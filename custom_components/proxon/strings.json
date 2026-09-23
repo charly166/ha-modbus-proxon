@@ -1,0 +1,599 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "description": "Verbindung zur Proxon-Anlage (Modbus TCP, z.B. über einen seriellen Gateway).",
+        "data": {
+          "host": "Host / IP-Adresse",
+          "port": "Port",
+          "slave": "Modbus-Slave-Adresse"
+        }
+      },
+      "reconfigure": {
+        "description": "Verbindungsdaten der Proxon-Anlage aktualisieren.",
+        "data": {
+          "host": "Host / IP-Adresse",
+          "port": "Port",
+          "slave": "Modbus-Slave-Adresse"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zur Anlage fehlgeschlagen. Adresse/Port/Slave-ID prüfen."
+    },
+    "abort": {
+      "already_configured": "Diese Anlage ist bereits eingerichtet.",
+      "reconfigure_successful": "Verbindungsdaten aktualisiert."
+    }
+  },
+  "entity": {
+    "number": {
+      "proxon_soll_temperatur_zone_2_og_bei_keine_hnbp": {
+        "name": "Soll Temperatur Zone 2 (OG) (Bei keine HNBP)"
+      },
+      "proxon_minimum_frischlufttemperatur_bypass_aus": {
+        "name": "Minimum Frischlufttemperatur (Bypass AUS)"
+      },
+      "proxon_bypasstemperatur_hysterese": {
+        "name": "Bypasstemperatur Hysterese"
+      },
+      "proxon_bypass_laufzeit_an_aus": {
+        "name": "Bypass laufzeit (AN/AUS)"
+      }
+    },
+    "sensor": {
+      "proxon_stunden_fwt_an": {
+        "name": "Stunden FWT AN"
+      },
+      "proxon_stunden_umluftfilter": {
+        "name": "Stunden Umluftfilter"
+      },
+      "proxon_stunden_vorwaerme_an": {
+        "name": "Stunden Vorwärme AN"
+      },
+      "proxon_stunden_umluft_an": {
+        "name": "Stunden Umluft AN"
+      },
+      "proxon_stunden_fu_an": {
+        "name": "Stunden FU AN"
+      },
+      "proxon_stunden_kompressor_kuehlen": {
+        "name": "Stunden Kompressor Kühlen"
+      },
+      "proxon_stunden_kompressor_heizen": {
+        "name": "Stunden Kompressor Heizen"
+      },
+      "proxon_stunden_abtau_an": {
+        "name": "Stunden Abtau AN"
+      },
+      "proxon_stunden_ventilatoren_stufe_1": {
+        "name": "Stunden Ventilatoren Stufe 1"
+      },
+      "proxon_stunden_ventilatoren_stufe2": {
+        "name": "Stunden Ventilatoren Stufe2"
+      },
+      "proxon_stunden_ventilatoren_stufe_3": {
+        "name": "Stunden Ventilatoren Stufe 3"
+      },
+      "proxon_stunden_ventilatoren_stufe_4": {
+        "name": "Stunden Ventilatoren Stufe 4"
+      },
+      "proxon_stunden_ptc_heizmodul_1_relais_1_an": {
+        "name": "Stunden PTC Heizmodul 1 Relais 1 An"
+      },
+      "proxon_stunden_ptc_heizmodul_1_relais_2_an": {
+        "name": "Stunden PTC Heizmodul 1 Relais 2 An"
+      },
+      "proxon_stunden_ptc_heizmodul_1_relais_3_an": {
+        "name": "Stunden PTC Heizmodul 1 Relais 3 An"
+      },
+      "proxon_stunden_ptc_heizmodul_1_relais_4_an": {
+        "name": "Stunden PTC Heizmodul 1 Relais 4 An"
+      },
+      "proxon_stunden_ptc_heizmodul_1_relais_5_an": {
+        "name": "Stunden PTC Heizmodul 1 Relais 5 An"
+      },
+      "proxon_stunden_ptc_heizmodul_1_relais_6_an": {
+        "name": "Stunden PTC Heizmodul 1 Relais 6 An"
+      },
+      "proxon_stunden_ptc_heizmodul_1_relais_7_an": {
+        "name": "Stunden PTC Heizmodul 1 Relais 7 An"
+      },
+      "proxon_stunden_ptc_heizmodul_1_relais_8_an": {
+        "name": "Stunden PTC Heizmodul 1 Relais 8 An"
+      },
+      "proxon_stunden_ptc_heizmodul_1_relais_9_an": {
+        "name": "Stunden PTC Heizmodul 1 Relais 9 An"
+      },
+      "proxon_stunden_ptc_heizmodul_1_relais_10_an": {
+        "name": "Stunden PTC Heizmodul 1 Relais 10 An"
+      },
+      "proxon_stunden_ptc_heizmodul_2_relais_1_an": {
+        "name": "Stunden PTC Heizmodul 2 Relais 1 An"
+      },
+      "proxon_stunden_ptc_heizmodul_2_relais_2_an": {
+        "name": "Stunden PTC Heizmodul 2 Relais 2 An"
+      },
+      "proxon_stunden_ptc_heizmodul_2_relais_3_an": {
+        "name": "Stunden PTC Heizmodul 2 Relais 3 An"
+      },
+      "proxon_stunden_ptc_heizmodul_2_relais_4_an": {
+        "name": "Stunden PTC Heizmodul 2 Relais 4 An"
+      },
+      "proxon_stunden_ptc_heizmodul_2_relais_5_an": {
+        "name": "Stunden PTC Heizmodul 2 Relais 5 An"
+      },
+      "proxon_stunden_ptc_heizmodul_2_relais_6_an": {
+        "name": "Stunden PTC Heizmodul 2 Relais 6 An"
+      },
+      "proxon_stunden_ptc_heizmodul_2_relais_7_an": {
+        "name": "Stunden PTC Heizmodul 2 Relais 7 An"
+      },
+      "proxon_stunden_ptc_heizmodul_2_relais_8_an": {
+        "name": "Stunden PTC Heizmodul 2 Relais 8 An"
+      },
+      "proxon_stunden_ptc_heizmodul_2_relais_9_an": {
+        "name": "Stunden PTC Heizmodul 2 Relais 9 An"
+      },
+      "proxon_stunden_ptc_heizmodul_2_relais_10_an": {
+        "name": "Stunden PTC Heizmodul 2 Relais 10 An"
+      },
+      "proxon_geraete_modell_0_fwt_1_p": {
+        "name": "Geräte Modell (0=FWT, 1=P)"
+      },
+      "proxon_geraete_typ_0_nur_heizen_1_heizen_und_kuehlen": {
+        "name": "Geräte typ (0=Nur Heizen, 1=Heizen und Kühlen)"
+      },
+      "proxon_akt_drehzahl_zuluftventilator": {
+        "name": "Akt.Drehzahl ZuLuftventilator"
+      },
+      "proxon_akt_drehzahl_abluftventilator": {
+        "name": "Akt.Drehzahl AbLuftventilator"
+      },
+      "proxon_ptc_kuehlen_freigabe": {
+        "name": "PTC Kühlen Freigabe"
+      },
+      "proxon_nacht_temp_bei_zeitprogramm": {
+        "name": "Nacht Temp Bei Zeitprogramm"
+      },
+      "proxon_firmwareversionhaupptplatine": {
+        "name": "FirmwareVersionHaupptPlatine"
+      },
+      "proxon_relaisstatushauptplatine": {
+        "name": "RelaisStatusHauptPlatine"
+      },
+      "proxon_es997stufe": {
+        "name": "ES997Stufe"
+      },
+      "proxon_sollzone2": {
+        "name": "SollZone2"
+      },
+      "proxon_adsusaettemp": {
+        "name": "ADSusaetTemp"
+      },
+      "proxon_adausentemp": {
+        "name": "ADAusenTemp"
+      },
+      "proxon_clockhour": {
+        "name": "ClockHour"
+      },
+      "proxon_clockmin": {
+        "name": "ClockMin"
+      },
+      "proxon_clockday": {
+        "name": "ClockDay"
+      },
+      "proxon_clockdate": {
+        "name": "ClockDate"
+      },
+      "proxon_clockmonth": {
+        "name": "ClockMonth"
+      },
+      "proxon_powerpcb": {
+        "name": "PowerPCB"
+      },
+      "proxon_powerfu": {
+        "name": "PowerFU"
+      },
+      "proxon_akt_betriebsart": {
+        "name": "Akt. Betriebsart"
+      },
+      "proxon_p18_druckventilator": {
+        "name": "P18 Druckventilator"
+      },
+      "proxon_air_m3_h": {
+        "name": "Air m3/h"
+      },
+      "proxon_jaz_komp_1min": {
+        "name": "JAZ KOMP 1min"
+      },
+      "proxon_jaz_komp_1_stunde": {
+        "name": "JAZ KOMP  1 stunde"
+      },
+      "proxon_jaz_komp_24_stunde": {
+        "name": "JAZ KOMP  24 stunde"
+      },
+      "proxon_jaz_komp_365_tage": {
+        "name": "JAZ KOMP  365 tage"
+      },
+      "proxon_jaz_komp_days": {
+        "name": "JAZ KOMP  days"
+      },
+      "proxon_jaz_total_1min": {
+        "name": "JAZ Total 1min"
+      },
+      "proxon_jaz_total_1_stunde": {
+        "name": "JAZ Total  1 stunde"
+      },
+      "proxon_jaz_total_24_stunde": {
+        "name": "JAZ Total  24 stunde"
+      },
+      "proxon_jaz_total_365_tage": {
+        "name": "JAZ Total  365 tage"
+      },
+      "proxon_jaz_total_days": {
+        "name": "JAZ Total  days"
+      },
+      "proxon_hp_nmt_state": {
+        "name": "HP_NMT_State"
+      },
+      "proxon_stufebeizeitprg": {
+        "name": "StufeBeiZeitPrg"
+      },
+      "proxon_umluftaktive": {
+        "name": "UmluftAktive"
+      },
+      "proxon_temphbdeintern": {
+        "name": "TempHBDEintern"
+      },
+      "proxon_stoerung": {
+        "name": "Stoerung"
+      },
+      "proxon_errorstatus1": {
+        "name": "ErrorStatus1"
+      },
+      "proxon_errorstatus2": {
+        "name": "ErrorStatus2"
+      },
+      "proxon_errorstatus3": {
+        "name": "ErrorStatus3"
+      },
+      "proxon_errorstatus4": {
+        "name": "ErrorStatus4"
+      },
+      "proxon_firmwareversionnebenplatine": {
+        "name": "FirmwareVersionNebenPlatine"
+      },
+      "proxon_wprelaisstatus": {
+        "name": "WpRelaisStatus"
+      },
+      "proxon_statusventilatoren": {
+        "name": "StatusVentilatoren"
+      },
+      "proxon_ventilatorfehlerrestzeit": {
+        "name": "VentilatorFehlerRestZeit"
+      },
+      "proxon_akt_ventilator_spannung_zuluft": {
+        "name": "Akt.Ventilator Spannung ZuLuft"
+      },
+      "proxon_akt_ventilator_spannung_abluft": {
+        "name": "Akt.Ventilator Spannung AbLuft"
+      },
+      "proxon_errorflagsnebenplatine": {
+        "name": "ErrorFlagsNebenPlatine"
+      },
+      "proxon_bypassresthaltezeit": {
+        "name": "BypassRestHaltezeit"
+      },
+      "proxon_schieber_position": {
+        "name": "Schieber Position"
+      },
+      "proxon_schieberresthaltezeit": {
+        "name": "SchieberRestHaltezeit"
+      },
+      "proxon_schieberverfahrauftrag": {
+        "name": "SchieberVerfahrauftrag"
+      },
+      "proxon_status_kompressor": {
+        "name": "Status Kompressor"
+      },
+      "proxon_wptimerschonzeit": {
+        "name": "WpTimerSchonzeit"
+      },
+      "proxon_wptimermindestlaufzeit": {
+        "name": "WpTimerMindestlaufzeit"
+      },
+      "proxon_wpabtautimer": {
+        "name": "WpAbtauTimer"
+      },
+      "proxon_wptimerabtaunachlauf": {
+        "name": "WpTimerAbtauNachlauf"
+      },
+      "proxon_p19_druckdiff_abtau": {
+        "name": "P19 Druckdiff. Abtau"
+      },
+      "proxon_wptimerentlastung": {
+        "name": "WpTimerEntlastung"
+      },
+      "proxon_wpminabtauintervalltimer": {
+        "name": "WpMinAbtauIntervallTimer"
+      },
+      "proxon_fu_errorcode": {
+        "name": "FU_ErrorCode"
+      },
+      "proxon_akt_leistung_kompressor": {
+        "name": "Akt.Leistung: Kompressor"
+      },
+      "proxon_fu_errorcode2": {
+        "name": "FU_ErrorCode2"
+      },
+      "proxon_delta_sauggas_kondensator_temp": {
+        "name": "Delta Sauggas Kondensator Temp"
+      },
+      "proxon_fu_fatalfoferror": {
+        "name": "FU_FatalFOFerror"
+      },
+      "proxon_t5_vorverdampfer": {
+        "name": "T5 VorVerdampfer"
+      },
+      "proxon_t6_verdampfer": {
+        "name": "T6 Verdampfer"
+      },
+      "proxon_t8_nach_vorwaerme": {
+        "name": "T8 Nach Vorwärme"
+      },
+      "proxon_t12_vor_kondensator": {
+        "name": "T12 Vor Kondensator"
+      },
+      "proxon_t10_kondensator": {
+        "name": "T10 Kondensator"
+      },
+      "proxon_t13_kompressor": {
+        "name": "T13 Kompressor"
+      },
+      "proxon_t9_t_aul_vor_ewt": {
+        "name": "T9 T_AUL_vor_EWT"
+      },
+      "proxon_wpabtauschwellecounter": {
+        "name": "WpAbtauSchwelleCounter"
+      },
+      "proxon_lscontrolfu_status": {
+        "name": "LsControlFU_Status"
+      },
+      "proxon_lscontrolfuerrorinput": {
+        "name": "LsControlFUErrorInput"
+      },
+      "proxon_furesettimecounter": {
+        "name": "FuResetTimeCounter"
+      },
+      "proxon_fufehlerverz": {
+        "name": "FuFehlerVerz"
+      },
+      "proxon_fuerrorcounter": {
+        "name": "FuErrorCounter"
+      },
+      "proxon_lscontrolhightime": {
+        "name": "LsControlHighTime"
+      },
+      "proxon_lscontrolpulsbreite": {
+        "name": "LsControlPulsbreite"
+      },
+      "proxon_akt_drehzahl_kompressor": {
+        "name": "Akt.Drehzahl: Kompressor"
+      },
+      "proxon_tempzusatz1": {
+        "name": "TempZusatz1"
+      },
+      "proxon_zuluftsollzone1": {
+        "name": "ZuluftSollZone1"
+      },
+      "proxon_tempzusatz2": {
+        "name": "TempZusatz2"
+      },
+      "proxon_zuluftsollzone2": {
+        "name": "ZuluftSollZone2"
+      },
+      "proxon_tcanforderungluft": {
+        "name": "TcAnforderungLuft"
+      },
+      "proxon_conwpstoptimer": {
+        "name": "ConWpStopTimer"
+      },
+      "proxon_akt_max_leistung_kompressor": {
+        "name": "Akt. Max.Leistung Kompressor"
+      },
+      "proxon_delta_sauggas_verdampfer_temp": {
+        "name": "Delta Sauggas Verdampfer Temp"
+      },
+      "proxon_e_ventil_kuehlung_position": {
+        "name": "E-Ventil Kühlung Position"
+      },
+      "proxon_e_ventil_heizung_position": {
+        "name": "E-Ventil Heizung Position"
+      },
+      "proxon_e_ventil_vorwaerme_position": {
+        "name": "E-Ventil Vorwärme Position"
+      },
+      "proxon_p14_nd_verdampfer": {
+        "name": "P14 ND. Verdampfer"
+      },
+      "proxon_t14_sauggas_nach_kondensator": {
+        "name": "T14 Sauggas nach Kondensator"
+      },
+      "proxon_t11_sauggas_nach_verdampfer": {
+        "name": "T11 Sauggas nach Verdampfer"
+      },
+      "proxon_abtaudruck": {
+        "name": "AbtauDruck"
+      },
+      "proxon_einausstatus": {
+        "name": "EinAusStatus"
+      },
+      "proxon_akt_ventilator_stufe_abluft": {
+        "name": "Akt.Ventilator Stufe Abluft"
+      },
+      "proxon_schieberberechnungrestzeit": {
+        "name": "SchieberBerechnungRestZeit"
+      },
+      "proxon_wptimerauslauf": {
+        "name": "WpTimerAuslauf"
+      },
+      "proxon_restwpzusatzabtauverzzeit": {
+        "name": "RestWpZusatzAbtauVerzZeit"
+      },
+      "proxon_verdampfertemperatur_druck": {
+        "name": "Verdampfertemperatur (Druck)"
+      },
+      "proxon_fuinittimecounter": {
+        "name": "FuInitTimeCounter"
+      },
+      "proxon_wpmaxr407_druckzutemp": {
+        "name": "WpMaxR407_DruckZuTemp"
+      },
+      "proxon_stufectrlby": {
+        "name": "StufeCtrlBy"
+      },
+      "proxon_erdwaerme_zustand": {
+        "name": "Erdwärme Zustand"
+      },
+      "proxon_zustand_magnetventil_aus_an": {
+        "name": "Zustand Magnetventil AUS/AN"
+      },
+      "proxon_zustand_bypass": {
+        "name": "Zustand Bypass"
+      },
+      "proxon_zustand_4_wegeventil_heizen_kuehlen": {
+        "name": "Zustand 4-Wegeventil Heizen/Kühlen"
+      },
+      "proxon_vorwaermeventilzustand": {
+        "name": "VorwärmeVentilZustand"
+      },
+      "proxon_fuleistungmodbus": {
+        "name": "FuLeistungModbus"
+      },
+      "proxon_fu_temperaturepowermodule": {
+        "name": "FU_TemperaturePowermodule"
+      },
+      "proxon_fu_temperaturecabinet": {
+        "name": "FU_TemperatureCabinet"
+      },
+      "proxon_regluftstufezuluft": {
+        "name": "RegLuftStufeZuluft"
+      },
+      "proxon_regluftstufeabluft": {
+        "name": "RegLuftStufeAbluft"
+      },
+      "proxon_stepstatepreh": {
+        "name": "StepStatePreH"
+      },
+      "proxon_stepsetpointpospreh": {
+        "name": "StepSetpointPosPreH"
+      },
+      "proxon_stepstatecool": {
+        "name": "StepStateCool"
+      },
+      "proxon_soll_ueberhitzung": {
+        "name": "Soll Überhitzung"
+      },
+      "proxon_stepsetpointposcool": {
+        "name": "StepSetpointPosCool"
+      },
+      "proxon_stepsetpointposheat": {
+        "name": "StepSetpointPosHeat"
+      },
+      "proxon_stepstateheat": {
+        "name": "StepStateHeat"
+      },
+      "proxon_delta_soll_t8_akt_t8": {
+        "name": "Delta Soll T8 - Akt.T8"
+      },
+      "proxon_fu_motorcurrent": {
+        "name": "FU_MotorCurrent"
+      },
+      "proxon_sollzonentemperatur2": {
+        "name": "SollZonenTemperatur2"
+      },
+      "proxon_akt_min_ueberhitzung": {
+        "name": "Akt. Min. Überhitzung"
+      },
+      "proxon_akt_max_ueberhitzung": {
+        "name": "Akt. Max. Überhitzung"
+      },
+      "proxon_fu_motor_strom": {
+        "name": "FU Motor Strom"
+      },
+      "proxon_regel_freigabe_restzeit_nach_abtau": {
+        "name": "Regel Freigabe Restzeit Nach Abtau"
+      },
+      "proxon_nachabtauleistungrestorevalue": {
+        "name": "NachAbtauLeistungRestoreValue"
+      },
+      "proxon_nachabtausuperheatrestorevalue": {
+        "name": "NachAbtauSuperheatRestoreValue"
+      },
+      "proxon_fumaxrpmupdatatet_fl": {
+        "name": "FuMaxRpmUpdatatet_fl"
+      },
+      "proxon_fumaxrpmset": {
+        "name": "FuMaxRpmSet"
+      },
+      "proxon_nachabtaumaxsuperheat": {
+        "name": "NachAbtauMaxSuperHeat"
+      },
+      "proxon_eventilstartpostimeleft": {
+        "name": "EventilStartPosTimeLeft"
+      },
+      "proxon_currentes997betriebsart": {
+        "name": "CurrentES997Betriebsart"
+      },
+      "proxon_t2_1_zonentemperatur1": {
+        "name": "T2.1 ZonenTemperatur1"
+      },
+      "proxon_t2_2_zonentemperatur2": {
+        "name": "T2.2 ZonenTemperatur2"
+      },
+      "proxon_sollzonentemperatur1": {
+        "name": "SollZonenTemperatur1"
+      },
+      "proxon_heizmodul_1_selbsttest_ergebnis": {
+        "name": "Heizmodul 1 Selbsttest-Ergebnis"
+      },
+      "proxon_heizmodul_1_status": {
+        "name": "Heizmodul 1 Status"
+      },
+      "proxon_heizmodul_1_temperatur": {
+        "name": "Heizmodul 1 Temperatur"
+      },
+      "proxon_heizmodul_2_selbsttest_ergebnis": {
+        "name": "Heizmodul 2 Selbsttest-Ergebnis"
+      },
+      "proxon_heizmodul_2_status": {
+        "name": "Heizmodul 2 Status"
+      },
+      "proxon_heizmodul_2_temperatur": {
+        "name": "Heizmodul 2 Temperatur"
+      },
+      "proxon_hnbe_status": {
+        "name": "HNBE Status"
+      },
+      "proxon_nbe1_status": {
+        "name": "NBE1 Status"
+      },
+      "proxon_nbe2_status": {
+        "name": "NBE2 Status"
+      },
+      "proxon_nbe3_status": {
+        "name": "NBE3 Status"
+      },
+      "proxon_nbe4_status": {
+        "name": "NBE4 Status"
+      },
+      "proxon_nbe5_status": {
+        "name": "NBE5 Status"
+      },
+      "proxon_nbe6_status": {
+        "name": "NBE6 Status"
+      }
+    }
+  }
+}

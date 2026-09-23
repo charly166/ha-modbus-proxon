@@ -1,0 +1,30 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "description": "Connection to the Proxon unit (Modbus TCP, e.g. via a serial gateway).",
+        "data": {
+          "host": "Host / IP address",
+          "port": "Port",
+          "slave": "Modbus slave address"
+        }
+      },
+      "reconfigure": {
+        "description": "Update the Proxon unit's connection details.",
+        "data": {
+          "host": "Host / IP address",
+          "port": "Port",
+          "slave": "Modbus slave address"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect. Please check address/port/slave id."
+    },
+    "abort": {
+      "already_configured": "This unit is already configured.",
+      "reconfigure_successful": "Connection details updated."
+    }
+  },
+  "entity": {}
+}
