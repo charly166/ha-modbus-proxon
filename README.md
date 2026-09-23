@@ -8,9 +8,17 @@ Home-Assistant-Integration für die Proxon-Wärmepumpe/Komfortlüftung **FWT2.0*
 TCP, nach dem seit 2026 empfohlenen ["modernisierten" Modbus-Architekturmuster von Home
 Assistant](https://developers.home-assistant.io/blog/2026/07/05/modernizing-modbus/):
 Register werden typisiert über [`modbus-connection`](https://home-assistant-libs.github.io/modbus-connection/)
-modelliert, die physische Verbindung wird über HA-Cores eingebaute `modbus`-Integration
-geteilt (kein eigener Socket), und alles wird über die Home-Assistant-Oberfläche (Config
-Flow) eingerichtet – keine YAML-Bearbeitung mehr nötig.
+modelliert, und alles wird über die Home-Assistant-Oberfläche (Config Flow) eingerichtet –
+keine YAML-Bearbeitung mehr nötig.
+
+Der im Blogpost beschriebene zweite Baustein – eine über Home Assistant Cores eingebaute
+`modbus`-Integration geteilte Verbindung (`async_get_unit`/`async_get_temporary_unit`) – ist
+in aktuellen, veröffentlichten Home-Assistant-Versionen noch nicht enthalten (Stand geprüft:
+Home Assistant 2026.9.3; `homeassistant.components.modbus` hat diese Funktionen dort noch
+nicht). Diese Integration öffnet deshalb aktuell eine **eigene** Modbus-TCP-Verbindung direkt
+über `modbus-connection` (`modbus_connection.tmodbus.connect_tcp`), statt sie mit anderen
+Integrationen zu teilen. Sobald HA Core die geteilte Verbindung veröffentlicht, kann darauf
+umgestellt werden (betrifft nur `__init__.py`/`config_flow.py`, nicht das Registermodell).
 
 Diese Integration ersetzt die bisherige, handgepflegte `proxon.yaml`
 (`modbus:`-Plattform).
@@ -24,12 +32,10 @@ Diese Integration ersetzt die bisherige, handgepflegte `proxon.yaml`
 4. Host/IP, Port (Standard `502`, an eurem Modbus-TCP-Gateway anpassen – z.B. `4196` wie
    in der bisherigen `proxon.yaml`) und Modbus-Slave-Adresse (Standard `41`) eingeben.
 
-Die Integration hängt von Home Assistants eingebauter `modbus`-Integration ab
-(`"dependencies": ["modbus"]` im Manifest) – die ist bereits Teil von Home Assistant Core,
-dafür ist keine separate Installation nötig. Vorausgesetzt wird eine Home-Assistant-Version,
-die `homeassistant.components.modbus.async_get_unit`/`async_get_temporary_unit` bereits
-enthält (siehe oben verlinkter Blogpost); bei älteren Core-Versionen bitte zuerst
-aktualisieren.
+Die Integration verwaltet ihre Modbus-TCP-Verbindung selbst (siehe Hinweis oben); es ist also
+keine weitere Voraussetzung an eure Home-Assistant-Version bezüglich der `modbus`-Integration
+zu erfüllen. Benötigt wird lediglich Python ≥3.12 (durch `modbus-connection`), was jede
+aktuelle Home-Assistant-Installation ohnehin mitbringt.
 
 ## Migration von der alten `proxon.yaml`
 
@@ -98,16 +104,25 @@ im Projektverzeichnis erneut ausführen.
 
 ## Grenzen dieser Umsetzung
 
-Diese Integration wurde in einer Umgebung ohne laufende Home-Assistant-Instanz und ohne
-Zugriff auf die reale Proxon-Anlage entwickelt. Geprüft wurde:
+Diese Integration wurde ohne Zugriff auf die reale Proxon-Anlage und ohne laufende
+Home-Assistant-Instanz entwickelt. Geprüft wurde dabei:
 
 - Python-Syntax aller Dateien (`py_compile`) und Lint (`ruff check`, sauber).
 - Interne Konsistenz: jede Entity-Beschreibung referenziert ein tatsächlich vorhandenes
   `component`/`field`-Paar (automatisiert gegenprüft), alle 254 `unique_id`s sind eindeutig.
 - Die Registeradressen/Skalierungen wurden 1:1 aus der mitgelieferten Excel-Liste bzw. der
   bisherigen `proxon.yaml` übernommen.
+- **Alle Python-Module wurden gegen die echten, per `pip install` bezogenen Pakete
+  `modbus-connection==4.12.1` und `homeassistant==2026.9.3` importiert** (nicht nur
+  Syntaxprüfung) – das deckt Tippfehler bei Funktions-/Klassennamen und falsche
+  Import-Pfade zuverlässig auf.
+- Die Register-Dekodierung (`model.py`/`registers_*.py`) wurde zusätzlich end-to-end mit
+  `modbus_connection.mock.MockModbusConnection` getestet: Werte schreiben → lesen → skalieren
+  ergibt die erwarteten Ergebnisse (Schalt- und Zahlen-Schreibpfad über `Component.write()`
+  eingeschlossen).
 
-**Nicht** geprüft werden konnte ein echter Verbindungsaufbau zur Anlage oder das Laden in
-einer laufenden Home-Assistant-Instanz. Bitte nach der Installation die Basisfunktionen
-(Verbindungsaufbau im Config Flow, ein paar Sensor-Werte, ein Schalter) verifizieren, bevor
-die alte `proxon.yaml`-Konfiguration endgültig gelöscht wird.
+**Nicht** geprüft werden konnte ein echter Verbindungsaufbau zur Anlage über das reale
+Netzwerk/Gateway oder das tatsächliche Laden in einer laufenden Home-Assistant-Instanz mit
+allen Abhängigkeiten (z.B. Frontend-Übersetzungen, Geräte-Registry-Verhalten). Bitte nach der
+Installation die Basisfunktionen (Verbindungsaufbau im Config Flow, ein paar Sensor-Werte, ein
+Schalter) verifizieren, bevor die alte `proxon.yaml`-Konfiguration endgültig gelöscht wird.

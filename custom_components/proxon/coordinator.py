@@ -9,6 +9,7 @@ from datetime import timedelta
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from modbus_connection.tmodbus import ModbusConnection
 
 from .const import DOMAIN, UPDATE_INTERVAL_SECONDS
 from .model import ProxonDevice
@@ -76,6 +77,7 @@ class ProxonRuntimeData:
 
     device: ProxonDevice
     coordinator: ProxonDataUpdateCoordinator
+    connection: ModbusConnection
 
 
 type ProxonConfigEntry = ConfigEntry[ProxonRuntimeData]
