@@ -9,6 +9,21 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import ProxonDataUpdateCoordinator
+from .zones import ZoneInfo
+
+
+def _zone_for(zones: list[ZoneInfo], component: str, zone_index: int | None) -> ZoneInfo | None:
+    """Match an entity description back to the zone it belongs to, if any.
+
+    ``zone_index`` (set only for "nb_zones_*" components) identifies an HNBP/
+    NBPn zone; "zbp"/"zbp_input" is always the one ZBP zone. Anything else is
+    a central (non-zone) entity - returns None.
+    """
+    if zone_index is not None:
+        return next((z for z in zones if z.kind == "nb" and z.zone_index == zone_index), None)
+    if component in ("zbp", "zbp_input"):
+        return next((z for z in zones if z.kind == "zbp"), None)
+    return None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -41,12 +56,27 @@ class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
         self.entity_description = description
         self._attr_unique_id = description.key
         entry = coordinator.config_entry
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, entry.entry_id)},
-            name=entry.title,
-            manufacturer="Proxon",
-            model="FWT2.0",
-        )
+        zone = _zone_for(entry.runtime_data.zones, description.component, description.zone_index)
+        if zone is not None:
+            # One device per zone (room), so the device list shows "Büro",
+            # "Wohnzimmer", etc. instead of everything being lumped under a
+            # single "Proxon" device - entities then only need to carry their
+            # function in their own name ("Ist-Temperatur"), since Home
+            # Assistant prefixes it with the device name automatically.
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, f"{entry.entry_id}_zone_{zone.slug}")},
+                name=zone.name,
+                manufacturer="Proxon",
+                model="FWT2.0 Zone",
+                suggested_area=zone.name,
+            )
+        else:
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, entry.entry_id)},
+                name=entry.title,
+                manufacturer="Proxon",
+                model="FWT2.0",
+            )
 
     @property
     def _component(self):

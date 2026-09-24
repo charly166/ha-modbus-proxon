@@ -4,16 +4,16 @@
       "user": {
         "description": "Verbindung zur Proxon-Anlage (Modbus TCP, z.B. über einen seriellen Gateway).",
         "data": {
-          "host": "Host / IP-Adresse",
-          "port": "Port",
+          "host": "Modbus Host / IP-Adresse",
+          "port": "Modbus Port",
           "slave": "Modbus-Slave-Adresse"
         }
       },
       "reconfigure": {
         "description": "Verbindungsdaten der Proxon-Anlage aktualisieren.",
         "data": {
-          "host": "Host / IP-Adresse",
-          "port": "Port",
+          "host": "Modbus Host / IP-Adresse",
+          "port": "Modbus Port",
           "slave": "Modbus-Slave-Adresse"
         }
       },
@@ -25,16 +25,35 @@
         }
       },
       "zone_names": {
-        "description": "Ein Raumname je Zone. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung).",
+        "description": "Wähle für jede Zone den passenden Home-Assistant-Raum. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung).",
         "data": {
-          "zbp_name": "Raumname ZBP",
-          "hnb_name": "Raumname HNBP"
+          "zbp_name": "Raum für ZBP",
+          "hnb_name": "Raum für HNBP",
+          "zone_name_1": "Raum für NBP1",
+          "zone_name_2": "Raum für NBP2",
+          "zone_name_3": "Raum für NBP3",
+          "zone_name_4": "Raum für NBP4",
+          "zone_name_5": "Raum für NBP5",
+          "zone_name_6": "Raum für NBP6",
+          "zone_name_7": "Raum für NBP7",
+          "zone_name_8": "Raum für NBP8",
+          "zone_name_9": "Raum für NBP9",
+          "zone_name_10": "Raum für NBP10",
+          "zone_name_11": "Raum für NBP11",
+          "zone_name_12": "Raum für NBP12",
+          "zone_name_13": "Raum für NBP13",
+          "zone_name_14": "Raum für NBP14",
+          "zone_name_15": "Raum für NBP15",
+          "zone_name_16": "Raum für NBP16",
+          "zone_name_17": "Raum für NBP17",
+          "zone_name_18": "Raum für NBP18",
+          "zone_name_19": "Raum für NBP19"
         }
       }
     },
     "error": {
       "cannot_connect": "Verbindung zur Anlage fehlgeschlagen. Adresse/Port/Slave-ID prüfen.",
-      "duplicate_zone_names": "Zwei Zonen ergeben denselben internen Namen (z.B. durch Sonderzeichen) - bitte eindeutige Raumnamen vergeben."
+      "duplicate_zone_names": "Zwei Zonen sind demselben Raum zugeordnet - bitte für jede Zone einen eigenen Raum wählen."
     },
     "abort": {
       "already_configured": "Diese Anlage ist bereits eingerichtet.",
@@ -44,10 +63,10 @@
   "entity": {
     "sensor": {
       "proxon_zone_ist_temperatur": {
-        "name": "Ist-Temperatur {zone}"
+        "name": "Ist-Temperatur"
       },
       "proxon_zone_mitteltemperatur": {
-        "name": "Mitteltemperatur {zone}"
+        "name": "Mitteltemperatur"
       },
       "proxon_stunden_fwt_an": {
         "name": "Stunden FWT AN"
@@ -583,18 +602,18 @@
     },
     "switch": {
       "proxon_zone_heizelement": {
-        "name": "Heizelement {zone}"
+        "name": "Heizelement"
       },
       "proxon_zone_tastensperre": {
-        "name": "Tastensperre {zone}"
+        "name": "Sperren Bedienteil"
       }
     },
     "number": {
       "proxon_zone_offset_temperatur": {
-        "name": "Offset-Temperatur {zone}"
+        "name": "Offset-Temperatur"
       },
       "proxon_zone_soll_temperatur": {
-        "name": "Soll-Temperatur {zone}"
+        "name": "Soll-Temperatur"
       },
       "proxon_minimum_frischlufttemperatur_bypass_aus": {
         "name": "Minimum Frischlufttemperatur (Bypass AUS)"
@@ -604,11 +623,6 @@
       },
       "proxon_bypass_laufzeit_an_aus": {
         "name": "Bypass laufzeit (AN/AUS)"
-      }
-    },
-    "climate": {
-      "proxon_zone_climate": {
-        "name": "{zone}"
       }
     }
   }

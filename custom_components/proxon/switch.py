@@ -71,7 +71,6 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSwitchEntityDescript
                 field="heizelement",
                 zone_index=zone.zone_index,
                 translation_key="proxon_zone_heizelement",
-                translation_placeholders={"zone": zone.name},
             )
         )
         if zone.kind == "nb":
@@ -82,7 +81,6 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSwitchEntityDescript
                     field="tastensperre",
                     zone_index=zone.zone_index,
                     translation_key="proxon_zone_tastensperre",
-                    translation_placeholders={"zone": zone.name},
                     entity_category=EntityCategory.CONFIG,
                 )
             )

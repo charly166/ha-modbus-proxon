@@ -30,6 +30,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import area_registry as ar
 from modbus_connection.model import Component, gauge, integer, repeating_group
 
 from .const import (
@@ -50,23 +52,43 @@ class ZoneInfo:
     slug: str
     kind: Literal["zbp", "nb"]
     zone_index: int | None  # None for ZBP; 0=HNBP, 1..19=NBPn for "nb"
+    area_id: str | None = None
 
 
-def zones_from_entry_data(data: dict) -> list[ZoneInfo]:
+def _resolve_area(hass: HomeAssistant, area_id: str) -> str:
+    """Turn a Home Assistant Area id (as picked in the config flow's
+    AreaSelector) into a display name + slug. Falls back to treating the
+    stored value as a plain name if it isn't a known area id (e.g. the area
+    was since deleted, or the entry predates the AreaSelector)."""
+    area = ar.async_get(hass).async_get_area(area_id)
+    name = area.name if area is not None else area_id
+    return name
+
+
+def zones_from_entry_data(hass: HomeAssistant, data: dict) -> list[ZoneInfo]:
     """Build the ordered zone list from a config entry's data.
 
-    Order matches the wizard/reconfigure form and, for the original 8-room
-    installation this integration was built for, reproduces the exact
-    unique_ids the legacy proxon.yaml used (ZBP=Wohnzimmer, HNBP=Partykeller,
-    NBP1-6=Flur/Schlafzimmer/Büro/Lea/Vorraum/Werkstatt) as long as the same
-    names are entered in the same order - see README.
+    Zone names come from Home Assistant's Area registry (the config flow uses
+    an AreaSelector) - `data` stores area ids, resolved here to the area's
+    current display name. Order matches the wizard/reconfigure form and, for
+    the original 8-room installation this integration was built for,
+    reproduces the exact unique_ids the legacy proxon.yaml used (ZBP=
+    Wohnzimmer, HNBP=Partykeller, NBP1-6=Flur/Schlafzimmer/Buro/Lea/Vorraum/
+    Werkstatt) as long as the same Areas are picked in the same order - see
+    README.
     """
-    zones = [ZoneInfo(name=data[CONF_ZBP_NAME], slug=slugify(data[CONF_ZBP_NAME]), kind="zbp", zone_index=None)]
+    zbp_area = data[CONF_ZBP_NAME]
+    zbp_name = _resolve_area(hass, zbp_area)
+    zones = [ZoneInfo(name=zbp_name, slug=slugify(zbp_name), kind="zbp", zone_index=None, area_id=zbp_area)]
     if data.get(CONF_HAS_HNB):
-        hnb_name = data[CONF_HNB_NAME]
-        zones.append(ZoneInfo(name=hnb_name, slug=slugify(hnb_name), kind="nb", zone_index=0))
-    for i, name in enumerate(data.get(CONF_ZONE_NAMES, [])[: data.get(CONF_ZONE_COUNT, 0)], start=1):
-        zones.append(ZoneInfo(name=name, slug=slugify(name), kind="nb", zone_index=i))
+        hnb_area = data[CONF_HNB_NAME]
+        hnb_name = _resolve_area(hass, hnb_area)
+        zones.append(
+            ZoneInfo(name=hnb_name, slug=slugify(hnb_name), kind="nb", zone_index=0, area_id=hnb_area)
+        )
+    for i, area_id in enumerate(data.get(CONF_ZONE_NAMES, [])[: data.get(CONF_ZONE_COUNT, 0)], start=1):
+        name = _resolve_area(hass, area_id)
+        zones.append(ZoneInfo(name=name, slug=slugify(name), kind="nb", zone_index=i, area_id=area_id))
     return zones
 
 # Offset-Temperatur is only adjustable ±3°C from the zone's own Mitteltemperatur.

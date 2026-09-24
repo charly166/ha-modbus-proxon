@@ -4,16 +4,16 @@
       "user": {
         "description": "Connection to the Proxon unit (Modbus TCP, e.g. via a serial gateway).",
         "data": {
-          "host": "Host / IP address",
-          "port": "Port",
+          "host": "Modbus host / IP address",
+          "port": "Modbus port",
           "slave": "Modbus slave address"
         }
       },
       "reconfigure": {
         "description": "Update the Proxon unit's connection details.",
         "data": {
-          "host": "Host / IP address",
-          "port": "Port",
+          "host": "Modbus host / IP address",
+          "port": "Modbus port",
           "slave": "Modbus slave address"
         }
       },
@@ -25,16 +25,35 @@
         }
       },
       "zone_names": {
-        "description": "One room name per zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping).",
+        "description": "Pick the matching Home Assistant Area for each zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping).",
         "data": {
-          "zbp_name": "ZBP room name",
-          "hnb_name": "HNBP room name"
+          "zbp_name": "Area for ZBP",
+          "hnb_name": "Area for HNBP",
+          "zone_name_1": "Area for NBP1",
+          "zone_name_2": "Area for NBP2",
+          "zone_name_3": "Area for NBP3",
+          "zone_name_4": "Area for NBP4",
+          "zone_name_5": "Area for NBP5",
+          "zone_name_6": "Area for NBP6",
+          "zone_name_7": "Area for NBP7",
+          "zone_name_8": "Area for NBP8",
+          "zone_name_9": "Area for NBP9",
+          "zone_name_10": "Area for NBP10",
+          "zone_name_11": "Area for NBP11",
+          "zone_name_12": "Area for NBP12",
+          "zone_name_13": "Area for NBP13",
+          "zone_name_14": "Area for NBP14",
+          "zone_name_15": "Area for NBP15",
+          "zone_name_16": "Area for NBP16",
+          "zone_name_17": "Area for NBP17",
+          "zone_name_18": "Area for NBP18",
+          "zone_name_19": "Area for NBP19"
         }
       }
     },
     "error": {
       "cannot_connect": "Failed to connect. Please check address/port/slave id.",
-      "duplicate_zone_names": "Two zones map to the same internal name (e.g. due to special characters) - please use unique room names."
+      "duplicate_zone_names": "Two zones are mapped to the same Area - please pick a distinct Area per zone."
     },
     "abort": {
       "already_configured": "This unit is already configured.",

@@ -880,7 +880,6 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSensorEntityDescript
                 field="ist_temperatur",
                 zone_index=zone.zone_index,
                 translation_key="proxon_zone_ist_temperatur",
-                translation_placeholders={"zone": zone.name},
                 native_unit_of_measurement="\N{DEGREE SIGN}C",
                 device_class=SensorDeviceClass.TEMPERATURE,
                 state_class=SensorStateClass.MEASUREMENT,
@@ -894,7 +893,6 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSensorEntityDescript
                     field="mitteltemperatur",
                     zone_index=zone.zone_index,
                     translation_key="proxon_zone_mitteltemperatur",
-                    translation_placeholders={"zone": zone.name},
                     native_unit_of_measurement="\N{DEGREE SIGN}C",
                     device_class=SensorDeviceClass.TEMPERATURE,
                     state_class=SensorStateClass.MEASUREMENT,
@@ -915,7 +913,6 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSwitchEntityDescript
                 field="heizelement",
                 zone_index=zone.zone_index,
                 translation_key="proxon_zone_heizelement",
-                translation_placeholders={"zone": zone.name},
             )
         )
         if zone.kind == "nb":
@@ -926,7 +923,6 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSwitchEntityDescript
                     field="tastensperre",
                     zone_index=zone.zone_index,
                     translation_key="proxon_zone_tastensperre",
-                    translation_placeholders={"zone": zone.name},
                     entity_category=EntityCategory.CONFIG,
                 )
             )
@@ -944,7 +940,6 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonNumberEntityDescript
                     component="zbp",
                     field="soll_temperatur",
                     translation_key="proxon_zone_soll_temperatur",
-                    translation_placeholders={"zone": zone.name},
                     native_unit_of_measurement="\N{DEGREE SIGN}C",
                     native_min_value=ZBP_SOLL_MIN,
                     native_max_value=ZBP_SOLL_MAX,
@@ -959,7 +954,6 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonNumberEntityDescript
                     field="offset_temperatur",
                     zone_index=zone.zone_index,
                     translation_key="proxon_zone_offset_temperatur",
-                    translation_placeholders={"zone": zone.name},
                     native_unit_of_measurement="\N{DEGREE SIGN}C",
                     native_min_value=OFFSET_MIN,
                     native_max_value=OFFSET_MAX,
@@ -1113,28 +1107,37 @@ def render_platform_file(platform: str, metas: list[FieldMeta]) -> str:
     return "\n".join(lines) + "\n"
 
 
+# Keep in sync with MAX_ZONE_COUNT in custom_components/proxon/const.py (not
+# imported directly - const.py pulls in homeassistant, which this script
+# doesn't depend on otherwise).
+MAX_ZONE_COUNT = 19
+
 CONFIG_FLOW_STRINGS: dict = {
     "step": {
         "user": {
             "description": "Verbindung zur Proxon-Anlage (Modbus TCP, z.B. über einen seriellen Gateway).",
-            "data": {"host": "Host / IP-Adresse", "port": "Port", "slave": "Modbus-Slave-Adresse"},
+            "data": {"host": "Modbus Host / IP-Adresse", "port": "Modbus Port", "slave": "Modbus-Slave-Adresse"},
         },
         "reconfigure": {
             "description": "Verbindungsdaten der Proxon-Anlage aktualisieren.",
-            "data": {"host": "Host / IP-Adresse", "port": "Port", "slave": "Modbus-Slave-Adresse"},
+            "data": {"host": "Modbus Host / IP-Adresse", "port": "Modbus Port", "slave": "Modbus-Slave-Adresse"},
         },
         "zones_count": {
             "description": "Wie viele Bedienteile/Zonen sind installiert? ZBP (Zentralbedienpanel) ist immer vorhanden und wird im nächsten Schritt separat benannt.",
             "data": {"has_hnb": "Hauptnebenbedienpanel (HNBP) installiert", "zone_count": "Anzahl Nebenbedienpanel (NBP1..NBPx)"},
         },
         "zone_names": {
-            "description": "Ein Raumname je Zone. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung).",
-            "data": {"zbp_name": "Raumname ZBP", "hnb_name": "Raumname HNBP"},
+            "description": "Wähle für jede Zone den passenden Home-Assistant-Raum. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung).",
+            "data": {
+                "zbp_name": "Raum für ZBP",
+                "hnb_name": "Raum für HNBP",
+                **{f"zone_name_{i}": f"Raum für NBP{i}" for i in range(1, MAX_ZONE_COUNT + 1)},
+            },
         },
     },
     "error": {
         "cannot_connect": "Verbindung zur Anlage fehlgeschlagen. Adresse/Port/Slave-ID prüfen.",
-        "duplicate_zone_names": "Zwei Zonen ergeben denselben internen Namen (z.B. durch Sonderzeichen) - bitte eindeutige Raumnamen vergeben.",
+        "duplicate_zone_names": "Zwei Zonen sind demselben Raum zugeordnet - bitte für jede Zone einen eigenen Raum wählen.",
     },
     "abort": {"already_configured": "Diese Anlage ist bereits eingerichtet.", "reconfigure_successful": "Verbindungsdaten aktualisiert."},
 }
@@ -1143,46 +1146,52 @@ CONFIG_FLOW_STRINGS_EN: dict = {
     "step": {
         "user": {
             "description": "Connection to the Proxon unit (Modbus TCP, e.g. via a serial gateway).",
-            "data": {"host": "Host / IP address", "port": "Port", "slave": "Modbus slave address"},
+            "data": {"host": "Modbus host / IP address", "port": "Modbus port", "slave": "Modbus slave address"},
         },
         "reconfigure": {
             "description": "Update the Proxon unit's connection details.",
-            "data": {"host": "Host / IP address", "port": "Port", "slave": "Modbus slave address"},
+            "data": {"host": "Modbus host / IP address", "port": "Modbus port", "slave": "Modbus slave address"},
         },
         "zones_count": {
             "description": "How many control panels/zones are installed? ZBP (main panel) always exists and is named separately in the next step.",
             "data": {"has_hnb": "Secondary main panel (HNBP) installed", "zone_count": "Number of remote panels (NBP1..NBPx)"},
         },
         "zone_names": {
-            "description": "One room name per zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping).",
-            "data": {"zbp_name": "ZBP room name", "hnb_name": "HNBP room name"},
+            "description": "Pick the matching Home Assistant Area for each zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping).",
+            "data": {
+                "zbp_name": "Area for ZBP",
+                "hnb_name": "Area for HNBP",
+                **{f"zone_name_{i}": f"Area for NBP{i}" for i in range(1, MAX_ZONE_COUNT + 1)},
+            },
         },
     },
     "error": {
         "cannot_connect": "Failed to connect. Please check address/port/slave id.",
-        "duplicate_zone_names": "Two zones map to the same internal name (e.g. due to special characters) - please use unique room names.",
+        "duplicate_zone_names": "Two zones are mapped to the same Area - please pick a distinct Area per zone.",
     },
     "abort": {"already_configured": "This unit is already configured.", "reconfigure_successful": "Connection details updated."},
 }
 
-# Translation strings for hand-written (non-generated) entities: select.py,
-# climate.py, and the dynamic per-zone entities added by sensor.py/switch.py/
-# number.py's _zone_descriptions(). {zone} is a translation_placeholder.
+# Translation strings for hand-written (non-generated) entities: select.py
+# and the dynamic per-zone entities added by sensor.py/switch.py/number.py's
+# _zone_descriptions(). Each zone is its own Home Assistant *device* (see
+# entity.py's _zone_for()/DeviceInfo), so these are function-only names -
+# Home Assistant prefixes the device name ("Büro", "Wohnzimmer", ...)
+# automatically, giving e.g. "Büro Ist-Temperatur". climate.py's entities
+# have no name of their own (they *are* the zone device's main entity, shown
+# as just the zone name), so there is nothing to add here for "climate".
 _EXTRA_ENTITY_STRINGS: dict = {
     "sensor": {
-        "proxon_zone_ist_temperatur": {"name": "Ist-Temperatur {zone}"},
-        "proxon_zone_mitteltemperatur": {"name": "Mitteltemperatur {zone}"},
+        "proxon_zone_ist_temperatur": {"name": "Ist-Temperatur"},
+        "proxon_zone_mitteltemperatur": {"name": "Mitteltemperatur"},
     },
     "switch": {
-        "proxon_zone_heizelement": {"name": "Heizelement {zone}"},
-        "proxon_zone_tastensperre": {"name": "Tastensperre {zone}"},
+        "proxon_zone_heizelement": {"name": "Heizelement"},
+        "proxon_zone_tastensperre": {"name": "Sperren Bedienteil"},
     },
     "number": {
-        "proxon_zone_offset_temperatur": {"name": "Offset-Temperatur {zone}"},
-        "proxon_zone_soll_temperatur": {"name": "Soll-Temperatur {zone}"},
-    },
-    "climate": {
-        "proxon_zone_climate": {"name": "{zone}"},
+        "proxon_zone_offset_temperatur": {"name": "Offset-Temperatur"},
+        "proxon_zone_soll_temperatur": {"name": "Soll-Temperatur"},
     },
 }
 

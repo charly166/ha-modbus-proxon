@@ -37,7 +37,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bo
         device=device,
         coordinator=coordinator,
         connection=connection,
-        zones=zones_from_entry_data(entry.data),
+        zones=zones_from_entry_data(hass, entry.data),
     )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

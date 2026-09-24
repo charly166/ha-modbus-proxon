@@ -124,8 +124,10 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonZoneClimateDescripti
                 component=component,
                 field=field,
                 zone_index=zone.zone_index,
-                translation_key="proxon_zone_climate",
-                translation_placeholders={"zone": zone.name},
+                # No name of its own: this is the zone device's main entity,
+                # so Home Assistant shows just the device name ("Büro", ...).
+                has_entity_name=True,
+                name=None,
             )
         )
     return out

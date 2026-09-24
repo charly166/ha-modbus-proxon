@@ -18,9 +18,6 @@ DEFAULT_SLAVE = 41
 DEFAULT_ZONE_COUNT = 8
 MAX_ZONE_COUNT = 19
 
-DEFAULT_ZBP_NAME = "Zentrale"
-DEFAULT_HNB_NAME = "Hauptraum"
-
 # Single poll interval for the whole device. The legacy proxon.yaml used many
 # different scan_intervals (5-30s) per entity; modbus-connection polls a
 # Component's fields together in as few requests as possible, so one shared

@@ -50,12 +50,14 @@ installiert ist. Kein zusätzlicher Schritt nötig.
    (`https://github.com/charly166/ha-modbus-proxon`) als Typ *Integration* hinzufügen.
 2. "HA Proxon FWT 2.0 Modbus" installieren, Home Assistant neu starten.
 3. Einstellungen → Geräte & Dienste → Integration hinzufügen → "Proxon" suchen.
-4. **Schritt 1 - Verbindung**: Host/IP, Port (Standard `502`, an euer Modbus-TCP-Gateway
-   anpassen) und Modbus-Slave-Adresse (Standard `41`) eingeben.
+4. **Schritt 1 - Verbindung**: Modbus Host/IP-Adresse, Modbus Port (Standard `502`, an euer
+   Modbus-TCP-Gateway anpassen) und Modbus-Slave-Adresse (Standard `41`) eingeben.
 5. **Schritt 2 - Zonenanzahl**: Ist ein Hauptnebenbedienpanel (HNBP) installiert? Wie viele
    Nebenbedienpanel (NBP1..NBPx) gibt es?
-6. **Schritt 3 - Raumnamen**: Ein Textfeld je Zone (ZBP, ggf. HNBP, dann NBP1, NBP2, ... in
-   dieser Reihenfolge - die Reihenfolge entscheidet über die Registerzuordnung, siehe unten).
+6. **Schritt 3 - Räume**: Für jede Zone (ZBP, ggf. HNBP, dann NBP1, NBP2, ... in dieser
+   Reihenfolge - die Reihenfolge entscheidet über die Registerzuordnung, siehe unten) einen
+   **Home-Assistant-Raum** aus einer Dropdown-Liste auswählen (nicht mehr frei eintippen).
+   Existiert der Raum noch nicht, kann er direkt im Auswahlfeld neu angelegt werden.
 
 Die Integration verwaltet ihre Modbus-TCP-Verbindung selbst (siehe Hinweis oben); es ist also
 keine weitere Voraussetzung an eure Home-Assistant-Version bezüglich der `modbus`-Integration
@@ -73,12 +75,26 @@ Proxon → Neu konfigurieren* ändern (derselbe 3-Schritte-Assistent).
 | **HNBP** (Hauptnebenbedienpanel) | 0 oder 1 | Technisch wie eine NBP-Zone modelliert (Mitteltemperatur + ±3°C Offset). Seine gemessene Temperatur beeinflusst aber zusätzlich, ob die ZBP-Zieltemperatur fürs ganze Haus erreicht wird (Zone-1/Zone-2-Regelkreis der Anlage) - eine reine Fachinfo, keine Sonderlogik im Code. |
 | **NBPn** (Nebenbedienpanel) | 0-19 | Zieltemperatur = eigene Mitteltemperatur (laufender Durchschnitt) ± bis zu 3°C Offset, per `number`/`climate` einstellbar. |
 
-Jede Zone bekommt, je nach Rolle: `switch` (Heizelement; ZBP+HNBP+NBPn), `switch` (Tastensperre;
-nur HNBP/NBPn), `sensor` (Ist-Temperatur; alle), `sensor` (Mitteltemperatur; nur HNBP/NBPn),
-`number` (Soll-/Offset-Temperatur; alle) und eine `climate`-Entität (alle), die Ist-/
-Zieltemperatur und Heizelement-Status/-Steuerung zu einer normalen Thermostat-Karte
+Jede Zone bekommt, je nach Rolle: `switch` (Heizelement; ZBP+HNBP+NBPn), `switch` (Sperren
+Bedienteil; nur HNBP/NBPn), `sensor` (Ist-Temperatur; alle), `sensor` (Mitteltemperatur; nur
+HNBP/NBPn), `number` (Soll-/Offset-Temperatur; alle) und eine `climate`-Entität (alle), die
+Ist-/Zieltemperatur und Heizelement-Status/-Steuerung zu einer normalen Thermostat-Karte
 zusammenfasst - **live berechnet bei jeder Aktualisierung**, ganz ohne die Sync-
 Automatisierungen der alten Lösung.
+
+## Geräte-Struktur
+
+Jede Zone ist ihr **eigenes Gerät** in Home Assistant, benannt nach dem im Assistenten
+gewählten Raum (z.B. "Büro", "Wohnzimmer") - nicht alles unter einem einzigen "Proxon"-Gerät.
+Die Entitäten selbst tragen dadurch nur noch ihre Funktion im Namen ("Ist-Temperatur",
+"Offset-Temperatur", "Heizelement", "Sperren Bedienteil"); Home Assistant setzt den
+Gerätenamen automatisch davor (z.B. "Büro Ist-Temperatur"). Die `climate`-Entität einer Zone
+trägt gar keinen eigenen Namenszusatz - sie erscheint als Hauptentität direkt unter dem
+Gerätenamen ("Büro"). Alle nicht-zonengebundenen Register (Lüftung, Bypass, T300-Boiler,
+Diagnosewerte, ...) bleiben gemeinsam unter einem zentralen Gerät (Titel der Integration).
+
+Neu angelegte Zonen-Geräte werden zusätzlich dem gewählten Home-Assistant-Raum vorgeschlagen
+(`suggested_area`), damit sie dort direkt einsortiert erscheinen.
 
 ## Migration von der alten `proxon.yaml` (+ climate_template-Setup)
 
@@ -87,15 +103,17 @@ Automatisierungen der alten Lösung.
    Home-Assistant-Konfiguration entfernen, dann Home Assistant neu starten.
 2. Diese Integration wie oben beschrieben über die UI einrichten.
 3. **Für den ursprünglichen Anlagenbesitzer** (8 Zonen: Wohnzimmer als ZBP, Partykeller als
-   HNBP, dann Flur/Schlafzimmer/**Buro**/Lea/Vorraum/Werkstatt als NBP1-NBP6 - **"Buro" ohne
-   Umlaut eingeben**, weil die alte `proxon.yaml` die `unique_id`s manuell mit "buro" statt
-   "büro" vergeben hatte, während diese Integration Umlaute intern zu "ue"/"oe"/"ae"
-   transliteriert; "Büro" mit Umlaut würde stattdessen `..._buero` ergeben und eine neue,
-   getrennte Entität anlegen) gilt: Werden im Assistenten exakt diese Namen in dieser
-   Reihenfolge eingegeben, ergeben sich für alle migrierten Entitäten
-   (Heizelement/Tastensperre/Ist-Temperatur) automatisch **dieselben** `unique_id`s wie zuvor
-   (z.B. `switch.proxon_heizelement_wohnzimmer`) - der Verlauf läuft nahtlos weiter. Die
-   neuen `number`/`climate`-Entitäten für die Zonen-Zieltemperatur sind davon unabhängig
+   HNBP, dann Flur/Schlafzimmer/Büro/Lea/Vorraum/Werkstatt als NBP1-NBP6): Werden im
+   Assistenten für jede Zone der jeweils **gleichnamige Home-Assistant-Raum** ausgewählt (in
+   dieser Reihenfolge), ergeben sich für alle migrierten Entitäten
+   (Heizelement/Sperren Bedienteil/Ist-Temperatur) in aller Regel **dieselben** `unique_id`s
+   wie zuvor (z.B. `switch.proxon_heizelement_wohnzimmer`) - der Verlauf läuft nahtlos weiter.
+   **Ausnahme Büro**: Falls euer Home-Assistant-Raum "Büro" mit Umlaut heißt, ergibt das
+   `..._buero` statt des alten `..._buro` (die alte `proxon.yaml` hatte die `unique_id`s
+   manuell ohne Umlaut vergeben, diese Integration transliteriert Umlaute zu "ue"/"oe"/"ae")
+   - für exakte Kontinuität also entweder den Home-Assistant-Raum in "Buro" umbenennen, oder
+   den einmaligen Entity-ID-Sprung für diese eine Zone in Kauf nehmen. Die neuen
+   `number`/`climate`-Entitäten für die Zonen-Zieltemperatur sind davon unabhängig
    grundsätzlich neu (siehe nächster Punkt).
 4. **Entity-Kontinuität, Details**: Für alle migrierten *zentralen* (nicht zonengebundenen)
    Entitäten wurden die exakt gleichen `unique_id`s und Anzeigenamen wie in der alten

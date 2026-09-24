@@ -9,6 +9,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.helpers.selector import (
+    AreaSelector,
     BooleanSelector,
     NumberSelector,
     NumberSelectorConfig,
@@ -24,16 +25,13 @@ from .const import (
     CONF_ZBP_NAME,
     CONF_ZONE_COUNT,
     CONF_ZONE_NAMES,
-    DEFAULT_HNB_NAME,
     DEFAULT_PORT,
     DEFAULT_SLAVE,
-    DEFAULT_ZBP_NAME,
     DEFAULT_ZONE_COUNT,
     DOMAIN,
     MAX_ZONE_COUNT,
 )
 from .model import ProxonDevice
-from .util import slugify
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,16 +62,26 @@ def _zones_count_schema(defaults: dict[str, Any]) -> vol.Schema:
     )
 
 
+def _area_field(key: str, default: str | None) -> vol.Marker:
+    """A Required() marker with a default only if we actually have one -
+    AreaSelector has no sensible universal fallback to guess at."""
+    return vol.Required(key, default=default) if default is not None else vol.Required(key)
+
+
 def _zone_names_schema(has_hnb: bool, zone_count: int, defaults: dict[str, Any]) -> vol.Schema:
+    """Every zone is picked from Home Assistant's own Areas (AreaSelector),
+    not typed freely - so the zone and the Area used elsewhere in HA for the
+    same room stay in sync, and so entities/devices can be pre-assigned to
+    that Area."""
     schema: dict[Any, Any] = {
-        vol.Required(CONF_ZBP_NAME, default=defaults.get(CONF_ZBP_NAME, DEFAULT_ZBP_NAME)): TextSelector(),
+        _area_field(CONF_ZBP_NAME, defaults.get(CONF_ZBP_NAME)): AreaSelector(),
     }
     if has_hnb:
-        schema[vol.Required(CONF_HNB_NAME, default=defaults.get(CONF_HNB_NAME, DEFAULT_HNB_NAME))] = TextSelector()
+        schema[_area_field(CONF_HNB_NAME, defaults.get(CONF_HNB_NAME))] = AreaSelector()
     existing_names = defaults.get(CONF_ZONE_NAMES, [])
     for i in range(1, zone_count + 1):
-        default = existing_names[i - 1] if i - 1 < len(existing_names) else f"Zone {i}"
-        schema[vol.Required(f"zone_name_{i}", default=default)] = TextSelector()
+        default = existing_names[i - 1] if i - 1 < len(existing_names) else None
+        schema[_area_field(f"zone_name_{i}", default)] = AreaSelector()
     return vol.Schema(schema)
 
 
@@ -81,8 +89,9 @@ class ProxonConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Proxon.
 
     Three steps: connection (host/port/slave, probed live), zone counts (is a
-    HNBP installed, how many NBPn zones), and zone names (one text field per
-    configured zone). The same steps are reused for reconfigure.
+    HNBP installed, how many NBPn zones), and zone names (one Home Assistant
+    Area picker per configured zone). The same steps are reused for
+    reconfigure.
     """
 
     VERSION = 1
@@ -167,9 +176,8 @@ class ProxonConfigFlow(ConfigFlow, domain=DOMAIN):
             hnb_name = user_input.get(CONF_HNB_NAME)
             zone_names = [user_input[f"zone_name_{i}"] for i in range(1, zone_count + 1)]
 
-            all_names = [zbp_name, *([hnb_name] if has_hnb else []), *zone_names]
-            slugs = [slugify(n) for n in all_names]
-            if len(set(slugs)) != len(slugs):
+            all_areas = [zbp_name, *([hnb_name] if has_hnb else []), *zone_names]
+            if len(set(all_areas)) != len(all_areas):
                 errors["base"] = "duplicate_zone_names"
             else:
                 self._data[CONF_ZBP_NAME] = zbp_name
