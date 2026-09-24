@@ -13,6 +13,7 @@ from modbus_connection.tmodbus import ModbusConnection
 
 from .const import DOMAIN, UPDATE_INTERVAL_SECONDS
 from .model import ProxonDevice
+from .zones import ZoneInfo
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -78,6 +79,7 @@ class ProxonRuntimeData:
     device: ProxonDevice
     coordinator: ProxonDataUpdateCoordinator
     connection: ModbusConnection
+    zones: list[ZoneInfo]
 
 
 type ProxonConfigEntry = ConfigEntry[ProxonRuntimeData]

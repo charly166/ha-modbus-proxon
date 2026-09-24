@@ -16,10 +16,25 @@
           "port": "Port",
           "slave": "Modbus slave address"
         }
+      },
+      "zones_count": {
+        "description": "How many control panels/zones are installed? ZBP (main panel) always exists and is named separately in the next step.",
+        "data": {
+          "has_hnb": "Secondary main panel (HNBP) installed",
+          "zone_count": "Number of remote panels (NBP1..NBPx)"
+        }
+      },
+      "zone_names": {
+        "description": "One room name per zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping).",
+        "data": {
+          "zbp_name": "ZBP room name",
+          "hnb_name": "HNBP room name"
+        }
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect. Please check address/port/slave id."
+      "cannot_connect": "Failed to connect. Please check address/port/slave id.",
+      "duplicate_zone_names": "Two zones map to the same internal name (e.g. due to special characters) - please use unique room names."
     },
     "abort": {
       "already_configured": "This unit is already configured.",

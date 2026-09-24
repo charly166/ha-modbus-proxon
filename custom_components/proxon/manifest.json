@@ -1,6 +1,6 @@
 {
   "domain": "proxon",
-  "name": "Proxon (FWT2.0)",
+  "name": "HA Proxon FWT 2.0 Modbus",
   "codeowners": ["@charly166"],
   "config_flow": true,
   "documentation": "https://github.com/charly166/ha-modbus-proxon",

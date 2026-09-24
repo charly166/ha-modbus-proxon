@@ -10,23 +10,6 @@ from __future__ import annotations
 from modbus_connection.model import Component, gauge, integer
 
 
-class ZonenTemperaturen(Component):
-    """Ist-Temperaturen je Raum/Zone. Migriert 1:1 aus proxon.yaml."""
-
-    register_space = "input"
-
-    proxon_ist_temperatur_partykeller = gauge(40, 0.01, signed=False, unit='°C')  # Partykeller
-    proxon_ist_temperatur_wohnzimmer = gauge(41, 0.01, signed=False, unit='°C')  # Wohnzimmer
-    proxon_heizelement_status = integer(574, signed=True, unit='Binär')  # Bit9:R10 Bit8:R9 Bit7:R8 Bit6:R7 Bit5:R6 Bit4:R5 Bit3:R4 Bit2:R3 Bit1:R2 Bit0:R1
-    proxon_heizelement_status_2 = integer(583, signed=True, unit='Binär')  # Bit9:R10 Bit8:R9 Bit7:R8 Bit6:R7 Bit5:R6 Bit4:R5 Bit3:R4 Bit2:R3 Bit1:R2 Bit0:R1
-    proxon_ist_temperatur_590 = gauge(590, 0.1, signed=True, unit='°C')  # NONE
-    proxon_ist_temperatur_flur = gauge(593, 0.1, signed=True, unit='°C')  # Flur
-    proxon_ist_temperatur_schlafzimmer = gauge(596, 0.1, signed=True, unit='°C')  # Schlafzimmer
-    proxon_ist_temperatur_buero = gauge(599, 0.1, signed=True, unit='°C')  # Büro
-    proxon_ist_temperatur_lea = gauge(602, 0.1, signed=True, unit='°C')  # Lea
-    proxon_ist_temperatur_vorraum = gauge(605, 0.1, signed=True, unit='°C')  # Vorraum
-    proxon_ist_temperatur_werkstatt = gauge(608, 0.1, signed=True, unit='°C')  # Werkstatt
-
 class ZuAbluft(Component):
     """Zu-/Ab-/Fort-/Frischluft-Temperaturen, CO2, Luftfeuchte. Migriert 1:1 aus proxon.yaml."""
 
@@ -44,16 +27,16 @@ class WarmwasserInput(Component):
 
     register_space = "input"
 
-    proxon_temperatur_wasser_unten = gauge(813, 0.1, signed=False, unit='°C')  # Nicht in der FWT2.0-Registerliste (separates Modul, z.B. T300).
-    proxon_ist_temperatur_wasser = gauge(814, 0.1, signed=False, unit='°C')  # Nicht in der FWT2.0-Registerliste (separates Modul, z.B. T300).
+    proxon_temperatur_wasser_unten = gauge(813, 0.1, signed=False, unit='°C', offset=-10.0)  # Proxon Temperatur Wasser Unten
+    proxon_ist_temperatur_wasser = gauge(814, 0.1, signed=False, unit='°C', offset=-10.0)  # Proxon Ist-Temperatur Wasser
 
 class HeizstabStatus(Component):
     """T300 Heizstab-/Kompressorstatus (binäre Sensoren). Migriert 1:1 aus proxon.yaml."""
 
     register_space = "input"
 
-    proxon_kompressor_status = integer(824, signed=False)  # Nicht in der FWT2.0-Registerliste (separates Modul, z.B. T300).
-    proxon_heizstab_status = integer(826, signed=False)  # Nicht in der FWT2.0-Registerliste (separates Modul, z.B. T300).
+    proxon_kompressor_status = integer(824, signed=False, unit='AUS/AN')  # Proxon Kompressor Status
+    proxon_heizstab_status = integer(826, signed=False, unit='AUS/AN')  # Proxon Heizstab Status
 
 class SonstigesInput(Component):
     """Betriebsart, Lüfterstufe, Stromaufnahme u.a. Migriert 1:1 aus proxon.yaml."""
@@ -63,6 +46,8 @@ class SonstigesInput(Component):
     proxon_stromaufnahme_total = gauge(25, 0.1, signed=True)  # Stromaufnahme
     proxon_lueftungsstufe_ventilator_zuluft = integer(154, signed=True)  # Proxon Lüftungsstufe Ventilator Zuluft
     proxon_aktueller_betrieb = integer(241, signed=True)  # Proxon aktueller Betrieb
+    proxon_heizelement_status = integer(574, signed=True, unit='Binär')  # Bit9:R10 Bit8:R9 Bit7:R8 Bit6:R7 Bit5:R6 Bit4:R5 Bit3:R4 Bit2:R3 Bit1:R2 Bit0:R1
+    proxon_heizelement_status_2 = integer(583, signed=True, unit='Binär')  # Bit9:R10 Bit8:R9 Bit7:R8 Bit6:R7 Bit5:R6 Bit4:R5 Bit3:R4 Bit2:R3 Bit1:R2 Bit0:R1
 
 class Betriebswerte(Component):
     """Ventilatoren, Leistung, JAZ-Zähler, Betriebsart/Status/Fehlercodes, Messtemperaturen T1-T14, Ventilpositionen, Drücke. Neu hinzugefügt."""
@@ -218,16 +203,3 @@ class Heizmodule(Component):
     heizmodul_2_selbsttest_ergebnis = integer(579, signed=True, unit='Binär')  # Heizmodul 2 Selbsttest-Ergebnis
     heizmodul_2_status = integer(580, signed=True)  # Heizmodul 2 Status
     heizmodul_2_temperatur = integer(582, signed=True, unit='°C')  # Heizmodul 2 Temperatur
-
-class BedienteilStatus(Component):
-    """Status der Bedienteile (Nebenbedienteile) je installierter Zone. Neu hinzugefügt."""
-
-    register_space = "input"
-
-    hnbe_status = integer(588, signed=True)  # HNBE Status
-    nbe1_status = integer(591, signed=True)  # NBE1 Status
-    nbe2_status = integer(594, signed=True)  # NBE2 Status
-    nbe3_status = integer(597, signed=True)  # NBE3 Status
-    nbe4_status = integer(600, signed=True)  # NBE4 Status
-    nbe5_status = integer(603, signed=True)  # NBE5 Status
-    nbe6_status = integer(606, signed=True)  # NBE6 Status

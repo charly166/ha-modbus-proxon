@@ -6,3 +6,10 @@ venv/
 .ruff_cache/
 .pytest_cache/
 *.egg-info/
+
+# Reference-only legacy YAML from the author's own HA config (climate_template +
+# automations this integration replaces) - not part of the integration itself.
+/automations.yaml
+/climates.yaml
+/controls.yaml
+/templates.yaml

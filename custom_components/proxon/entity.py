@@ -17,11 +17,17 @@ class ProxonEntityDescription(EntityDescription):
 
     ``component`` is the attribute name on ProxonDevice (see model.py),
     ``field`` is the attribute name on that Component (see registers_holding.py
-    / registers_input.py) that this entity reads (and, if writable, writes).
+    / registers_input.py, or zones.py for zone entities) that this entity
+    reads (and, if writable, writes). ``zone_index`` is only set for entities
+    that live on one instance of a repeating zone group (``component`` is then
+    "nb_zones_holding" or "nb_zones_input", see zones.py) - None for
+    single-instance components (including ZBP, which is its own component,
+    not part of a repeating group).
     """
 
     component: str
     field: str
+    zone_index: int | None = None
 
 
 class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
@@ -44,7 +50,10 @@ class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
 
     @property
     def _component(self):
-        return getattr(self.coordinator.device, self.entity_description.component)
+        comp = getattr(self.coordinator.device, self.entity_description.component)
+        if self.entity_description.zone_index is not None:
+            return comp.zones[self.entity_description.zone_index]
+        return comp
 
     @property
     def _value(self):

@@ -11,6 +11,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .coordinator import ProxonConfigEntry
 from .entity import ProxonEntity, ProxonEntityDescription
+from .zones import OFFSET_MAX, OFFSET_MIN, ZBP_SOLL_MAX, ZBP_SOLL_MIN, ZoneInfo
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -33,14 +34,36 @@ class ProxonNumber(ProxonEntity, NumberEntity):
 
 NUMBER_DESCRIPTIONS: tuple[ProxonNumberEntityDescription, ...] = (
     ProxonNumberEntityDescription(
-        key='proxon_soll_temperatur_zone_2_og_bei_keine_hnbp',
-        component='offset_temperaturen',
-        field='soll_temperatur_zone_2_og_bei_keine_hnbp',
-        translation_key='proxon_soll_temperatur_zone_2_og_bei_keine_hnbp',
+        key='proxon_luefterstufe',
+        component='lueftung',
+        field='proxon_luefterstufe',
+        name='Proxon Lüfterstufe',
+        has_entity_name=False,
+        native_min_value=1.0,
+        native_max_value=4.0,
+        native_step=1.0,
+    ),
+    ProxonNumberEntityDescription(
+        key='proxon_soll_temperatur_wasser',
+        component='t300_warmwasser',
+        field='proxon_soll_temperatur_wasser',
+        name='Proxon Soll-Temperatur Wasser',
+        has_entity_name=False,
         native_unit_of_measurement='°C',
-        native_min_value=10.0,
-        native_max_value=30.0,
-        native_step=0.01,
+        native_min_value=20.0,
+        native_max_value=55.0,
+        native_step=0.1,
+    ),
+    ProxonNumberEntityDescription(
+        key='proxon_heizstab_temperatur',
+        component='t300_warmwasser',
+        field='proxon_heizstab_temperatur',
+        name='Proxon Heizstab Temperatur',
+        has_entity_name=False,
+        native_unit_of_measurement='°C',
+        native_min_value=20.0,
+        native_max_value=70.0,
+        native_step=0.1,
     ),
     ProxonNumberEntityDescription(
         key='proxon_minimum_frischlufttemperatur_bypass_aus',
@@ -77,11 +100,47 @@ NUMBER_DESCRIPTIONS: tuple[ProxonNumberEntityDescription, ...] = (
     ),
 )
 
+def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonNumberEntityDescription]:
+    """ZBP: absolute Soll-Temperatur (10-30°C). HNBP/NBPn: ±3°C Offset-Temperatur."""
+    out: list[ProxonNumberEntityDescription] = []
+    for zone in zones:
+        if zone.kind == "zbp":
+            out.append(
+                ProxonNumberEntityDescription(
+                    key=f"proxon_offsettemperatur_{zone.slug}",
+                    component="zbp",
+                    field="soll_temperatur",
+                    translation_key="proxon_zone_soll_temperatur",
+                    translation_placeholders={"zone": zone.name},
+                    native_unit_of_measurement="°C",
+                    native_min_value=ZBP_SOLL_MIN,
+                    native_max_value=ZBP_SOLL_MAX,
+                    native_step=0.5,
+                )
+            )
+        else:
+            out.append(
+                ProxonNumberEntityDescription(
+                    key=f"proxon_offsettemperatur_{zone.slug}",
+                    component="nb_zones_holding",
+                    field="offset_temperatur",
+                    zone_index=zone.zone_index,
+                    translation_key="proxon_zone_offset_temperatur",
+                    translation_placeholders={"zone": zone.name},
+                    native_unit_of_measurement="°C",
+                    native_min_value=OFFSET_MIN,
+                    native_max_value=OFFSET_MAX,
+                    native_step=1.0,
+                )
+            )
+    return out
+
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ProxonConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up Proxon number entities."""
     coordinator = entry.runtime_data.coordinator
-    async_add_entities(ProxonNumber(coordinator, d) for d in NUMBER_DESCRIPTIONS)
+    descriptions = [*NUMBER_DESCRIPTIONS, *_zone_descriptions(entry.runtime_data.zones)]
+    async_add_entities(ProxonNumber(coordinator, d) for d in descriptions)
 

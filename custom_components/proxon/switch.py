@@ -5,11 +5,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .coordinator import ProxonConfigEntry
 from .entity import ProxonEntity, ProxonEntityDescription
+from .zones import ZoneInfo
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -35,115 +37,10 @@ class ProxonSwitch(ProxonEntity, SwitchEntity):
 
 SWITCH_DESCRIPTIONS: tuple[ProxonSwitchEntityDescription, ...] = (
     ProxonSwitchEntityDescription(
-        key='proxon_heizelement_wohnzimmer',
-        component='heizelemente_switches',
-        field='proxon_heizelement_wohnzimmer',
-        name='Proxon Heizelement Wohnzimmer',
-        has_entity_name=False,
-    ),
-    ProxonSwitchEntityDescription(
-        key='proxon_heizelement_partykeller',
-        component='heizelemente_switches',
-        field='proxon_heizelement_partykeller',
-        name='Proxon Heizelement Partykeller',
-        has_entity_name=False,
-    ),
-    ProxonSwitchEntityDescription(
-        key='proxon_heizelement_flur',
-        component='heizelemente_switches',
-        field='proxon_heizelement_flur',
-        name='Proxon Heizelement Flur',
-        has_entity_name=False,
-    ),
-    ProxonSwitchEntityDescription(
-        key='proxon_heizelement_schlafzimmer',
-        component='heizelemente_switches',
-        field='proxon_heizelement_schlafzimmer',
-        name='Proxon Heizelement Schlafzimmer',
-        has_entity_name=False,
-    ),
-    ProxonSwitchEntityDescription(
-        key='proxon_heizelement_buro',
-        component='heizelemente_switches',
-        field='proxon_heizelement_buero',
-        name='Proxon Heizelement Büro',
-        has_entity_name=False,
-    ),
-    ProxonSwitchEntityDescription(
-        key='proxon_heizelement_lea',
-        component='heizelemente_switches',
-        field='proxon_heizelement_lea',
-        name='Proxon Heizelement Lea',
-        has_entity_name=False,
-    ),
-    ProxonSwitchEntityDescription(
-        key='proxon_heizelement_vorraum',
-        component='heizelemente_switches',
-        field='proxon_heizelement_vorraum',
-        name='Proxon Heizelement Vorraum',
-        has_entity_name=False,
-    ),
-    ProxonSwitchEntityDescription(
-        key='proxon_heizelement_werkstatt',
-        component='heizelemente_switches',
-        field='proxon_heizelement_werkstatt',
-        name='Proxon Heizelement Werkstatt',
-        has_entity_name=False,
-    ),
-    ProxonSwitchEntityDescription(
         key='proxon_heizelemente_global',
-        component='heizelemente_switches',
+        component='lueftung',
         field='proxon_heizelemente_global',
         name='Proxon Heizelemente Global',
-        has_entity_name=False,
-    ),
-    ProxonSwitchEntityDescription(
-        key='proxon_tastensperre_partykeller',
-        component='tastensperre',
-        field='proxon_tastensperre_partykeller',
-        name='Proxon Tastensperre Partykeller',
-        has_entity_name=False,
-    ),
-    ProxonSwitchEntityDescription(
-        key='proxon_tastensperre_flur',
-        component='tastensperre',
-        field='proxon_tastensperre_flur',
-        name='Proxon Tastensperre Flur',
-        has_entity_name=False,
-    ),
-    ProxonSwitchEntityDescription(
-        key='proxon_tastensperre_schlafzimmer',
-        component='tastensperre',
-        field='proxon_tastensperre_schlafzimmer',
-        name='Proxon Tastensperre Schlafzimmer',
-        has_entity_name=False,
-    ),
-    ProxonSwitchEntityDescription(
-        key='proxon_tastensperre_buro',
-        component='tastensperre',
-        field='proxon_tastensperre_buero',
-        name='Proxon Tastensperre Büro',
-        has_entity_name=False,
-    ),
-    ProxonSwitchEntityDescription(
-        key='proxon_tastensperre_lea',
-        component='tastensperre',
-        field='proxon_tastensperre_lea',
-        name='Proxon Tastensperre Lea',
-        has_entity_name=False,
-    ),
-    ProxonSwitchEntityDescription(
-        key='proxon_tastensperre_vorraum',
-        component='tastensperre',
-        field='proxon_tastensperre_vorraum',
-        name='Proxon Tastensperre Vorraum',
-        has_entity_name=False,
-    ),
-    ProxonSwitchEntityDescription(
-        key='proxon_tastensperre_werkstatt',
-        component='tastensperre',
-        field='proxon_tastensperre_werkstatt',
-        name='Proxon Tastensperre Werkstatt',
         has_entity_name=False,
     ),
     ProxonSwitchEntityDescription(
@@ -162,11 +59,41 @@ SWITCH_DESCRIPTIONS: tuple[ProxonSwitchEntityDescription, ...] = (
     ),
 )
 
+def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSwitchEntityDescription]:
+    """One Heizelement switch per zone, plus Tastensperre for HNBP/NBPn zones."""
+    out: list[ProxonSwitchEntityDescription] = []
+    for zone in zones:
+        component = "zbp" if zone.kind == "zbp" else "nb_zones_holding"
+        out.append(
+            ProxonSwitchEntityDescription(
+                key=f"proxon_heizelement_{zone.slug}",
+                component=component,
+                field="heizelement",
+                zone_index=zone.zone_index,
+                translation_key="proxon_zone_heizelement",
+                translation_placeholders={"zone": zone.name},
+            )
+        )
+        if zone.kind == "nb":
+            out.append(
+                ProxonSwitchEntityDescription(
+                    key=f"proxon_tastensperre_{zone.slug}",
+                    component="nb_zones_holding",
+                    field="tastensperre",
+                    zone_index=zone.zone_index,
+                    translation_key="proxon_zone_tastensperre",
+                    translation_placeholders={"zone": zone.name},
+                    entity_category=EntityCategory.CONFIG,
+                )
+            )
+    return out
+
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ProxonConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up Proxon switch entities."""
     coordinator = entry.runtime_data.coordinator
-    async_add_entities(ProxonSwitch(coordinator, d) for d in SWITCH_DESCRIPTIONS)
+    descriptions = [*SWITCH_DESCRIPTIONS, *_zone_descriptions(entry.runtime_data.zones)]
+    async_add_entities(ProxonSwitch(coordinator, d) for d in descriptions)
 

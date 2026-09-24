@@ -4,20 +4,33 @@ and (re)generates custom_components/proxon/registers_holding.py and registers_in
 Usage (from the repository root):
 
     python tools/generate_registers.py
+    ruff check --fix custom_components tools   # the generated import order isn't
+                                                # always ruff-clean; this settles it
 
 Curation policy (see plans/... for the full rationale):
 
-  * Every register already used by the legacy proxon.yaml is always carried over
-    1:1 (same address/scale/signedness), grouped into a small number of
-    modbus-connection ``Component`` classes by functional area.
-  * A hand-picked set of *additional* registers is included on top of that:
-    all hour counters (S01-S33), the bypass settings (G01-G03), device
-    model/type (A03/A04) and the two zone target temperatures (A09/A10) from
-    the Holding Register sheet, and the "operational" Input Register block
-    (fan speeds, power/JAZ counters, mode/status/error codes, measurement
-    temperatures T1-T14, valve positions, pressures, the two heating-module
-    status blocks, and the status of the remote panels for the zones that are
-    actually installed here).
+  * Every *non-zone-shaped* register already used by the legacy proxon.yaml is
+    always carried over 1:1 (same address/scale/signedness), grouped into a
+    small number of modbus-connection ``Component`` classes by functional
+    area.
+  * Zone-shaped registers (Heizelement/PTC-freigeben, Tastensperre,
+    Offsettemperatur, Mitteltemperatur, Ist-Temperatur per Raum, plus the
+    ZBP/HNB zone setpoints A09/A10) are deliberately EXCLUDED here - the
+    integration now supports a variable number of zones, configured through
+    the config flow wizard, and models them dynamically at runtime in
+    zones.py using modbus_connection's repeating_group() instead of emitting
+    one hardcoded field per room. See zones.py.
+  * A hand-picked set of *additional* (non-zone) registers is included on top
+    of the migrated set: all hour counters (S01-S33), the bypass settings
+    (G01-G03), device model/type (A03/A04), and the "operational" Input
+    Register block (fan speeds, power/JAZ counters, mode/status/error codes,
+    measurement temperatures T1-T14, valve positions, pressures, and the two
+    heating-module status blocks).
+  * Betriebsart, Lüfterstufe, Soll-Wassertemperatur and Heizstab-Solltemperatur
+    are writable registers that used to be modeled as read-only sensors (a
+    limitation of the legacy YAML `modbus:` platform, which has no `number`/
+    `select` platform); they are now routed to `select`/`number` instead, via
+    the explicit ``_PLATFORM_OVERRIDES`` table below.
   * Everything else (PID tuning parameters, test/service/date-time/HMI
     registers, the two time-schedule blocks, raw ADC/calibration registers,
     and unused remote-panel slots) is intentionally left out. Extend the
@@ -30,19 +43,36 @@ data) - the generated files are meant to be read and tweaked by hand too.
 
 from __future__ import annotations
 
+import importlib.util
+import os
 import re
 import sys
-import unicodedata
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 import openpyxl
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-XLSX_PATH = REPO_ROOT / "Modbus Liste FWT2.0 ver2 - für Kunden.xlsx"
+# Override via PROXON_XLSX_PATH if the repo's copy is locked (e.g. by an active
+# cloud-sync client such as OneDrive) - point it at a plain local copy instead.
+XLSX_PATH = Path(os.environ["PROXON_XLSX_PATH"]) if os.environ.get("PROXON_XLSX_PATH") else (
+    REPO_ROOT / "Modbus Liste FWT2.0 ver2 - für Kunden.xlsx"
+)
 YAML_PATH = REPO_ROOT / "proxon.yaml"
 OUT_DIR = REPO_ROOT / "custom_components" / "proxon"
+
+
+def _load_util_module():
+    """Load custom_components/proxon/util.py directly, without importing the
+    proxon package (whose __init__.py depends on homeassistant)."""
+    spec = importlib.util.spec_from_file_location("_proxon_util", OUT_DIR / "util.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+slugify = _load_util_module().slugify
 
 
 # --------------------------------------------------------------------------
@@ -62,6 +92,7 @@ class ExcelRegister:
     comment: str
     ist_min: float | None = None
     ist_max: float | None = None
+    offset: float = 0.0
 
 
 def _load_workbook() -> openpyxl.Workbook:
@@ -90,14 +121,18 @@ def _parse_format_scale(fmt: str | None) -> float:
     return 1.0 if divisor == 0 else 1.0 / divisor
 
 
+_CODE_RE = re.compile(r"^\dx(\d+)$")
+
+
 def parse_holding(wb: openpyxl.Workbook) -> dict[int, ExcelRegister]:
     ws = wb["Holding Register"]
     out: dict[int, ExcelRegister] = {}
     for row in ws.iter_rows(min_row=5, values_only=True):
         code = row[0]
-        if not code:
-            continue
-        address = int(str(code).split("x", 1)[1])
+        m = _CODE_RE.match(str(code).strip()) if code else None
+        if not m:
+            continue  # blank row, section header, or repeated column header
+        address = int(m.group(1))
         writable = str(row[5] or "").strip().upper() == "R/W"
         out[address] = ExcelRegister(
             address=address,
@@ -123,23 +158,45 @@ def _as_float(value: object) -> float | None:
         return None
 
 
+_FORMAT_RE = re.compile(r"^\*\s*[0-9.]+$")
+
+
 def parse_input(wb: openpyxl.Workbook) -> dict[int, ExcelRegister]:
+    """Parse the Input Register sheet.
+
+    Most of the sheet is laid out as
+    ``code | name | R/W | datatype | format | unit | comment``, but a block
+    added later (from address ~800 on, covering the T300/refrigeration-circuit
+    sensors) has an extra "Roh-Min Wert" (raw minimum value, like the Holding
+    sheet's column of the same name) inserted before ``format``:
+    ``code | name | R/W | datatype | roh_min | format | unit | comment``.
+    Detect which shape a row uses by checking whether the "format" position
+    actually looks like a format string (``*10`` etc.) - if not, assume the
+    extra column is present and shift the remaining fields right by one.
+    That extra column is purely informational here (these are all read-only
+    input registers) and is not otherwise used.
+    """
     ws = wb["Input Register"]
     out: dict[int, ExcelRegister] = {}
     for row in ws.iter_rows(min_row=5, values_only=True):
         code = row[0]
-        if not code:
+        m = _CODE_RE.match(str(code).strip()) if code else None
+        if not m:
             continue
-        address = int(str(code).split("x", 1)[1])
+        address = int(m.group(1))
+        if _FORMAT_RE.match(str(row[4] or "").strip()):
+            fmt, unit, comment = row[4], row[5], row[6]
+        else:
+            fmt, unit, comment = row[5], row[6], row[7] if len(row) > 7 else None
         out[address] = ExcelRegister(
             address=address,
             name=str(row[1] or "").strip(),
             group="",
             writable=False,
             data_type=str(row[3] or "int16").strip(),
-            scale=_parse_format_scale(row[4]),
-            unit=str(row[5] or "").strip(),
-            comment=str(row[6] or "").strip(),
+            scale=_parse_format_scale(fmt),
+            unit=str(unit or "").strip(),
+            comment=str(comment or "").strip(),
         )
     return out
 
@@ -160,6 +217,7 @@ class LegacyEntity:
     scale: float | None
     device_class: str | None
     unit: str | None
+    legacy_offset: float | None  # proxon.yaml's `offset:` (raw units, pre-scale)
 
 
 def parse_legacy_yaml() -> list[LegacyEntity]:
@@ -190,6 +248,7 @@ def parse_legacy_yaml() -> list[LegacyEntity]:
                     scale=item.get("scale"),
                     device_class=item.get("device_class"),
                     unit=item.get("unit_of_measurement"),
+                    legacy_offset=item.get("offset"),
                 )
             )
     return entities
@@ -203,8 +262,11 @@ def parse_legacy_yaml() -> list[LegacyEntity]:
 def extra_holding_addresses(by_addr: dict[int, ExcelRegister]) -> list[int]:
     addrs: list[int] = []
     for addr, reg in by_addr.items():
-        group_code = reg.group.split(":", 1)[0].strip()  # e.g. "S01", "A09"
-        if group_code.startswith(("S", "G")) or group_code in ("A03", "A04", "A09", "A10"):  # Stundenzähler, Bypass, Gerätemodell/-typ, Soll Zone1/2
+        group_code = reg.group.split(":", 1)[0].strip()  # e.g. "S01", "A03"
+        # A09/A10 (ZBP/HNB zone setpoints) are intentionally NOT included here - they
+        # are zone-shaped registers now handled dynamically by zones.py, not by this
+        # per-user codegen.
+        if group_code.startswith(("S", "G")) or group_code in ("A03", "A04"):  # Stundenzähler, Bypass, Gerätemodell/-typ
             addrs.append(addr)
     return sorted(addrs)
 
@@ -226,13 +288,6 @@ _INPUT_EXCLUDE_KEYWORDS = (
     "fumodbuserror",
 )
 
-# Remote-panel ("Nebenbedienteil") *status* registers for the zones that are
-# actually installed (matches the temperature sensors already migrated from
-# proxon.yaml at addresses 590/593/596/599/602/605/608, plus the main panel
-# at address 41/574/583 handled separately). LEDsetpointlevel and the unused
-# NBE7-19 slots are intentionally skipped.
-_INPUT_PANEL_STATUS_INCLUDE = {588, 591, 594, 597, 600, 603, 606}
-
 # The "Heizmodul" (PTC) block: keep the operationally interesting fields,
 # skip raw bit-input/relay-used/relay-test/address/model diagnostics.
 _INPUT_HEIZMODUL_INCLUDE_SUFFIXES = ("Selbsttest-Ergebnis", "Status", "Temperatur", "Relais Status")
@@ -250,9 +305,7 @@ def extra_input_addresses(by_addr: dict[int, ExcelRegister]) -> list[int]:
             if reg.name.startswith("Heizmodul") and reg.name.split(" ", 2)[-1] in _INPUT_HEIZMODUL_INCLUDE_SUFFIXES:
                 addrs.append(addr)
             continue
-        if 588 <= addr <= 650:  # remote panel (NBE) block
-            if addr in _INPUT_PANEL_STATUS_INCLUDE:
-                addrs.append(addr)
+        if 588 <= addr <= 650:  # remote panel (NBE) block - zone-shaped, handled by zones.py
             continue
         if addr <= 269:  # main operational/diagnostic block
             addrs.append(addr)
@@ -262,20 +315,6 @@ def extra_input_addresses(by_addr: dict[int, ExcelRegister]) -> list[int]:
 # --------------------------------------------------------------------------
 # Identifier / entity-description helpers
 # --------------------------------------------------------------------------
-
-_UMLAUT_MAP = str.maketrans({"ä": "ae", "ö": "oe", "ü": "ue", "Ä": "Ae", "Ö": "Oe", "Ü": "Ue", "ß": "ss"})
-
-
-def slugify(name: str) -> str:
-    name = name.translate(_UMLAUT_MAP)
-    name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
-    name = re.sub(r"[^0-9a-zA-Z]+", "_", name).strip("_").lower()
-    name = re.sub(r"_+", "_", name)
-    if not name:
-        name = "reg"
-    if name[0].isdigit():
-        name = f"r_{name}"
-    return name
 
 
 def dedupe(base: str, used: set[str]) -> str:
@@ -334,6 +373,11 @@ def emit_field_line(field_name: str, address: int, reg: ExcelRegister, writable:
     kwargs = [f"signed={signed}"]
     if unit:
         kwargs.append(f"unit={unit!r}")
+    if abs(reg.offset) > 1e-9:
+        # modbus_connection applies `offset` in real/scaled units (value = raw*scale +
+        # offset); proxon.yaml's `offset:` was in raw units (HA core modbus convention:
+        # value = (raw + offset) * scale) - reg.offset here is already converted.
+        kwargs.append(f"offset={reg.offset!r}")
     if writable:
         kwargs.append("writable=True")
     kwargs_str = ", ".join(kwargs)
@@ -345,6 +389,24 @@ def emit_field_line(field_name: str, address: int, reg: ExcelRegister, writable:
         comment = comment.replace("\n", " ").strip()
         line += f"  # {comment}"
     return line
+
+
+# Registers that are genuinely writable at the protocol level but were only ever
+# exposed as read-only `sensor`s in the legacy proxon.yaml, because the old YAML
+# `modbus:` platform has no `number`/`select` platform. Route these to a proper
+# writable entity instead. `betriebsart` becomes a hand-written select.py entity
+# (see custom_components/proxon/select.py) - it is EXCLUDED from codegen output
+# entirely via the "platform": "select" marker below (the generator only emits
+# sensor/switch/binary_sensor/number, not select).
+_PLATFORM_OVERRIDES: dict[str, dict] = {
+    "proxon_betriebsart": {"platform": "select"},
+    "proxon_luefterstufe": {"platform": "number", "min": 1.0, "max": 4.0, "step": 1.0},
+    # min/max for the T300 fields come straight from the Excel's "T300 Sollwerte"
+    # section (addresses 2000/2003, IST-Min/IST-Max columns) when present; these
+    # are just the fallback in case that section isn't in the sheet.
+    "proxon_soll_temperatur_wasser": {"platform": "number", "min": 20.0, "max": 55.0, "step": 0.5},
+    "proxon_heizstab_temperatur": {"platform": "number", "min": 20.0, "max": 70.0, "step": 0.5},
+}
 
 
 _DEVICE_CLASS_BY_LEGACY = {
@@ -464,42 +526,37 @@ def build_holding_components(
                 unit=e.unit or "",
                 comment="Nicht in der FWT2.0-Registerliste (separates Modul, z.B. T300).",
             )
-        writable = e.platform == "switch"
+        if e.legacy_offset is not None:
+            reg = replace(reg, offset=e.legacy_offset * reg.scale)
+        override = _PLATFORM_OVERRIDES.get(e.unique_id)
+        writable = e.platform == "switch" or override is not None
         fname = dedupe(slugify(e.name), used_names)
         spec.fields.append(emit_field_line(fname, e.address, reg, writable, reg.comment or e.name))
-        spec.meta.append(
-            make_meta(
-                key=e.unique_id,
-                name=e.name,
-                component_class=spec.class_name,
-                field_name=fname,
-                module="registers_holding",
-                platform=e.platform,
-                writable=writable,
-                reg=reg,
-                entity_category=None,
-                migrated=True,
-                legacy_device_class=e.device_class,
-            )
+        meta = make_meta(
+            key=e.unique_id,
+            name=e.name,
+            component_class=spec.class_name,
+            field_name=fname,
+            module="registers_holding",
+            platform=override["platform"] if override else e.platform,
+            writable=writable,
+            reg=reg,
+            entity_category=None,
+            migrated=True,
+            legacy_device_class=e.device_class,
         )
+        if override:
+            # Prefer real Excel-derived IST-Min/Max/scale when available (e.g. the
+            # "T300 Sollwerte" section); the override's numbers are only a fallback
+            # for registers this particular Excel copy doesn't document.
+            meta.min_value = meta.min_value if meta.min_value is not None else override.get("min")
+            meta.max_value = meta.max_value if meta.max_value is not None else override.get("max")
+            meta.step = meta.step if meta.step is not None else override.get("step")
+        spec.meta.append(meta)
 
-    heizelemente = ComponentSpec(
-        "HeizelementeSwitches",
-        "holding",
-        "Heizelemente (PTC) global + je Raum ein-/ausschalten. Migriert 1:1 aus proxon.yaml.",
-    )
-    tastensperre = ComponentSpec(
-        "Tastensperre", "holding", "Tastensperre der Bedienteile je Raum. Migriert 1:1 aus proxon.yaml."
-    )
-    offset_temps = ComponentSpec(
-        "OffsetTemperaturen",
-        "holding",
-        "Offset-/Soll-Temperaturen je Raum bzw. Zone. Migriert aus proxon.yaml, ergänzt um "
-        "die Zonen-Sollwerte A09/A10.",
-    )
-    mittel_temps = ComponentSpec(
-        "Mitteltemperaturen", "holding", "Gemittelte Raumtemperaturen je Raum. Migriert 1:1 aus proxon.yaml."
-    )
+    # Note: HeizelementeSwitches/Tastensperre/OffsetTemperaturen/Mitteltemperaturen no
+    # longer exist here - those register families are zone-shaped and handled
+    # dynamically at runtime by zones.py for however many zones the user configures.
     lueftung = ComponentSpec(
         "Lueftung", "holding", "Betriebsart, Lüfterstufe und Intensivlüftung. Migriert 1:1 aus proxon.yaml."
     )
@@ -524,17 +581,17 @@ def build_holding_components(
         "HauptmenuInfo", "holding", "Gerätemodell/-typ (A03/A04). Neu hinzugefügt."
     )
 
+    _ZONE_UID_MARKERS = ("heizelement", "tastensperre", "offsettemperatur", "mitteltemperatur")
+    # proxon_heizelemente_global (address 325) is NOT zone-shaped - it's a single
+    # central switch that enables/disables all heating elements at once, and must
+    # stay migrated despite matching the "heizelement" marker above.
+    _ZONE_UID_EXCEPTIONS = ("proxon_heizelemente_global",)
+
     for addr, e in sorted(legacy_holding.items()):
         uid = e.unique_id
-        if "heizelement" in uid and "tastensperre" not in uid:
-            add_legacy(heizelemente, e)
-        elif "tastensperre" in uid:
-            add_legacy(tastensperre, e)
-        elif "offsettemperatur" in uid:
-            add_legacy(offset_temps, e)
-        elif "mitteltemperatur" in uid:
-            add_legacy(mittel_temps, e)
-        elif uid in ("proxon_betriebsart", "proxon_luefterstufe") or "intensivlueftung" in uid:
+        if uid not in _ZONE_UID_EXCEPTIONS and any(marker in uid for marker in _ZONE_UID_MARKERS):
+            continue  # zone-shaped - handled dynamically by zones.py instead
+        if uid == "proxon_heizelemente_global" or uid in ("proxon_betriebsart", "proxon_luefterstufe") or "intensivlueftung" in uid:
             add_legacy(lueftung, e)
         elif "wasser" in uid or "heizstab" in uid or "kuehlung" in uid:
             add_legacy(t300, e)
@@ -555,18 +612,12 @@ def build_holding_components(
         group_code = reg.group.split(":", 1)[0].strip()
         if group_code.startswith("S"):
             add(stundenzaehler, addr, reg.name, False, reg.name, entity_category="EntityCategory.DIAGNOSTIC")
-        elif group_code in ("A09", "A10"):
-            add(offset_temps, addr, reg.name, True, reg.name, entity_category=None)
         elif group_code in ("A03", "A04"):
             add(hauptmenu, addr, reg.name, False, reg.name, entity_category="EntityCategory.DIAGNOSTIC")
         elif group_code.startswith("G"):
             add(bypass, addr, reg.name, True, reg.name, entity_category="EntityCategory.CONFIG")
 
     components = [
-        heizelemente,
-        tastensperre,
-        offset_temps,
-        mittel_temps,
         lueftung,
         t300,
         geraetefilter,
@@ -619,6 +670,11 @@ def build_input_components(
                 unit=e.unit or "",
                 comment="Nicht in der FWT2.0-Registerliste (separates Modul, z.B. T300).",
             )
+        if e.legacy_offset is not None:
+            # proxon.yaml's offset is in raw units (pre-scale); modbus-connection's
+            # gauge()/integer() offset is applied post-scale - convert. Copy the
+            # register first: `reg` may be a shared instance from `by_addr`.
+            reg = replace(reg, offset=e.legacy_offset * reg.scale)
         fname = dedupe(slugify(e.name), used_names)
         spec.fields.append(emit_field_line(fname, e.address, reg, False, reg.comment or e.name))
         spec.meta.append(
@@ -637,9 +693,6 @@ def build_input_components(
             )
         )
 
-    zonen_temps = ComponentSpec(
-        "ZonenTemperaturen", "input", "Ist-Temperaturen je Raum/Zone. Migriert 1:1 aus proxon.yaml."
-    )
     zuluft = ComponentSpec(
         "ZuAbluft", "input", "Zu-/Ab-/Fort-/Frischluft-Temperaturen, CO2, Luftfeuchte. Migriert 1:1 aus proxon.yaml."
     )
@@ -661,16 +714,15 @@ def build_input_components(
     heizmodule = ComponentSpec(
         "Heizmodule", "input", "Status/Temperatur/Selbsttest der beiden PTC-Heizmodule. Neu hinzugefügt."
     )
-    bedienteile = ComponentSpec(
-        "BedienteilStatus", "input", "Status der Bedienteile (Nebenbedienteile) je installierter Zone. Neu hinzugefügt."
-    )
 
     for addr, e in sorted(legacy_input.items()):
         uid = e.unique_id
         if "ist_temperatur" in uid and "wasser" in uid:
             add_legacy(warmwasser, e)
-        elif "ist_temperatur" in uid or "heizelement_status" in uid:
-            add_legacy(zonen_temps, e)
+        elif "ist_temperatur" in uid:
+            continue  # zone-shaped - handled dynamically by zones.py instead
+        elif "heizelement_status" in uid:
+            add_legacy(sonstiges, e)
         elif uid in (
             "proxon_temperatur_frischluft",
             "proxon_temperatur_zuluft",
@@ -689,20 +741,16 @@ def build_input_components(
         reg = by_addr[addr]
         if 570 <= addr <= 587:
             add(heizmodule, addr, reg.name, reg.name, entity_category="EntityCategory.DIAGNOSTIC")
-        elif 588 <= addr <= 650:
-            add(bedienteile, addr, reg.name, reg.name, entity_category="EntityCategory.DIAGNOSTIC")
         else:
             add(betrieb, addr, reg.name, reg.name, entity_category="EntityCategory.DIAGNOSTIC")
 
     components = [
-        zonen_temps,
         zuluft,
         warmwasser,
         heizstab_status,
         sonstiges,
         betrieb,
         heizmodule,
-        bedienteile,
     ]
     return [c for c in components if c.fields]
 
@@ -751,7 +799,13 @@ def camel_to_snake(name: str) -> str:
 
 def render_model(holding: list[ComponentSpec], input_: list[ComponentSpec]) -> str:
     lines = [
-        '"""AUTO-GENERATED by tools/generate_registers.py - do not edit by hand."""',
+        '"""AUTO-GENERATED by tools/generate_registers.py - do not edit by hand.',
+        "",
+        "The central (non-zone) Components below are generated from proxon.yaml + the",
+        "Excel register list. The zone wiring (ZBP/HNBP/NBPn) is fixed boilerplate that",
+        "always looks like this, regardless of curation - see zones.py for the Component",
+        'definitions themselves.',
+        '"""',
         "",
         "from __future__ import annotations",
         "",
@@ -759,13 +813,22 @@ def render_model(holding: list[ComponentSpec], input_: list[ComponentSpec]) -> s
         "",
         "from . import registers_holding as rh",
         "from . import registers_input as ri",
+        "from .zones import ZbpZone, ZbpZoneInput, build_nb_zones_group, build_nb_zones_input_group",
         "",
         "",
         "class ProxonDevice(Device):",
         '    """Root device object: one attribute per Component, wired to the shared ModbusUnit."""',
         "",
-        "    def __init__(self, unit) -> None:",
+        "    def __init__(self, unit, *, zone_count: int = 0) -> None:",
+        '        """``zone_count`` is the number of NBP1..NBPn zones (from the config',
+        '        entry); the HNBP slot is always modeled as an extra, index-0 zone.',
+        '        """',
         "        super().__init__(unit)",
+        "        self.zone_count = zone_count",
+        "        self.zbp = ZbpZone(unit)",
+        "        self.zbp_input = ZbpZoneInput(unit)",
+        "        self.nb_zones_holding = build_nb_zones_group(zone_count + 1)(unit)",
+        "        self.nb_zones_input = build_nb_zones_input_group(zone_count + 1)(unit)",
     ]
     for spec in holding:
         attr = camel_to_snake(spec.class_name)
@@ -778,6 +841,10 @@ def render_model(holding: list[ComponentSpec], input_: list[ComponentSpec]) -> s
     lines.append("    def components(self):")
     lines.append('        """All components, for async_update()/failure tracking."""')
     lines.append("        return (")
+    lines.append("            self.zbp,")
+    lines.append("            self.zbp_input,")
+    lines.append("            self.nb_zones_holding,")
+    lines.append("            self.nb_zones_input,")
     for spec in all_components:
         attr = camel_to_snake(spec.class_name)
         lines.append(f"            self.{attr},")
@@ -793,6 +860,121 @@ def _fmt_kwarg(name: str, value: str | None) -> str | None:
     if value is None:
         return None
     return f"{name}={value}"
+
+
+# Fixed (not Excel-derived) code that builds entity descriptions for the
+# dynamically-configured zones (ZBP/HNBP/NBPn, see zones.py) - spliced into
+# sensor.py/switch.py/number.py's generated output, since those platforms have
+# zone entities in addition to the static, Excel-curated ones.
+_ZONE_ENTITY_CODE: dict[str, str] = {
+    "sensor": '''
+def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSensorEntityDescription]:
+    """One Ist-Temperatur sensor per zone, plus Mitteltemperatur for HNBP/NBPn zones."""
+    out: list[ProxonSensorEntityDescription] = []
+    for zone in zones:
+        component = "zbp_input" if zone.kind == "zbp" else "nb_zones_input"
+        out.append(
+            ProxonSensorEntityDescription(
+                key=f"proxon_ist_temperatur_{zone.slug}",
+                component=component,
+                field="ist_temperatur",
+                zone_index=zone.zone_index,
+                translation_key="proxon_zone_ist_temperatur",
+                translation_placeholders={"zone": zone.name},
+                native_unit_of_measurement="\N{DEGREE SIGN}C",
+                device_class=SensorDeviceClass.TEMPERATURE,
+                state_class=SensorStateClass.MEASUREMENT,
+            )
+        )
+        if zone.kind == "nb":
+            out.append(
+                ProxonSensorEntityDescription(
+                    key=f"proxon_mitteltemperatur_{zone.slug}",
+                    component="nb_zones_holding",
+                    field="mitteltemperatur",
+                    zone_index=zone.zone_index,
+                    translation_key="proxon_zone_mitteltemperatur",
+                    translation_placeholders={"zone": zone.name},
+                    native_unit_of_measurement="\N{DEGREE SIGN}C",
+                    device_class=SensorDeviceClass.TEMPERATURE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                )
+            )
+    return out
+''',
+    "switch": '''
+def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSwitchEntityDescription]:
+    """One Heizelement switch per zone, plus Tastensperre for HNBP/NBPn zones."""
+    out: list[ProxonSwitchEntityDescription] = []
+    for zone in zones:
+        component = "zbp" if zone.kind == "zbp" else "nb_zones_holding"
+        out.append(
+            ProxonSwitchEntityDescription(
+                key=f"proxon_heizelement_{zone.slug}",
+                component=component,
+                field="heizelement",
+                zone_index=zone.zone_index,
+                translation_key="proxon_zone_heizelement",
+                translation_placeholders={"zone": zone.name},
+            )
+        )
+        if zone.kind == "nb":
+            out.append(
+                ProxonSwitchEntityDescription(
+                    key=f"proxon_tastensperre_{zone.slug}",
+                    component="nb_zones_holding",
+                    field="tastensperre",
+                    zone_index=zone.zone_index,
+                    translation_key="proxon_zone_tastensperre",
+                    translation_placeholders={"zone": zone.name},
+                    entity_category=EntityCategory.CONFIG,
+                )
+            )
+    return out
+''',
+    "number": '''
+def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonNumberEntityDescription]:
+    """ZBP: absolute Soll-Temperatur (10-30\N{DEGREE SIGN}C). HNBP/NBPn: \N{PLUS-MINUS SIGN}3\N{DEGREE SIGN}C Offset-Temperatur."""
+    out: list[ProxonNumberEntityDescription] = []
+    for zone in zones:
+        if zone.kind == "zbp":
+            out.append(
+                ProxonNumberEntityDescription(
+                    key=f"proxon_offsettemperatur_{zone.slug}",
+                    component="zbp",
+                    field="soll_temperatur",
+                    translation_key="proxon_zone_soll_temperatur",
+                    translation_placeholders={"zone": zone.name},
+                    native_unit_of_measurement="\N{DEGREE SIGN}C",
+                    native_min_value=ZBP_SOLL_MIN,
+                    native_max_value=ZBP_SOLL_MAX,
+                    native_step=0.5,
+                )
+            )
+        else:
+            out.append(
+                ProxonNumberEntityDescription(
+                    key=f"proxon_offsettemperatur_{zone.slug}",
+                    component="nb_zones_holding",
+                    field="offset_temperatur",
+                    zone_index=zone.zone_index,
+                    translation_key="proxon_zone_offset_temperatur",
+                    translation_placeholders={"zone": zone.name},
+                    native_unit_of_measurement="\N{DEGREE SIGN}C",
+                    native_min_value=OFFSET_MIN,
+                    native_max_value=OFFSET_MAX,
+                    native_step=1.0,
+                )
+            )
+    return out
+''',
+}
+
+_ZONE_ENTITY_EXTRA_IMPORTS: dict[str, str] = {
+    "number": "from .zones import OFFSET_MAX, OFFSET_MIN, ZBP_SOLL_MAX, ZBP_SOLL_MIN, ZoneInfo",
+    "sensor": "from .zones import ZoneInfo",
+    "switch": "from .zones import ZoneInfo",
+}
 
 
 def render_platform_file(platform: str, metas: list[FieldMeta]) -> str:
@@ -823,18 +1005,21 @@ def render_platform_file(platform: str, metas: list[FieldMeta]) -> str:
         "from dataclasses import dataclass",
         "",
     ]
+    needs_entity_category = any(m.entity_category for m in metas) or platform == "switch"
     entity_base = base_desc.replace("EntityDescription", "Entity")
     if platform == "sensor":
         lines.append(f"from {ha_module} import SensorEntity, {_SENSOR_DEVICE_CLASS_IMPORTS}")
     else:
         lines.append(f"from {ha_module} import {entity_base}, {base_desc}")
-    if any(m.entity_category for m in metas):
+    if needs_entity_category:
         lines.append("from homeassistant.const import EntityCategory")
     lines.append("from homeassistant.core import HomeAssistant")
     lines.append("from homeassistant.helpers.entity_platform import AddEntitiesCallback")
     lines.append("")
     lines.append("from .coordinator import ProxonConfigEntry")
     lines.append("from .entity import ProxonEntity, ProxonEntityDescription")
+    if platform in _ZONE_ENTITY_EXTRA_IMPORTS:
+        lines.append(_ZONE_ENTITY_EXTRA_IMPORTS[platform])
     lines.append("")
     lines.append("")
     lines.append("@dataclass(frozen=True, kw_only=True)")
@@ -905,15 +1090,25 @@ def render_platform_file(platform: str, metas: list[FieldMeta]) -> str:
         lines.append("    ),")
     lines.append(")")
     lines.append("")
+    if platform in _ZONE_ENTITY_CODE:
+        lines.append(_ZONE_ENTITY_CODE[platform].strip("\n"))
+        lines.append("")
     lines.append("")
     lines.append("async def async_setup_entry(")
     lines.append("    hass: HomeAssistant, entry: ProxonConfigEntry, async_add_entities: AddEntitiesCallback")
     lines.append(") -> None:")
     lines.append(f'    """Set up Proxon {platform} entities."""')
     lines.append("    coordinator = entry.runtime_data.coordinator")
-    lines.append(
-        f"    async_add_entities({entity_name}(coordinator, d) for d in {platform.upper()}_DESCRIPTIONS)"
-    )
+    if platform in _ZONE_ENTITY_CODE:
+        lines.append(
+            f"    descriptions = [*{platform.upper()}_DESCRIPTIONS, "
+            "*_zone_descriptions(entry.runtime_data.zones)]"
+        )
+        lines.append(f"    async_add_entities({entity_name}(coordinator, d) for d in descriptions)")
+    else:
+        lines.append(
+            f"    async_add_entities({entity_name}(coordinator, d) for d in {platform.upper()}_DESCRIPTIONS)"
+        )
     lines.append("")
     return "\n".join(lines) + "\n"
 
@@ -928,8 +1123,19 @@ CONFIG_FLOW_STRINGS: dict = {
             "description": "Verbindungsdaten der Proxon-Anlage aktualisieren.",
             "data": {"host": "Host / IP-Adresse", "port": "Port", "slave": "Modbus-Slave-Adresse"},
         },
+        "zones_count": {
+            "description": "Wie viele Bedienteile/Zonen sind installiert? ZBP (Zentralbedienpanel) ist immer vorhanden und wird im nächsten Schritt separat benannt.",
+            "data": {"has_hnb": "Hauptnebenbedienpanel (HNBP) installiert", "zone_count": "Anzahl Nebenbedienpanel (NBP1..NBPx)"},
+        },
+        "zone_names": {
+            "description": "Ein Raumname je Zone. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung).",
+            "data": {"zbp_name": "Raumname ZBP", "hnb_name": "Raumname HNBP"},
+        },
     },
-    "error": {"cannot_connect": "Verbindung zur Anlage fehlgeschlagen. Adresse/Port/Slave-ID prüfen."},
+    "error": {
+        "cannot_connect": "Verbindung zur Anlage fehlgeschlagen. Adresse/Port/Slave-ID prüfen.",
+        "duplicate_zone_names": "Zwei Zonen ergeben denselben internen Namen (z.B. durch Sonderzeichen) - bitte eindeutige Raumnamen vergeben.",
+    },
     "abort": {"already_configured": "Diese Anlage ist bereits eingerichtet.", "reconfigure_successful": "Verbindungsdaten aktualisiert."},
 }
 
@@ -943,16 +1149,51 @@ CONFIG_FLOW_STRINGS_EN: dict = {
             "description": "Update the Proxon unit's connection details.",
             "data": {"host": "Host / IP address", "port": "Port", "slave": "Modbus slave address"},
         },
+        "zones_count": {
+            "description": "How many control panels/zones are installed? ZBP (main panel) always exists and is named separately in the next step.",
+            "data": {"has_hnb": "Secondary main panel (HNBP) installed", "zone_count": "Number of remote panels (NBP1..NBPx)"},
+        },
+        "zone_names": {
+            "description": "One room name per zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping).",
+            "data": {"zbp_name": "ZBP room name", "hnb_name": "HNBP room name"},
+        },
     },
-    "error": {"cannot_connect": "Failed to connect. Please check address/port/slave id."},
+    "error": {
+        "cannot_connect": "Failed to connect. Please check address/port/slave id.",
+        "duplicate_zone_names": "Two zones map to the same internal name (e.g. due to special characters) - please use unique room names.",
+    },
     "abort": {"already_configured": "This unit is already configured.", "reconfigure_successful": "Connection details updated."},
 }
 
+# Translation strings for hand-written (non-generated) entities: select.py,
+# climate.py, and the dynamic per-zone entities added by sensor.py/switch.py/
+# number.py's _zone_descriptions(). {zone} is a translation_placeholder.
+_EXTRA_ENTITY_STRINGS: dict = {
+    "sensor": {
+        "proxon_zone_ist_temperatur": {"name": "Ist-Temperatur {zone}"},
+        "proxon_zone_mitteltemperatur": {"name": "Mitteltemperatur {zone}"},
+    },
+    "switch": {
+        "proxon_zone_heizelement": {"name": "Heizelement {zone}"},
+        "proxon_zone_tastensperre": {"name": "Tastensperre {zone}"},
+    },
+    "number": {
+        "proxon_zone_offset_temperatur": {"name": "Offset-Temperatur {zone}"},
+        "proxon_zone_soll_temperatur": {"name": "Soll-Temperatur {zone}"},
+    },
+    "climate": {
+        "proxon_zone_climate": {"name": "{zone}"},
+    },
+}
 
-def render_strings(all_meta: list[FieldMeta], config_flow: dict) -> str:
+
+def render_strings(all_meta: list[FieldMeta], config_flow: dict, *, include_extra_entities: bool = True) -> str:
     import json
 
     entity: dict[str, dict[str, dict]] = {}
+    if include_extra_entities:
+        for platform, keys in _EXTRA_ENTITY_STRINGS.items():
+            entity.setdefault(platform, {}).update(keys)
     for m in all_meta:
         if m.migrated:
             continue  # migrated entities use a literal `name`, no translation needed
@@ -995,7 +1236,9 @@ def main() -> None:
     translations_dir = OUT_DIR / "translations"
     translations_dir.mkdir(exist_ok=True)
     (translations_dir / "de.json").write_text(render_strings(all_meta, CONFIG_FLOW_STRINGS), encoding="utf-8")
-    (translations_dir / "en.json").write_text(render_strings([], CONFIG_FLOW_STRINGS_EN), encoding="utf-8")
+    (translations_dir / "en.json").write_text(
+        render_strings([], CONFIG_FLOW_STRINGS_EN, include_extra_entities=False), encoding="utf-8"
+    )
 
     n_holding = sum(len(c.fields) for c in holding_components)
     n_input = sum(len(c.fields) for c in input_components)

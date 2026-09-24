@@ -1,5 +1,5 @@
 {
-  "name": "Proxon (FWT2.0)",
+  "name": "HA Proxon FWT 2.0 Modbus",
   "render_readme": true,
   "homeassistant": "2025.1.0"
 }

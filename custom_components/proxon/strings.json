@@ -16,10 +16,25 @@
           "port": "Port",
           "slave": "Modbus-Slave-Adresse"
         }
+      },
+      "zones_count": {
+        "description": "Wie viele Bedienteile/Zonen sind installiert? ZBP (Zentralbedienpanel) ist immer vorhanden und wird im nächsten Schritt separat benannt.",
+        "data": {
+          "has_hnb": "Hauptnebenbedienpanel (HNBP) installiert",
+          "zone_count": "Anzahl Nebenbedienpanel (NBP1..NBPx)"
+        }
+      },
+      "zone_names": {
+        "description": "Ein Raumname je Zone. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung).",
+        "data": {
+          "zbp_name": "Raumname ZBP",
+          "hnb_name": "Raumname HNBP"
+        }
       }
     },
     "error": {
-      "cannot_connect": "Verbindung zur Anlage fehlgeschlagen. Adresse/Port/Slave-ID prüfen."
+      "cannot_connect": "Verbindung zur Anlage fehlgeschlagen. Adresse/Port/Slave-ID prüfen.",
+      "duplicate_zone_names": "Zwei Zonen ergeben denselben internen Namen (z.B. durch Sonderzeichen) - bitte eindeutige Raumnamen vergeben."
     },
     "abort": {
       "already_configured": "Diese Anlage ist bereits eingerichtet.",
@@ -27,21 +42,13 @@
     }
   },
   "entity": {
-    "number": {
-      "proxon_soll_temperatur_zone_2_og_bei_keine_hnbp": {
-        "name": "Soll Temperatur Zone 2 (OG) (Bei keine HNBP)"
-      },
-      "proxon_minimum_frischlufttemperatur_bypass_aus": {
-        "name": "Minimum Frischlufttemperatur (Bypass AUS)"
-      },
-      "proxon_bypasstemperatur_hysterese": {
-        "name": "Bypasstemperatur Hysterese"
-      },
-      "proxon_bypass_laufzeit_an_aus": {
-        "name": "Bypass laufzeit (AN/AUS)"
-      }
-    },
     "sensor": {
+      "proxon_zone_ist_temperatur": {
+        "name": "Ist-Temperatur {zone}"
+      },
+      "proxon_zone_mitteltemperatur": {
+        "name": "Mitteltemperatur {zone}"
+      },
       "proxon_stunden_fwt_an": {
         "name": "Stunden FWT AN"
       },
@@ -572,27 +579,36 @@
       },
       "proxon_heizmodul_2_temperatur": {
         "name": "Heizmodul 2 Temperatur"
+      }
+    },
+    "switch": {
+      "proxon_zone_heizelement": {
+        "name": "Heizelement {zone}"
       },
-      "proxon_hnbe_status": {
-        "name": "HNBE Status"
+      "proxon_zone_tastensperre": {
+        "name": "Tastensperre {zone}"
+      }
+    },
+    "number": {
+      "proxon_zone_offset_temperatur": {
+        "name": "Offset-Temperatur {zone}"
       },
-      "proxon_nbe1_status": {
-        "name": "NBE1 Status"
+      "proxon_zone_soll_temperatur": {
+        "name": "Soll-Temperatur {zone}"
       },
-      "proxon_nbe2_status": {
-        "name": "NBE2 Status"
+      "proxon_minimum_frischlufttemperatur_bypass_aus": {
+        "name": "Minimum Frischlufttemperatur (Bypass AUS)"
       },
-      "proxon_nbe3_status": {
-        "name": "NBE3 Status"
+      "proxon_bypasstemperatur_hysterese": {
+        "name": "Bypasstemperatur Hysterese"
       },
-      "proxon_nbe4_status": {
-        "name": "NBE4 Status"
-      },
-      "proxon_nbe5_status": {
-        "name": "NBE5 Status"
-      },
-      "proxon_nbe6_status": {
-        "name": "NBE6 Status"
+      "proxon_bypass_laufzeit_an_aus": {
+        "name": "Bypass laufzeit (AN/AUS)"
+      }
+    },
+    "climate": {
+      "proxon_zone_climate": {
+        "name": "{zone}"
       }
     }
   }

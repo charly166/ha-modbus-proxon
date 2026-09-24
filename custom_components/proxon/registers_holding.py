@@ -10,69 +10,22 @@ from __future__ import annotations
 from modbus_connection.model import Component, gauge, integer
 
 
-class HeizelementeSwitches(Component):
-    """Heizelemente (PTC) global + je Raum ein-/ausschalten. Migriert 1:1 aus proxon.yaml."""
-
-    proxon_heizelement_wohnzimmer = integer(187, signed=False, writable=True)  # Proxon Heizelement Wohnzimmer
-    proxon_heizelement_partykeller = integer(253, signed=False, unit='AUS/AN', writable=True)  # Proxon Heizelement Partykeller
-    proxon_heizelement_flur = integer(254, signed=False, unit='AUS/AN', writable=True)  # Proxon Heizelement Flur
-    proxon_heizelement_schlafzimmer = integer(255, signed=False, unit='AUS/AN', writable=True)  # Proxon Heizelement Schlafzimmer
-    proxon_heizelement_buero = integer(256, signed=False, unit='AUS/AN', writable=True)  # Proxon Heizelement Büro
-    proxon_heizelement_lea = integer(257, signed=False, unit='AUS/AN', writable=True)  # Proxon Heizelement Lea
-    proxon_heizelement_vorraum = integer(258, signed=False, unit='AUS/AN', writable=True)  # Proxon Heizelement Vorraum
-    proxon_heizelement_werkstatt = integer(259, signed=False, unit='AUS/AN', writable=True)  # Proxon Heizelement Werkstatt
-    proxon_heizelemente_global = integer(325, signed=False, unit='AUS/AN', writable=True)  # Proxon Heizelemente Global
-
-class Tastensperre(Component):
-    """Tastensperre der Bedienteile je Raum. Migriert 1:1 aus proxon.yaml."""
-
-    proxon_tastensperre_partykeller = integer(273, signed=False, unit='AUS/AN', writable=True)  # Partykeller
-    proxon_tastensperre_flur = integer(274, signed=False, unit='AUS/AN', writable=True)  # Flur
-    proxon_tastensperre_schlafzimmer = integer(275, signed=False, unit='AUS/AN', writable=True)  # Schlafzimmer
-    proxon_tastensperre_buero = integer(276, signed=False, unit='AUS/AN', writable=True)  # Büro
-    proxon_tastensperre_lea = integer(277, signed=False, unit='AUS/AN', writable=True)  # Lea
-    proxon_tastensperre_vorraum = integer(278, signed=False, unit='AUS/AN', writable=True)  # Vorraum
-    proxon_tastensperre_werkstatt = integer(279, signed=False, unit='AUS/AN', writable=True)  # Werkstatt
-
-class OffsetTemperaturen(Component):
-    """Offset-/Soll-Temperaturen je Raum bzw. Zone. Migriert aus proxon.yaml, ergänzt um die Zonen-Sollwerte A09/A10."""
-
-    proxon_offsettemperatur_wohnzimmer = gauge(70, 0.01, signed=True, unit='°C')  # Wohnzimmer
-    proxon_offsettemperatur_partykeller = integer(213, signed=True, unit='°C')  # Partykeller
-    proxon_offsettemperatur_flur = integer(214, signed=True, unit='°C')  # Flur
-    proxon_offsettemperatur_schlafzimmer = integer(215, signed=True, unit='°C')  # Schlafzimmer
-    proxon_offsettemperatur_buero = integer(216, signed=True, unit='°C')  # Büro
-    proxon_offsettemperatur_lea = integer(217, signed=True, unit='°C')  # Lea
-    proxon_offsettemperatur_vorraum = integer(218, signed=True, unit='°C')  # Vorraum
-    proxon_offsettemperatur_werkstatt = integer(219, signed=True, unit='°C')  # Werkstatt
-    soll_temperatur_zone_2_og_bei_keine_hnbp = gauge(75, 0.01, signed=True, unit='°C', writable=True)  # Soll Temperatur Zone 2 (OG) (Bei keine HNBP)
-
-class Mitteltemperaturen(Component):
-    """Gemittelte Raumtemperaturen je Raum. Migriert 1:1 aus proxon.yaml."""
-
-    proxon_mitteltemperatur_partykeller = integer(233, signed=True, unit='°C')  # Partykeller
-    proxon_mitteltemperatur_flur = integer(234, signed=True, unit='°C')  # Flur
-    proxon_mitteltemperatur_schlafzimmer = integer(235, signed=True, unit='°C')  # Schlafzimmer
-    proxon_mitteltemperatur_buero = integer(236, signed=True, unit='°C')  # Büro
-    proxon_mitteltemperatur_lea = integer(237, signed=True, unit='°C')  # Lea
-    proxon_mitteltemperatur_vorraum = integer(238, signed=True, unit='°C')  # Vorraum
-    proxon_mitteltemperatur_werkstatt = integer(239, signed=True, unit='°C')  # Werkstatt
-
 class Lueftung(Component):
     """Betriebsart, Lüfterstufe und Intensivlüftung. Migriert 1:1 aus proxon.yaml."""
 
-    proxon_betriebsart = integer(16, signed=False)  # Proxon Betriebsart
-    proxon_luefterstufe = integer(22, signed=False)  # Proxon Lüfterstufe
+    proxon_betriebsart = integer(16, signed=False, writable=True)  # Proxon Betriebsart
+    proxon_luefterstufe = integer(22, signed=False, writable=True)  # Lüfterstufe (innen)
     proxon_intensivlueftung_restzeit = integer(133, signed=False, unit='Minuten')  # Proxon Intensivlüftung Restzeit
     proxon_intensivlueftung_sollzeit = integer(189, signed=False, unit='Minuten')  # Proxon Intensivlüftung Sollzeit
+    proxon_heizelemente_global = integer(325, signed=False, unit='AUS/AN', writable=True)  # Heizelemente Global freigeben
 
 class T300Warmwasser(Component):
     """T300 Warmwasser-Heizstab. Migriert 1:1 aus proxon.yaml."""
 
     proxon_kuehlung = integer(62, signed=False, unit='AUS/AN', writable=True)  # Proxon Kuehlung
-    proxon_soll_temperatur_wasser = gauge(2000, 0.1, signed=False, unit='°C')  # Nicht in der FWT2.0-Registerliste (separates Modul, z.B. T300).
-    t300_heizstab = integer(2001, signed=False, writable=True)  # Nicht in der FWT2.0-Registerliste (separates Modul, z.B. T300).
-    proxon_heizstab_temperatur = gauge(2003, 0.1, signed=False, unit='°C')  # Nicht in der FWT2.0-Registerliste (separates Modul, z.B. T300).
+    proxon_soll_temperatur_wasser = gauge(2000, 0.1, signed=False, unit='°C', writable=True)  # Proxon Soll-Temperatur Wasser
+    t300_heizstab = integer(2001, signed=False, unit='AUS/AN', writable=True)  # Heizstab
+    proxon_heizstab_temperatur = gauge(2003, 0.1, signed=False, unit='°C', writable=True)  # Proxon Heizstab Temperatur
 
 class Geraetefilter(Component):
     """Standzeit/Nutzzeit des Gerätefilters. Migriert 1:1 aus proxon.yaml."""

@@ -6,13 +6,14 @@ from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from modbus_connection.tmodbus import connect_tcp
 
-from .const import CONF_SLAVE, PLATFORMS
+from .const import CONF_SLAVE, CONF_ZONE_COUNT, PLATFORMS
 from .coordinator import (
     ProxonConfigEntry,
     ProxonDataUpdateCoordinator,
     ProxonRuntimeData,
 )
 from .model import ProxonDevice
+from .zones import zones_from_entry_data
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bool:
@@ -28,11 +29,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bo
     connection = await connect_tcp(entry.data[CONF_HOST], port=int(entry.data[CONF_PORT]))
     unit = connection.for_unit(int(entry.data[CONF_SLAVE]))
 
-    device = ProxonDevice(unit)
+    device = ProxonDevice(unit, zone_count=entry.data[CONF_ZONE_COUNT])
     coordinator = ProxonDataUpdateCoordinator(hass, entry, device)
     await coordinator.async_config_entry_first_refresh()
 
-    entry.runtime_data = ProxonRuntimeData(device=device, coordinator=coordinator, connection=connection)
+    entry.runtime_data = ProxonRuntimeData(
+        device=device,
+        coordinator=coordinator,
+        connection=connection,
+        zones=zones_from_entry_data(entry.data),
+    )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
