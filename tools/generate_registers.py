@@ -880,6 +880,7 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSensorEntityDescript
                 field="ist_temperatur",
                 zone_index=zone.zone_index,
                 translation_key="proxon_zone_ist_temperatur",
+                has_entity_name=True,
                 native_unit_of_measurement="\N{DEGREE SIGN}C",
                 device_class=SensorDeviceClass.TEMPERATURE,
                 state_class=SensorStateClass.MEASUREMENT,
@@ -893,6 +894,7 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSensorEntityDescript
                     field="mitteltemperatur",
                     zone_index=zone.zone_index,
                     translation_key="proxon_zone_mitteltemperatur",
+                    has_entity_name=True,
                     native_unit_of_measurement="\N{DEGREE SIGN}C",
                     device_class=SensorDeviceClass.TEMPERATURE,
                     state_class=SensorStateClass.MEASUREMENT,
@@ -913,6 +915,7 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSwitchEntityDescript
                 field="heizelement",
                 zone_index=zone.zone_index,
                 translation_key="proxon_zone_heizelement",
+                has_entity_name=True,
             )
         )
         if zone.kind == "nb":
@@ -923,6 +926,7 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSwitchEntityDescript
                     field="tastensperre",
                     zone_index=zone.zone_index,
                     translation_key="proxon_zone_tastensperre",
+                    has_entity_name=True,
                     entity_category=EntityCategory.CONFIG,
                 )
             )
@@ -940,6 +944,7 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonNumberEntityDescript
                     component="zbp",
                     field="soll_temperatur",
                     translation_key="proxon_zone_soll_temperatur",
+                    has_entity_name=True,
                     native_unit_of_measurement="\N{DEGREE SIGN}C",
                     native_min_value=ZBP_SOLL_MIN,
                     native_max_value=ZBP_SOLL_MAX,
@@ -954,6 +959,7 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonNumberEntityDescript
                     field="offset_temperatur",
                     zone_index=zone.zone_index,
                     translation_key="proxon_zone_offset_temperatur",
+                    has_entity_name=True,
                     native_unit_of_measurement="\N{DEGREE SIGN}C",
                     native_min_value=OFFSET_MIN,
                     native_max_value=OFFSET_MAX,
@@ -1060,6 +1066,7 @@ def render_platform_file(platform: str, metas: list[FieldMeta]) -> str:
             kwargs.append("has_entity_name=False")
         else:
             kwargs.append(f"translation_key={m.key!r}")
+            kwargs.append("has_entity_name=True")
         if m.entity_category:
             kwargs.append(f"entity_category={m.entity_category}")
         if platform == "sensor":
