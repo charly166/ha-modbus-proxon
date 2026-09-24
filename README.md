@@ -33,6 +33,17 @@ es jetzt nativ als `climate`-Entität, ganz ohne die HACS-Erweiterung
 [hass-template-climate](https://github.com/jcwillox/hass-template-climate) und ohne
 Sync-Automatisierungen.
 
+## Icon/Logo in Home Assistant
+
+Seit Home Assistant 2026.3 können Custom-Integrationen ihr Icon/Logo direkt mitbringen, ohne
+einen Pull Request beim offiziellen [home-assistant/brands](https://github.com/home-assistant/brands)
+zu benötigen (siehe [Brands-Proxy-API-Ankündigung](https://developers.home-assistant.io/blog/2026/02/24/brands-proxy-api)).
+Dieses Repo enthält daher `custom_components/proxon/brand/` mit `icon.png`/`icon@2x.png`
+(256×256/512×512, aus dem Logo-Zahnrad-Emblem zugeschnitten) und `logo.png`/`logo@2x.png`
+(Querformat) - Home Assistant zeigt diese automatisch in der Integrationssuche, unter
+Einstellungen → Geräte & Dienste und auf der Geräteseite an, sobald die Integration
+installiert ist. Kein zusätzlicher Schritt nötig.
+
 ## Installation (HACS)
 
 1. In HACS → Integrationen → ⋮ → *Benutzerdefinierte Repositories* → dieses Repository
