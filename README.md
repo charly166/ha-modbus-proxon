@@ -262,3 +262,19 @@ Assistent in der echten UI), oder das Verhalten mit mehr als der ursprünglich v
 Zonenzahl auf echter Hardware. Bitte nach der Installation die Basisfunktionen
 (Verbindungsaufbau im Assistenten, ein paar Sensor-Werte, ein Schalter, eine `climate`-Karte)
 verifizieren, bevor die alte Konfiguration endgültig gelöscht wird.
+
+**Bekannte Klasse von Fehlern, die sich so nicht vorab erkennen lässt**: `modbus-connection`
+fasst mehrere Felder eines Components automatisch zu einem einzigen Leseblock zusammen, wenn
+sie nah genug beieinander liegen (`Component.max_gap`, Standard 16 Register). Das ist korrekt,
+solange auch die Register *zwischen* den beiden Feldern auf der Anlage existieren – ist das
+nicht der Fall, lehnt die reale Hardware den zusammengefassten Lesevorgang mit "Illegal Data
+Address" (Modbus Exception Code 2) ab, obwohl beide Einzelregister für sich valide sind. Dieser
+Fehler tritt ausschließlich am echten Gerät auf (der Mock kennt nur die tatsächlich
+beschriebenen Register, nicht deren "Lücken"), wurde bei `Geraetefilter`
+(Standzeit/Nutzzeit, Register 460/469) durch Live-Debug-Logging gegen die Anlage des
+Integrations-Autors entdeckt und dort mit `max_gap = 0` (erzwingt getrennte Lesevorgänge)
+behoben. Sollten weitere Sensoren dauerhaft `Nicht verfügbar` bleiben, bitte das
+Debug-Protokoll der Integration aktivieren (⋮ am Integrationseintrag → "Debug-Protokoll
+aktivieren", danach in den Protokollen "Unveränderte Protokolle anzeigen" für die
+DEBUG-Zeilen) und nach `Modbus exception code 2` suchen – das identifiziert das betroffene
+Component eindeutig.

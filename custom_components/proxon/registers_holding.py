@@ -33,6 +33,8 @@ class T300Warmwasser(Component):
 class Geraetefilter(Component):
     """Standzeit/Nutzzeit des Gerätefilters. Migriert 1:1 aus proxon.yaml."""
 
+    max_gap = 0
+
     proxon_standzeit_fwt_geraetefilter = integer(460, signed=False, unit='Monate')  # Proxon Standzeit FWT Gerätefilter
     proxon_nutzzeit_fwt_geraetefilter = integer(469, signed=False, unit='h')  # Proxon Nutzzeit FWT Gerätefilter
 

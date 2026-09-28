@@ -532,6 +532,11 @@ class ComponentSpec:
     doc: str
     fields: list[str] = field(default_factory=list)
     meta: list[FieldMeta] = field(default_factory=list)
+    # Override modbus_connection's default read-batching (Component.max_gap=16):
+    # set below 16 when two fields on the same component are far enough apart
+    # that the real device rejects a merged block read spanning undocumented
+    # registers in between (Modbus exception code 2 / illegal data address).
+    max_gap: int | None = None
 
 
 def build_holding_components(
@@ -639,7 +644,16 @@ def build_holding_components(
         "T300Warmwasser", "holding", "T300 Warmwasser-Heizstab. Migriert 1:1 aus proxon.yaml."
     )
     geraetefilter = ComponentSpec(
-        "Geraetefilter", "holding", "Standzeit/Nutzzeit des Gerätefilters. Migriert 1:1 aus proxon.yaml."
+        "Geraetefilter",
+        "holding",
+        "Standzeit/Nutzzeit des Gerätefilters. Migriert 1:1 aus proxon.yaml.",
+        # Registers 460 and 469 are 9 apart; the default batching (max_gap=16)
+        # merges them into one 10-register block read covering 461-468, which
+        # aren't implemented on real FWT2.0 hardware and make the device
+        # respond with Modbus exception code 2 (illegal data address),
+        # confirmed via live debug logging against a real unit. Force each
+        # field to be read separately instead.
+        max_gap=0,
     )
     modbus_status = ComponentSpec(
         "ModbusStatusHolding", "holding", "Modbus-Statusregister. Migriert 1:1 aus proxon.yaml."
@@ -882,6 +896,9 @@ def render_component(spec: ComponentSpec) -> str:
     lines.append("")
     if spec.register_space == "input":
         lines.append('    register_space = "input"')
+        lines.append("")
+    if spec.max_gap is not None:
+        lines.append(f"    max_gap = {spec.max_gap}")
         lines.append("")
     lines.extend(spec.fields)
     lines.append("")
