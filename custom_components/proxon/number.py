@@ -66,6 +66,18 @@ NUMBER_DESCRIPTIONS: tuple[ProxonNumberEntityDescription, ...] = (
         native_step=0.1,
     ),
     ProxonNumberEntityDescription(
+        key='proxon_filterwechselintervall_t300',
+        component='t300_warmwasser',
+        field='filterwechselintervall_t300',
+        translation_key='proxon_filterwechselintervall_t300',
+        has_entity_name=True,
+        entity_category=EntityCategory.CONFIG,
+        native_unit_of_measurement='Monate',
+        native_min_value=0.0,
+        native_max_value=6.0,
+        native_step=1.0,
+    ),
+    ProxonNumberEntityDescription(
         key='proxon_minimum_frischlufttemperatur_bypass_aus',
         component='bypass',
         field='minimum_frischlufttemperatur_bypass_aus',
@@ -144,6 +156,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Proxon number entities."""
     coordinator = entry.runtime_data.coordinator
-    descriptions = [*NUMBER_DESCRIPTIONS, *_zone_descriptions(entry.runtime_data.zones)]
-    async_add_entities(ProxonNumber(coordinator, d) for d in descriptions)
+    entities = [ProxonNumber(coordinator, d) for d in NUMBER_DESCRIPTIONS]
+    entities += [ProxonNumber(coordinator, d) for d in _zone_descriptions(entry.runtime_data.zones)]
+    async_add_entities(entities)
 

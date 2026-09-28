@@ -68,6 +68,9 @@
       "proxon_zone_mitteltemperatur": {
         "name": "Mitteltemperatur"
       },
+      "proxon_filter_resttage": {
+        "name": "Gerätefilter Resttage"
+      },
       "proxon_stunden_fwt_an": {
         "name": "Stunden FWT AN"
       },
@@ -598,6 +601,248 @@
       },
       "proxon_heizmodul_2_temperatur": {
         "name": "Heizmodul 2 Temperatur"
+      },
+      "proxon_t5_vor_verdampfer": {
+        "name": "T5 Vor Verdampfer"
+      },
+      "proxon_t6_verdampfer_2": {
+        "name": "T6 Verdampfer"
+      },
+      "proxon_t13_kompressor_2": {
+        "name": "T13 Kompressor"
+      },
+      "proxon_t11_sauggas_nach_verdampfer_2": {
+        "name": "T11 Sauggas nach Verdampfer"
+      },
+      "proxon_t9_extern_fuehler": {
+        "name": "T9 Extern Fühler"
+      },
+      "proxon_p14_nd_verdampfer_2": {
+        "name": "P14 ND. Verdampfer"
+      },
+      "proxon_p19_druckdiff_abtau_2": {
+        "name": "P19 Druckdiff. Abtau"
+      },
+      "proxon_e_ventil_posision": {
+        "name": "E-ventil Posision"
+      },
+      "proxon_stepsetpointposision": {
+        "name": "StepSetpointPosision"
+      },
+      "proxon_stepmicrosteppos": {
+        "name": "StepMicroStepPos"
+      },
+      "proxon_stepstate": {
+        "name": "StepState"
+      },
+      "proxon_verdampfertemperatur_druck_2": {
+        "name": "Verdampfertemperatur (Druck)"
+      },
+      "proxon_delta_sauggas_verdampfer_temp_2": {
+        "name": "Delta Sauggas Verdampfer Temp"
+      },
+      "proxon_nou_used": {
+        "name": "Nou_used"
+      },
+      "proxon_hotairrestrictedcnt": {
+        "name": "HotAirRestrictedCnt"
+      },
+      "proxon_compressorstate": {
+        "name": "CompressorState"
+      },
+      "proxon_notbetrieb": {
+        "name": "NotBetrieb"
+      },
+      "proxon_wp_abtaurestrictedcnt": {
+        "name": "WP_AbtauRestrictedCnt"
+      },
+      "proxon_wp_statetimer": {
+        "name": "WP_StateTimer"
+      },
+      "proxon_abtaustate": {
+        "name": "AbtauState"
+      },
+      "proxon_ventilator_geschwindigkeit": {
+        "name": "Ventilator Geschwindigkeit"
+      },
+      "proxon_abtaumaxtimeleft": {
+        "name": "AbtauMaxTimeLeft"
+      },
+      "proxon_abtauwaittime": {
+        "name": "AbtauWaitTime"
+      },
+      "proxon_kaltebetriebcnt": {
+        "name": "KalteBetriebCnt"
+      },
+      "proxon_rressorstatfehlercnt": {
+        "name": "RressorstatFehlerCnt"
+      },
+      "proxon_ventilatorfehlercnt": {
+        "name": "VentilatorFehlerCnt"
+      },
+      "proxon_komptempfehlerno4": {
+        "name": "KompTempFehlerNo4"
+      },
+      "proxon_p14drukfehlercnt": {
+        "name": "P14DrukFehlerCnt"
+      },
+      "proxon_hourcntr2lowword": {
+        "name": "HourCntR2LowWord"
+      },
+      "proxon_hourcntr2hiword": {
+        "name": "HourCntR2HiWord"
+      },
+      "proxon_hourcntr3lowword": {
+        "name": "HourCntR3LowWord"
+      },
+      "proxon_hourcntr3hiword": {
+        "name": "HourCntR3HiWord"
+      },
+      "proxon_hourcntr4lowword": {
+        "name": "HourCntR4LowWord"
+      },
+      "proxon_hourcntr4hiword": {
+        "name": "HourCntR4HiWord"
+      },
+      "proxon_hourcntr5lowword": {
+        "name": "HourCntR5LowWord"
+      },
+      "proxon_hourcntr5hiword": {
+        "name": "HourCntR5HiWord"
+      },
+      "proxon_hourcntr6lowword": {
+        "name": "HourCntR6LowWord"
+      },
+      "proxon_hourcntr6hiword": {
+        "name": "HourCntR6HiWord"
+      },
+      "proxon_filtercntlowword": {
+        "name": "FilterCntLowWord"
+      },
+      "proxon_filtercnthiword": {
+        "name": "FilterCntHiWord"
+      },
+      "proxon_legionallacntlowword": {
+        "name": "LegionallaCntLowWord"
+      },
+      "proxon_legionallacnthiword": {
+        "name": "LegionallaCntHiWord"
+      },
+      "proxon_fehlerlist": {
+        "name": "FehlerList"
+      },
+      "proxon_fanrpm": {
+        "name": "FanRPM"
+      },
+      "proxon_eco_nodeonoff": {
+        "name": "ECO_NodeOnOff"
+      },
+      "proxon_pid_max_vordamfer_reduktion": {
+        "name": "pid_max_vordamfer_reduktion"
+      },
+      "proxon_maxtempwp_reduktion": {
+        "name": "MaxTempWP_reduktion"
+      },
+      "proxon_noteheizfreigabestate": {
+        "name": "NotEheizFreigabeState"
+      },
+      "proxon_p19fehlercnt": {
+        "name": "P19FehlerCnt"
+      },
+      "proxon_p14fehlercnt": {
+        "name": "P14FehlerCnt"
+      },
+      "proxon_t5_fehlercnt": {
+        "name": "T5_FehlerCnt"
+      },
+      "proxon_t6_fehlercnt": {
+        "name": "T6_FehlerCnt"
+      },
+      "proxon_t20_fehlercnt": {
+        "name": "T20_FehlerCnt"
+      },
+      "proxon_t21_fehlercnt": {
+        "name": "T21_FehlerCnt"
+      },
+      "proxon_t13_fehlercnt": {
+        "name": "T13_FehlerCnt"
+      },
+      "proxon_t11_fehlercnt": {
+        "name": "T11_FehlerCnt"
+      },
+      "proxon_t9_fehlercnt": {
+        "name": "T9_FehlerCnt"
+      },
+      "proxon_kompmaxtempfehlercnt": {
+        "name": "KompMaxTempFehlerCnt"
+      },
+      "proxon_currentsetpoint": {
+        "name": "CurrentSetpoint"
+      },
+      "proxon_number_of_restart": {
+        "name": "Number_of_restart"
+      },
+      "proxon_firmware_ver": {
+        "name": "Firmware ver"
+      },
+      "proxon_behaelderavg": {
+        "name": "BehaelderAvg"
+      },
+      "proxon_superheattemp": {
+        "name": "SuperHeatTemp"
+      },
+      "proxon_aktmaxsuperheat": {
+        "name": "AktMaxSuperHeat"
+      },
+      "proxon_aktminsuperheat": {
+        "name": "AktMinSuperHeat"
+      },
+      "proxon_superheatref": {
+        "name": "SuperHeatRef"
+      },
+      "proxon_eventilstartpostimeleft_2": {
+        "name": "EventilStartPosTimeLeft"
+      },
+      "proxon_regreleaseafterabtauresttime": {
+        "name": "RegReleaseAfterAbtauRestTime"
+      },
+      "proxon_afterabtausuperheatrestorevalue": {
+        "name": "AfterAbtauSuperheatRestoreValue"
+      },
+      "proxon_afterabtaumaxsuperheat": {
+        "name": "AfterAbtauMaxSuperHeat"
+      },
+      "proxon_abtaustarttemp": {
+        "name": "AbtauStartTemp"
+      },
+      "proxon_hitze_begrenzung": {
+        "name": "Hitze Begrenzung"
+      },
+      "proxon_kaelte_begrenzung": {
+        "name": "Kälte Begrenzung"
+      },
+      "proxon_pv_t9_level": {
+        "name": "PV T9 level"
+      },
+      "proxon_pv_eheiz_an": {
+        "name": "PV Eheiz AN"
+      },
+      "proxon_pv_wp_an": {
+        "name": "PV WP AN"
+      }
+    },
+    "binary_sensor": {
+      "proxon_filter_wechsel_faellig": {
+        "name": "Gerätefilter Wechsel fällig"
+      },
+      "proxon_r3_solar": {
+        "name": "R3:Solar"
+      },
+      "proxon_r5_ventilator": {
+        "name": "R5:Ventilator"
+      },
+      "proxon_r6_abtau": {
+        "name": "R6:Abtau"
       }
     },
     "switch": {
@@ -606,6 +851,9 @@
       },
       "proxon_zone_tastensperre": {
         "name": "Sperren Bedienteil"
+      },
+      "proxon_legionellaschutz": {
+        "name": "Legionellaschutz"
       }
     },
     "number": {
@@ -615,6 +863,9 @@
       "proxon_zone_soll_temperatur": {
         "name": "Soll-Temperatur"
       },
+      "proxon_filterwechselintervall_t300": {
+        "name": "Filterwechselintervall T300"
+      },
       "proxon_minimum_frischlufttemperatur_bypass_aus": {
         "name": "Minimum Frischlufttemperatur (Bypass AUS)"
       },
@@ -623,6 +874,26 @@
       },
       "proxon_bypass_laufzeit_an_aus": {
         "name": "Bypass laufzeit (AN/AUS)"
+      }
+    },
+    "select": {
+      "proxon_betriebsart": {
+        "state": {
+          "aus": "Aus",
+          "sommerbetrieb": "Sommerbetrieb",
+          "winterbetrieb": "Winterbetrieb",
+          "eco_komfortbetrieb": "ECO Komfortbetrieb",
+          "ofenbetrieb": "Ofenbetrieb"
+        }
+      },
+      "proxon_betriebsart_t300": {
+        "name": "Betriebsart",
+        "state": {
+          "aus": "Aus",
+          "bedarf": "Bedarf",
+          "lueftungsstufe_1": "Lüftungsstufe 1",
+          "lueftungsstufe_2": "Lüftungsstufe 2"
+        }
       }
     }
   }

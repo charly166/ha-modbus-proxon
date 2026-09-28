@@ -46,6 +46,7 @@ class ProxonDevice(Device):
         self.sonstiges_input = ri.SonstigesInput(unit)
         self.betriebswerte = ri.Betriebswerte(unit)
         self.heizmodule = ri.Heizmodule(unit)
+        self.t300_diagnose = ri.T300Diagnose(unit)
 
     def components(self):
         """All components, for async_update()/failure tracking."""
@@ -67,5 +68,6 @@ class ProxonDevice(Device):
             self.sonstiges_input,
             self.betriebswerte,
             self.heizmodule,
+            self.t300_diagnose,
         )
 

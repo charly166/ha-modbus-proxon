@@ -15,6 +15,7 @@ class Lueftung(Component):
 
     proxon_betriebsart = integer(16, signed=False, writable=True)  # Proxon Betriebsart
     proxon_luefterstufe = integer(22, signed=False, writable=True)  # Lüfterstufe (innen)
+    proxon_kuehlung = integer(62, signed=False, unit='AUS/AN', writable=True)  # Proxon Kuehlung
     proxon_intensivlueftung_restzeit = integer(133, signed=False, unit='Minuten')  # Proxon Intensivlüftung Restzeit
     proxon_intensivlueftung_sollzeit = integer(189, signed=False, unit='Minuten')  # Proxon Intensivlüftung Sollzeit
     proxon_heizelemente_global = integer(325, signed=False, unit='AUS/AN', writable=True)  # Heizelemente Global freigeben
@@ -22,16 +23,18 @@ class Lueftung(Component):
 class T300Warmwasser(Component):
     """T300 Warmwasser-Heizstab. Migriert 1:1 aus proxon.yaml."""
 
-    proxon_kuehlung = integer(62, signed=False, unit='AUS/AN', writable=True)  # Proxon Kuehlung
     proxon_soll_temperatur_wasser = gauge(2000, 0.1, signed=False, unit='°C', writable=True)  # Proxon Soll-Temperatur Wasser
     t300_heizstab = integer(2001, signed=False, unit='AUS/AN', writable=True)  # Heizstab
     proxon_heizstab_temperatur = gauge(2003, 0.1, signed=False, unit='°C', writable=True)  # Proxon Heizstab Temperatur
+    betriebsart_t300 = integer(2002, signed=False, writable=True)  # Betriebsart (0=AUS 1=Bedarf 2=LF1 3=LF2
+    filterwechselintervall_t300 = integer(2024, signed=False, unit='Monate', writable=True)  # Filterwechselintervall T300
+    legionellaschutz = integer(2025, signed=False, unit='AUS/AN', writable=True)  # Legionellaschutz
 
 class Geraetefilter(Component):
     """Standzeit/Nutzzeit des Gerätefilters. Migriert 1:1 aus proxon.yaml."""
 
     proxon_standzeit_fwt_geraetefilter = integer(460, signed=False, unit='Monate')  # Proxon Standzeit FWT Gerätefilter
-    proxon_nutzzeit_fwt_geraetefilter = integer(469, signed=False)  # Proxon Nutzzeit FWT Gerätefilter
+    proxon_nutzzeit_fwt_geraetefilter = integer(469, signed=False, unit='h')  # Proxon Nutzzeit FWT Gerätefilter
 
 class ModbusStatusHolding(Component):
     """Modbus-Statusregister. Migriert 1:1 aus proxon.yaml."""

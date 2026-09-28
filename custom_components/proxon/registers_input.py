@@ -37,6 +37,9 @@ class HeizstabStatus(Component):
 
     proxon_kompressor_status = integer(824, signed=False, unit='AUS/AN')  # Proxon Kompressor Status
     proxon_heizstab_status = integer(826, signed=False, unit='AUS/AN')  # Proxon Heizstab Status
+    r3_solar = integer(825, signed=False, unit='AUS/AN')  # R3:Solar
+    r5_ventilator = integer(827, signed=False, unit='AUS/AN')  # R5:Ventilator
+    r6_abtau = integer(828, signed=False, unit='AUS/AN')  # R6:Abtau
 
 class SonstigesInput(Component):
     """Betriebsart, Lüfterstufe, Stromaufnahme u.a. Migriert 1:1 aus proxon.yaml."""
@@ -203,3 +206,85 @@ class Heizmodule(Component):
     heizmodul_2_selbsttest_ergebnis = integer(579, signed=True, unit='Binär')  # Heizmodul 2 Selbsttest-Ergebnis
     heizmodul_2_status = integer(580, signed=True)  # Heizmodul 2 Status
     heizmodul_2_temperatur = integer(582, signed=True, unit='°C')  # Heizmodul 2 Temperatur
+
+class T300Diagnose(Component):
+    """T300 Kältekreis-Messwerte (T5/T6/T9/T11/T13, Drücke, Zustände, Fehlerzähler). Neu hinzugefügt."""
+
+    register_space = "input"
+
+    t5_vor_verdampfer = gauge(811, 0.1, signed=False, unit='°C')  # T5 Vor Verdampfer
+    t6_verdampfer_2 = gauge(812, 0.1, signed=False, unit='°C')  # T6 Verdampfer
+    t13_kompressor_2 = gauge(815, 0.1, signed=False, unit='°C')  # T13 Kompressor
+    t11_sauggas_nach_verdampfer_2 = gauge(816, 0.1, signed=False, unit='°C')  # T11 Sauggas nach Verdampfer
+    t9_extern_fuehler = gauge(817, 0.1, signed=False, unit='°C')  # T9 Extern Fühler
+    p14_nd_verdampfer_2 = gauge(818, 0.01, signed=False, unit='bar')  # P14 ND. Verdampfer
+    p19_druckdiff_abtau_2 = gauge(819, 0.01, signed=False, unit='Pa')  # P19 Druckdiff. Abtau
+    e_ventil_posision = integer(820, signed=False)  # E-ventil Posision
+    stepsetpointposision = integer(821, signed=False)  # StepSetpointPosision
+    stepmicrosteppos = integer(822, signed=False)  # StepMicroStepPos
+    stepstate = integer(823, signed=False)  # StepState
+    verdampfertemperatur_druck_2 = gauge(829, 0.1, signed=False, unit='°C')  # Verdampfertemperatur (Druck)
+    delta_sauggas_verdampfer_temp_2 = gauge(830, 0.1, signed=False, unit='°C')  # Delta Sauggas Verdampfer Temp
+    nou_used = integer(831, signed=False)  # Nou_used
+    hotairrestrictedcnt = integer(832, signed=False, unit='Sekunden')  # HotAirRestrictedCnt
+    compressorstate = integer(833, signed=False)  # CompressorState
+    notbetrieb = integer(834, signed=False)  # NotBetrieb
+    wp_abtaurestrictedcnt = integer(835, signed=False, unit='Sekunden')  # WP_AbtauRestrictedCnt
+    wp_statetimer = integer(836, signed=False, unit='Sekunden')  # WP_StateTimer
+    abtaustate = integer(837, signed=False)  # AbtauState
+    ventilator_geschwindigkeit = integer(838, signed=False, unit='%')  # Ventilator Geschwindigkeit
+    abtaumaxtimeleft = integer(839, signed=False, unit='Sekunden')  # AbtauMaxTimeLeft
+    abtauwaittime = integer(840, signed=False, unit='Sekunden')  # AbtauWaitTime
+    kaltebetriebcnt = integer(841, signed=False, unit='Sekunden')  # KalteBetriebCnt
+    rressorstatfehlercnt = integer(842, signed=False, unit='Sekunden')  # RressorstatFehlerCnt
+    ventilatorfehlercnt = integer(844, signed=False, unit='Sekunden')  # VentilatorFehlerCnt
+    komptempfehlerno4 = integer(845, signed=False, unit='Sekunden')  # KompTempFehlerNo4
+    p14drukfehlercnt = integer(846, signed=False, unit='Sekunden')  # P14DrukFehlerCnt
+    hourcntr2lowword = integer(847, signed=False, unit='Sekunden')  # HourCntR2LowWord
+    hourcntr2hiword = integer(848, signed=False)  # HourCntR2HiWord
+    hourcntr3lowword = integer(849, signed=False, unit='Sekunden')  # HourCntR3LowWord
+    hourcntr3hiword = integer(850, signed=False)  # HourCntR3HiWord
+    hourcntr4lowword = integer(851, signed=False, unit='Sekunden')  # HourCntR4LowWord
+    hourcntr4hiword = integer(852, signed=False)  # HourCntR4HiWord
+    hourcntr5lowword = integer(853, signed=False, unit='Sekunden')  # HourCntR5LowWord
+    hourcntr5hiword = integer(854, signed=False)  # HourCntR5HiWord
+    hourcntr6lowword = integer(855, signed=False, unit='Sekunden')  # HourCntR6LowWord
+    hourcntr6hiword = integer(856, signed=False)  # HourCntR6HiWord
+    filtercntlowword = integer(857, signed=False, unit='Sekunden')  # FilterCntLowWord
+    filtercnthiword = integer(858, signed=False)  # FilterCntHiWord
+    legionallacntlowword = integer(859, signed=False, unit='Sekunden')  # LegionallaCntLowWord
+    legionallacnthiword = integer(860, signed=False)  # LegionallaCntHiWord
+    fehlerlist = integer(861, signed=False, unit='Binär')  # FehlerList
+    fanrpm = integer(862, signed=False, unit='rpm')  # FanRPM
+    eco_nodeonoff = integer(863, signed=False, unit='AUS/AN')  # ECO_NodeOnOff
+    pid_max_vordamfer_reduktion = integer(864, signed=False)  # pid_max_vordamfer_reduktion
+    maxtempwp_reduktion = integer(865, signed=False)  # MaxTempWP_reduktion
+    noteheizfreigabestate = integer(868, signed=False, unit='AUS/AN')  # NotEheizFreigabeState
+    p19fehlercnt = integer(869, signed=False, unit='Sekunden')  # P19FehlerCnt
+    p14fehlercnt = integer(870, signed=False, unit='Sekunden')  # P14FehlerCnt
+    t5_fehlercnt = integer(871, signed=False, unit='Sekunden')  # T5_FehlerCnt
+    t6_fehlercnt = integer(872, signed=False, unit='Sekunden')  # T6_FehlerCnt
+    t20_fehlercnt = integer(873, signed=False, unit='Sekunden')  # T20_FehlerCnt
+    t21_fehlercnt = integer(874, signed=False, unit='Sekunden')  # T21_FehlerCnt
+    t13_fehlercnt = integer(875, signed=False, unit='Sekunden')  # T13_FehlerCnt
+    t11_fehlercnt = integer(876, signed=False, unit='Sekunden')  # T11_FehlerCnt
+    t9_fehlercnt = integer(877, signed=False, unit='Sekunden')  # T9_FehlerCnt
+    kompmaxtempfehlercnt = integer(878, signed=False, unit='Sekunden')  # KompMaxTempFehlerCnt
+    currentsetpoint = gauge(879, 0.1, signed=False, unit='°C')  # CurrentSetpoint
+    number_of_restart = integer(880, signed=False)  # Number_of_restart
+    firmware_ver = gauge(881, 0.1, signed=False)  # Firmware ver
+    behaelderavg = gauge(882, 0.01, signed=False, unit='°C')  # BehaelderAvg
+    superheattemp = gauge(883, 0.01, signed=False, unit='°C')  # SuperHeatTemp
+    aktmaxsuperheat = gauge(884, 0.01, signed=False, unit='°C')  # AktMaxSuperHeat
+    aktminsuperheat = gauge(885, 0.01, signed=False, unit='°C')  # AktMinSuperHeat
+    superheatref = gauge(886, 0.01, signed=False, unit='°C')  # SuperHeatRef
+    eventilstartpostimeleft_2 = integer(887, signed=False, unit='Sekunden')  # EventilStartPosTimeLeft
+    regreleaseafterabtauresttime = integer(888, signed=False, unit='Sekunden')  # RegReleaseAfterAbtauRestTime
+    afterabtausuperheatrestorevalue = integer(889, signed=False)  # AfterAbtauSuperheatRestoreValue
+    afterabtaumaxsuperheat = gauge(890, 0.01, signed=False, unit='°C')  # AfterAbtauMaxSuperHeat
+    abtaustarttemp = gauge(892, 0.1, signed=False, unit='°C')  # AbtauStartTemp
+    hitze_begrenzung = integer(896, signed=False)  # Hitze Begrenzung
+    kaelte_begrenzung = integer(897, signed=False)  # Kälte Begrenzung
+    pv_t9_level = integer(898, signed=False, unit='%')  # PV T9 level
+    pv_eheiz_an = integer(899, signed=False, unit='AUS/AN')  # PV Eheiz AN
+    pv_wp_an = integer(900, signed=False, unit='AUS/AN')  # PV WP AN

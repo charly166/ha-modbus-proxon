@@ -259,6 +259,20 @@ def parse_legacy_yaml() -> list[LegacyEntity]:
 # --------------------------------------------------------------------------
 
 
+# T300 (Warmwasserboiler) "Sollwerte" section of the Holding Register sheet
+# (addresses 2000+): a handful of genuinely operational values, picked out of
+# a much larger block of installer/PID-tuning/date-time registers (same
+# curation philosophy as the main controller - see module docstring):
+#   2002 Betriebsart T300 (0=AUS,1=Bedarf,2=LF1,3=LF2) -> select.py
+#   2024 Filterwechselintervall (Monate) -> number
+#   2025 Legionellafunktion (AUS/AN) -> switch
+# 2000/2001/2003 are not listed here - already migrated from proxon.yaml.
+T300_HOLDING_BETRIEBSART = 2002
+T300_HOLDING_FILTERINTERVALL = 2024
+T300_HOLDING_LEGIONELLA = 2025
+_T300_HOLDING_EXTRA = {T300_HOLDING_BETRIEBSART, T300_HOLDING_FILTERINTERVALL, T300_HOLDING_LEGIONELLA}
+
+
 def extra_holding_addresses(by_addr: dict[int, ExcelRegister]) -> list[int]:
     addrs: list[int] = []
     for addr, reg in by_addr.items():
@@ -266,7 +280,7 @@ def extra_holding_addresses(by_addr: dict[int, ExcelRegister]) -> list[int]:
         # A09/A10 (ZBP/HNB zone setpoints) are intentionally NOT included here - they
         # are zone-shaped registers now handled dynamically by zones.py, not by this
         # per-user codegen.
-        if group_code.startswith(("S", "G")) or group_code in ("A03", "A04"):  # Stundenzähler, Bypass, Gerätemodell/-typ
+        if group_code.startswith(("S", "G")) or group_code in ("A03", "A04") or addr in _T300_HOLDING_EXTRA:  # Stundenzähler, Bypass, Gerätemodell/-typ
             addrs.append(addr)
     return sorted(addrs)
 
@@ -307,9 +321,22 @@ def extra_input_addresses(by_addr: dict[int, ExcelRegister]) -> list[int]:
             continue
         if 588 <= addr <= 650:  # remote panel (NBE) block - zone-shaped, handled by zones.py
             continue
+        if 800 <= addr <= 900:  # T300 (Warmwasserboiler) diagnostics block
+            addrs.append(addr)
+            continue
         if addr <= 269:  # main operational/diagnostic block
             addrs.append(addr)
     return sorted(addrs)
+
+
+# T300 input registers already migrated 1:1 from proxon.yaml under different
+# names (Ist-Temperatur Wasser/Wasser Unten = T21/T20 @ 813/814, Kompressor/
+# Heizstab Status = R2/R4 @ 824/826) are excluded from the "extra" T300
+# diagnostics block automatically (main() drops anything already in the
+# legacy address set) - not duplicated here.
+# R3 (Solar), R5 (Ventilator), R6 (Abtau) relay status - binary, like the
+# already-migrated R2/R4 (Kompressor/Heizstab).
+_T300_INPUT_BINARY = {825, 827, 828}
 
 
 # --------------------------------------------------------------------------
@@ -416,6 +443,25 @@ _DEVICE_CLASS_BY_LEGACY = {
     "duration": ("SensorDeviceClass.DURATION", "SensorStateClass.TOTAL_INCREASING"),
 }
 
+# Home Assistant's SensorDeviceClass.DURATION only accepts these exact unit
+# symbols (checked against the installed homeassistant package) - German
+# words like "Stunden"/"Monate" or abbreviations like "std" are NOT valid and
+# make Home Assistant log a warning (the unit is silently kept, but this is
+# still wrong - fix it at the source instead). "Monate" (months) has no valid
+# duration unit at all, so device_class is dropped for it, not remapped.
+_VALID_DURATION_UNITS = {"h", "s", "min", "ms", "μs", "d"}
+
+# Used when falling back to proxon.yaml's own unit for a register the Excel
+# documents with a blank unit (see add_legacy()) - normalizes legacy German/
+# abbreviated units to real HA unit symbols.
+_LEGACY_UNIT_NORMALIZE = {
+    "std": "h",
+    "Stunden": "h",
+    "Sekunden": "s",
+    "Minuten": "min",
+    "Tage": "d",
+}
+
 
 def infer_device_class(unit: str) -> tuple[str | None, str | None]:
     if unit.strip() == "°C":
@@ -437,7 +483,15 @@ def make_meta(
     migrated: bool,
     legacy_device_class: str | None = None,
 ) -> FieldMeta:
-    if legacy_device_class and legacy_device_class in _DEVICE_CLASS_BY_LEGACY:
+    if (
+        legacy_device_class == "duration"
+        and reg.unit.strip() not in _VALID_DURATION_UNITS
+    ):
+        # e.g. "Monate" (months): not representable as a valid HA duration
+        # unit at all - keep the (accurate) unit, drop the (invalid) device
+        # class rather than have Home Assistant reject/warn about it.
+        device_class, state_class = None, None
+    elif legacy_device_class and legacy_device_class in _DEVICE_CLASS_BY_LEGACY:
         device_class, state_class = _DEVICE_CLASS_BY_LEGACY[legacy_device_class]
     else:
         device_class, state_class = infer_device_class(reg.unit)
@@ -485,27 +539,43 @@ def build_holding_components(
 ) -> list[ComponentSpec]:
     used_names: set[str] = set()
 
-    def add(spec: ComponentSpec, addr: int, base_name: str, writable: bool, comment: str, *, entity_category: str | None) -> None:
+    def add(
+        spec: ComponentSpec,
+        addr: int,
+        base_name: str,
+        writable: bool,
+        comment: str,
+        *,
+        entity_category: str | None,
+        platform: str | None = None,
+        suppress_entity: bool = False,
+    ) -> str:
+        """Returns the generated field name. ``platform`` overrides the
+        default number/sensor auto-choice (e.g. "switch"). ``suppress_entity``
+        adds the register field to the Component without generating any
+        sensor/switch/number entity for it - used when a hand-written
+        platform file (e.g. select.py) references the field directly."""
         reg = by_addr.get(addr)
         if reg is None:
             raise KeyError(f"holding address {addr} not found in Excel list")
         fname = dedupe(slugify(base_name), used_names)
         spec.fields.append(emit_field_line(fname, addr, reg, writable, comment))
-        platform = "number" if writable else "sensor"
-        spec.meta.append(
-            make_meta(
-                key=f"proxon_{fname}",
-                name=comment or base_name,
-                component_class=spec.class_name,
-                field_name=fname,
-                module="registers_holding",
-                platform=platform,
-                writable=writable,
-                reg=reg,
-                entity_category=entity_category,
-                migrated=False,
+        if not suppress_entity:
+            spec.meta.append(
+                make_meta(
+                    key=f"proxon_{fname}",
+                    name=comment or base_name,
+                    component_class=spec.class_name,
+                    field_name=fname,
+                    module="registers_holding",
+                    platform=platform or ("number" if writable else "sensor"),
+                    writable=writable,
+                    reg=reg,
+                    entity_category=entity_category,
+                    migrated=False,
+                )
             )
-        )
+        return fname
 
     legacy_holding = {e.address: e for e in legacy if e.register_space == "holding"}
 
@@ -528,6 +598,11 @@ def build_holding_components(
             )
         if e.legacy_offset is not None:
             reg = replace(reg, offset=e.legacy_offset * reg.scale)
+        if not reg.unit.strip() and e.unit:
+            # Excel documents this address but left the unit blank - prefer
+            # proxon.yaml's own unit (normalized to a proper HA unit symbol)
+            # over losing the unit altogether.
+            reg = replace(reg, unit=_LEGACY_UNIT_NORMALIZE.get(e.unit, e.unit))
         override = _PLATFORM_OVERRIDES.get(e.unique_id)
         writable = e.platform == "switch" or override is not None
         fname = dedupe(slugify(e.name), used_names)
@@ -591,9 +666,13 @@ def build_holding_components(
         uid = e.unique_id
         if uid not in _ZONE_UID_EXCEPTIONS and any(marker in uid for marker in _ZONE_UID_MARKERS):
             continue  # zone-shaped - handled dynamically by zones.py instead
-        if uid == "proxon_heizelemente_global" or uid in ("proxon_betriebsart", "proxon_luefterstufe") or "intensivlueftung" in uid:
+        if (
+            uid == "proxon_heizelemente_global"
+            or uid in ("proxon_betriebsart", "proxon_luefterstufe", "proxon_kuehlung")
+            or "intensivlueftung" in uid
+        ):
             add_legacy(lueftung, e)
-        elif "wasser" in uid or "heizstab" in uid or "kuehlung" in uid:
+        elif "wasser" in uid or "heizstab" in uid:
             add_legacy(t300, e)
         elif "geraetefilter" in uid:
             add_legacy(geraetefilter, e)
@@ -610,7 +689,19 @@ def build_holding_components(
     for addr in extra_addrs:
         reg = by_addr[addr]
         group_code = reg.group.split(":", 1)[0].strip()
-        if group_code.startswith("S"):
+        if addr == T300_HOLDING_BETRIEBSART:
+            # Field only - select.py hand-writes the actual select entity
+            # (translated AUS/Bedarf/LF1/LF2 options), same pattern as the
+            # main Betriebsart register.
+            add(t300, addr, "Betriebsart T300", True, reg.name, entity_category=None, suppress_entity=True)
+        elif addr == T300_HOLDING_FILTERINTERVALL:
+            add(
+                t300, addr, "Filterwechselintervall T300", True, "Filterwechselintervall T300",
+                entity_category="EntityCategory.CONFIG",
+            )
+        elif addr == T300_HOLDING_LEGIONELLA:
+            add(t300, addr, "Legionellaschutz", True, "Legionellaschutz", entity_category=None, platform="switch")
+        elif group_code.startswith("S"):
             add(stundenzaehler, addr, reg.name, False, reg.name, entity_category="EntityCategory.DIAGNOSTIC")
         elif group_code in ("A03", "A04"):
             add(hauptmenu, addr, reg.name, False, reg.name, entity_category="EntityCategory.DIAGNOSTIC")
@@ -634,7 +725,9 @@ def build_input_components(
 ) -> list[ComponentSpec]:
     used_names: set[str] = set()
 
-    def add(spec: ComponentSpec, addr: int, base_name: str, comment: str, *, entity_category: str | None) -> None:
+    def add(
+        spec: ComponentSpec, addr: int, base_name: str, comment: str, *, entity_category: str | None, platform: str = "sensor"
+    ) -> None:
         reg = by_addr.get(addr)
         if reg is None:
             raise KeyError(f"input address {addr} not found in Excel list")
@@ -647,7 +740,7 @@ def build_input_components(
                 component_class=spec.class_name,
                 field_name=fname,
                 module="registers_input",
-                platform="sensor",
+                platform=platform,
                 writable=False,
                 reg=reg,
                 entity_category=entity_category,
@@ -714,6 +807,11 @@ def build_input_components(
     heizmodule = ComponentSpec(
         "Heizmodule", "input", "Status/Temperatur/Selbsttest der beiden PTC-Heizmodule. Neu hinzugefügt."
     )
+    t300_diagnose = ComponentSpec(
+        "T300Diagnose",
+        "input",
+        "T300 Kältekreis-Messwerte (T5/T6/T9/T11/T13, Drücke, Zustände, Fehlerzähler). Neu hinzugefügt.",
+    )
 
     for addr, e in sorted(legacy_input.items()):
         uid = e.unique_id
@@ -741,6 +839,10 @@ def build_input_components(
         reg = by_addr[addr]
         if 570 <= addr <= 587:
             add(heizmodule, addr, reg.name, reg.name, entity_category="EntityCategory.DIAGNOSTIC")
+        elif addr in _T300_INPUT_BINARY:
+            add(heizstab_status, addr, reg.name, reg.name, entity_category=None, platform="binary_sensor")
+        elif 800 <= addr <= 900:
+            add(t300_diagnose, addr, reg.name, reg.name, entity_category="EntityCategory.DIAGNOSTIC")
         else:
             add(betrieb, addr, reg.name, reg.name, entity_category="EntityCategory.DIAGNOSTIC")
 
@@ -751,6 +853,7 @@ def build_input_components(
         sonstiges,
         betrieb,
         heizmodule,
+        t300_diagnose,
     ]
     return [c for c in components if c.fields]
 
@@ -970,6 +1073,19 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonNumberEntityDescript
 ''',
 }
 
+# Filter-life sensors are computed (Standzeit + Nutzzeit combined), not a 1:1
+# register mapping - hand-written in filter.py (imports only from .entity, to
+# avoid a circular import with the generated sensor.py/binary_sensor.py that
+# reference it here).
+_FILTER_IMPORTS: dict[str, str] = {
+    "sensor": "from .filter import FILTER_RESTTAGE_DESCRIPTION, ProxonFilterResttageSensor\n",
+    "binary_sensor": "from .filter import FILTER_REMINDER_DESCRIPTION, ProxonFilterReminderBinarySensor\n",
+}
+_FILTER_EXTRA_ENTITIES: dict[str, str] = {
+    "sensor": "ProxonFilterResttageSensor(coordinator, FILTER_RESTTAGE_DESCRIPTION)",
+    "binary_sensor": "ProxonFilterReminderBinarySensor(coordinator, FILTER_REMINDER_DESCRIPTION)",
+}
+
 _ZONE_ENTITY_EXTRA_IMPORTS: dict[str, str] = {
     "number": "from .zones import OFFSET_MAX, OFFSET_MIN, ZBP_SOLL_MAX, ZBP_SOLL_MIN, ZoneInfo",
     "sensor": "from .zones import ZoneInfo",
@@ -1095,21 +1211,22 @@ def render_platform_file(platform: str, metas: list[FieldMeta]) -> str:
         lines.append(_ZONE_ENTITY_CODE[platform].strip("\n"))
         lines.append("")
     lines.append("")
+    if platform in _FILTER_IMPORTS:
+        lines.append(_FILTER_IMPORTS[platform])
     lines.append("async def async_setup_entry(")
     lines.append("    hass: HomeAssistant, entry: ProxonConfigEntry, async_add_entities: AddEntitiesCallback")
     lines.append(") -> None:")
     lines.append(f'    """Set up Proxon {platform} entities."""')
     lines.append("    coordinator = entry.runtime_data.coordinator")
+    lines.append(f"    entities = [{entity_name}(coordinator, d) for d in {platform.upper()}_DESCRIPTIONS]")
     if platform in _ZONE_ENTITY_CODE:
         lines.append(
-            f"    descriptions = [*{platform.upper()}_DESCRIPTIONS, "
-            "*_zone_descriptions(entry.runtime_data.zones)]"
+            "    entities += ["
+            f"{entity_name}(coordinator, d) for d in _zone_descriptions(entry.runtime_data.zones)]"
         )
-        lines.append(f"    async_add_entities({entity_name}(coordinator, d) for d in descriptions)")
-    else:
-        lines.append(
-            f"    async_add_entities({entity_name}(coordinator, d) for d in {platform.upper()}_DESCRIPTIONS)"
-        )
+    if platform in _FILTER_EXTRA_ENTITIES:
+        lines.append(f"    entities.append({_FILTER_EXTRA_ENTITIES[platform]})")
+    lines.append("    async_add_entities(entities)")
     lines.append("")
     return "\n".join(lines) + "\n"
 
@@ -1191,6 +1308,10 @@ _EXTRA_ENTITY_STRINGS: dict = {
     "sensor": {
         "proxon_zone_ist_temperatur": {"name": "Ist-Temperatur"},
         "proxon_zone_mitteltemperatur": {"name": "Mitteltemperatur"},
+        "proxon_filter_resttage": {"name": "Gerätefilter Resttage"},
+    },
+    "binary_sensor": {
+        "proxon_filter_wechsel_faellig": {"name": "Gerätefilter Wechsel fällig"},
     },
     "switch": {
         "proxon_zone_heizelement": {"name": "Heizelement"},
@@ -1199,6 +1320,28 @@ _EXTRA_ENTITY_STRINGS: dict = {
     "number": {
         "proxon_zone_offset_temperatur": {"name": "Offset-Temperatur"},
         "proxon_zone_soll_temperatur": {"name": "Soll-Temperatur"},
+    },
+    "select": {
+        # proxon_betriebsart keeps its legacy literal `name` (continuity) -
+        # only the option *state* labels are translated here.
+        "proxon_betriebsart": {
+            "state": {
+                "aus": "Aus",
+                "sommerbetrieb": "Sommerbetrieb",
+                "winterbetrieb": "Winterbetrieb",
+                "eco_komfortbetrieb": "ECO Komfortbetrieb",
+                "ofenbetrieb": "Ofenbetrieb",
+            }
+        },
+        "proxon_betriebsart_t300": {
+            "name": "Betriebsart",
+            "state": {
+                "aus": "Aus",
+                "bedarf": "Bedarf",
+                "lueftungsstufe_1": "Lüftungsstufe 1",
+                "lueftungsstufe_2": "Lüftungsstufe 2",
+            },
+        },
     },
 }
 

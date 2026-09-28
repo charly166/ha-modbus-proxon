@@ -90,11 +90,33 @@ Die Entitäten selbst tragen dadurch nur noch ihre Funktion im Namen ("Ist-Tempe
 "Offset-Temperatur", "Heizelement", "Sperren Bedienteil"); Home Assistant setzt den
 Gerätenamen automatisch davor (z.B. "Büro Ist-Temperatur"). Die `climate`-Entität einer Zone
 trägt gar keinen eigenen Namenszusatz - sie erscheint als Hauptentität direkt unter dem
-Gerätenamen ("Büro"). Alle nicht-zonengebundenen Register (Lüftung, Bypass, T300-Boiler,
-Diagnosewerte, ...) bleiben gemeinsam unter einem zentralen Gerät (Titel der Integration).
+Gerätenamen ("Büro").
+
+Der **T300-Warmwasserboiler** ist, obwohl kein per Raum-Auswahl konfigurierbarer "Zone",
+ebenfalls ein **eigenes Gerät** ("T300") - nicht Teil des zentralen Geräts. Alle übrigen,
+wirklich zentralen Register (Lüftung, Bypass, Betriebsstundenzähler, Diagnosewerte, ...)
+bleiben gemeinsam unter dem zentralen Gerät (Titel der Integration).
 
 Neu angelegte Zonen-Geräte werden zusätzlich dem gewählten Home-Assistant-Raum vorgeschlagen
 (`suggested_area`), damit sie dort direkt einsortiert erscheinen.
+
+## T300-Warmwasserboiler
+
+Seit einem Update der Registerliste ist der T300 vollständig dokumentiert. Das Gerät "T300"
+bündelt jetzt:
+
+- Die bereits zuvor migrierten 6 Entitäten (Soll-/Ist-Temperatur Wasser, Wasser Unten,
+  Heizstab-Temperatur/-Schalter/-Status, Kompressor-Status).
+- **Neu**: `select` "Betriebsart" (Aus/Bedarf/Lüftungsstufe 1/Lüftungsstufe 2),
+  `number` "Filterwechselintervall T300" (Monate), `switch` "Legionellaschutz".
+- **Neu**: ca. 80 Diagnose-Sensoren aus dem Kältekreis (Messtemperaturen T5/T6/T9/T11/T13,
+  Drücke, Zustände, Fehlerzähler) sowie 3 zusätzliche Relais-Status (Solar/Ventilator/Abtau)
+  als `binary_sensor`, alle als Diagnose-Entitäten (Kategorie "Diagnose", nicht im
+  Standard-Dashboard sichtbar).
+
+Wie beim Hauptcontroller bewusst ausgelassen: die zahlreichen Installateur-/PID-
+Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Installateur Menü`,
+`L-xx:LSC Menü`). Details/Adressen stehen als Kommentar in `tools/generate_registers.py`.
 
 ## Migration von der alten `proxon.yaml` (+ climate_template-Setup)
 
@@ -143,6 +165,24 @@ Neu angelegte Zonen-Geräte werden zusätzlich dem gewählten Home-Assistant-Rau
      Generieren **nicht** übernommen (ein Fehler aus der ersten Version dieser Integration,
      v0.0.1/v0.0.2), wodurch beide Werte ca. 10°C zu hoch angezeigt wurden. Mit diesem Update
      korrekt.
+7. **Betriebsart-Werte korrigiert**: Die Registerliste kommentiert Adresse 16 mit
+   "0=Aus, 1=EcoSommer, 2=EcoWinter, 9=Test" - laut Rückmeldung vom eigenen Bedienpanel gilt
+   tatsächlich 0=Aus, 1=Sommerbetrieb, 2=Winterbetrieb, 3=ECO Komfortbetrieb, 4=Ofenbetrieb.
+   Die `select`-Entität "Proxon Betriebsart" nutzt jetzt diese korrigierten Werte.
+8. **Gerätefilter-Sensoren gefixt**: `Proxon Standzeit FWT Gerätefilter` hatte
+   `device_class: duration` zusammen mit der (korrekten) Einheit "Monate" - Home Assistant
+   akzeptiert für diese Geräteklasse aber nur Sekunden/Minuten/Stunden/Millisekunden/
+   Mikrosekunden/Tage, keine Monate, und protokollierte deswegen eine Warnung. Die
+   Geräteklasse wurde entfernt (Einheit "Monate" bleibt). `Proxon Nutzzeit FWT Gerätefilter`
+   hatte durch das Excel-Update zwischenzeitlich seine Einheit verloren (Registerliste lässt
+   sie dort leer) - fällt jetzt korrekt auf "h" (Stunden) zurück.
+9. **Neu: Gerätefilter-Restlaufzeit + Erinnerung** (ersetzt den bisherigen Template-Sensor aus
+   `templates.yaml`): `sensor.proxon_geraetefilter_resttage` berechnet die verbleibenden Tage
+   aus Standzeit (Monate × 30 Tage, Näherung) minus bisheriger Nutzzeit (Stunden ÷ 24) - live,
+   ohne Template. `binary_sensor.proxon_geraetefilter_wechsel_faellig` schaltet auf "Ein",
+   sobald die Restlaufzeit ≤ 14 Tage beträgt. Für die eigentliche Benachrichtigung (z.B. per
+   Telegram) diesen Binärsensor in einer eigenen Automatisierung auslösen - die Integration
+   versendet selbst keine Benachrichtigungen (HA-Konvention).
 
 ## Umfang / Kuration der Register
 
@@ -156,11 +196,10 @@ Heizmodul-Status) - sowie, dynamisch je nach Zonenanzahl, alle Zonen-Register (H
 Tastensperre, Ist-/Mittel-/Offset-Temperatur, Status).
 
 Bewusst ausgelassen: PID-Regelparameter, Test-/Service-/Bedienteil-/Datum-&-Uhrzeit-Register,
-die beiden Zeitprogramm-Blöcke (>100 Zeit-Slots), rohe ADC-/Kalibrierregister sowie der neue
-T300-Abschnitt jenseits der schon zuvor genutzten 6 Warmwasser-Register (Solltemperatur,
-Heizstab-Temperatur/-Status, Ist-Temperaturen, Kompressor-Status - die dortigen ~90 weiteren
-Installateur-/Diagnoseregister folgen demselben Kurationsprinzip wie beim Hauptcontroller und
-wurden nicht übernommen). Details und Begründung stehen als Kommentar am Anfang von
+die beiden Zeitprogramm-Blöcke (>100 Zeit-Slots), rohe ADC-/Kalibrierregister sowie - beim
+T300-Abschnitt - die zahlreichen Installateur-/PID-Regel-/Datum-Uhrzeit-Register (siehe
+Abschnitt "T300-Warmwasserboiler" oben für das, was dort *wurde* übernommen). Details und
+Begründung stehen als Kommentar am Anfang von
 [`tools/generate_registers.py`](tools/generate_registers.py).
 
 **Weitere (zentrale) Register selbst ergänzen**: `custom_components/proxon/registers_holding.py`,

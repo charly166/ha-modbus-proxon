@@ -45,7 +45,31 @@ BINARY_SENSOR_DESCRIPTIONS: tuple[ProxonBinarySensorEntityDescription, ...] = (
         name='Proxon Heizstab Status',
         has_entity_name=False,
     ),
+    ProxonBinarySensorEntityDescription(
+        key='proxon_r3_solar',
+        component='heizstab_status',
+        field='r3_solar',
+        translation_key='proxon_r3_solar',
+        has_entity_name=True,
+    ),
+    ProxonBinarySensorEntityDescription(
+        key='proxon_r5_ventilator',
+        component='heizstab_status',
+        field='r5_ventilator',
+        translation_key='proxon_r5_ventilator',
+        has_entity_name=True,
+    ),
+    ProxonBinarySensorEntityDescription(
+        key='proxon_r6_abtau',
+        component='heizstab_status',
+        field='r6_abtau',
+        translation_key='proxon_r6_abtau',
+        has_entity_name=True,
+    ),
 )
+
+
+from .filter import FILTER_REMINDER_DESCRIPTION, ProxonFilterReminderBinarySensor
 
 
 async def async_setup_entry(
@@ -53,5 +77,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Proxon binary_sensor entities."""
     coordinator = entry.runtime_data.coordinator
-    async_add_entities(ProxonBinarySensor(coordinator, d) for d in BINARY_SENSOR_DESCRIPTIONS)
+    entities = [ProxonBinarySensor(coordinator, d) for d in BINARY_SENSOR_DESCRIPTIONS]
+    entities.append(ProxonFilterReminderBinarySensor(coordinator, FILTER_REMINDER_DESCRIPTION))
+    async_add_entities(entities)
 

@@ -37,17 +37,17 @@ class ProxonSwitch(ProxonEntity, SwitchEntity):
 
 SWITCH_DESCRIPTIONS: tuple[ProxonSwitchEntityDescription, ...] = (
     ProxonSwitchEntityDescription(
+        key='proxon_kuehlung',
+        component='lueftung',
+        field='proxon_kuehlung',
+        name='Proxon Kuehlung',
+        has_entity_name=False,
+    ),
+    ProxonSwitchEntityDescription(
         key='proxon_heizelemente_global',
         component='lueftung',
         field='proxon_heizelemente_global',
         name='Proxon Heizelemente Global',
-        has_entity_name=False,
-    ),
-    ProxonSwitchEntityDescription(
-        key='proxon_kuehlung',
-        component='t300_warmwasser',
-        field='proxon_kuehlung',
-        name='Proxon Kuehlung',
         has_entity_name=False,
     ),
     ProxonSwitchEntityDescription(
@@ -56,6 +56,13 @@ SWITCH_DESCRIPTIONS: tuple[ProxonSwitchEntityDescription, ...] = (
         field='t300_heizstab',
         name='T300 Heizstab',
         has_entity_name=False,
+    ),
+    ProxonSwitchEntityDescription(
+        key='proxon_legionellaschutz',
+        component='t300_warmwasser',
+        field='legionellaschutz',
+        translation_key='proxon_legionellaschutz',
+        has_entity_name=True,
     ),
 )
 
@@ -94,6 +101,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Proxon switch entities."""
     coordinator = entry.runtime_data.coordinator
-    descriptions = [*SWITCH_DESCRIPTIONS, *_zone_descriptions(entry.runtime_data.zones)]
-    async_add_entities(ProxonSwitch(coordinator, d) for d in descriptions)
+    entities = [ProxonSwitch(coordinator, d) for d in SWITCH_DESCRIPTIONS]
+    entities += [ProxonSwitch(coordinator, d) for d in _zone_descriptions(entry.runtime_data.zones)]
+    async_add_entities(entities)
 

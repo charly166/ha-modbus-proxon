@@ -26,6 +26,13 @@ def _zone_for(zones: list[ZoneInfo], component: str, zone_index: int | None) -> 
     return None
 
 
+# T300 (Warmwasserboiler) components - not a "zone" (no Area picker, not part
+# of the dynamic HNBP/NBPn model), but still its own device rather than
+# living on the central hub, per user feedback ("T300 wie ein eigener Raum").
+# Names are the snake_case ProxonDevice attribute names from model.py.
+T300_COMPONENTS = frozenset({"t300_warmwasser", "warmwasser_input", "heizstab_status", "t300_diagnose"})
+
+
 @dataclass(frozen=True, kw_only=True)
 class ProxonEntityDescription(EntityDescription):
     """Base description for every Proxon entity.
@@ -69,6 +76,13 @@ class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
                 manufacturer="Proxon",
                 model="FWT2.0 Zone",
                 suggested_area=zone.name,
+            )
+        elif description.component in T300_COMPONENTS:
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, f"{entry.entry_id}_t300")},
+                name="T300",
+                manufacturer="Proxon",
+                model="T300 Warmwasserboiler",
             )
         else:
             self._attr_device_info = DeviceInfo(
