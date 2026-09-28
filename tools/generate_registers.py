@@ -391,6 +391,11 @@ class FieldMeta:
     min_value: float | None = None
     max_value: float | None = None
     step: float | None = None
+    # Display-only unit conversion (e.g. "UnitOfTime.DAYS"): native_unit_of_measurement/
+    # the underlying register stay unchanged (so unique_id/statistics continuity is
+    # preserved), Home Assistant just converts the shown value. Requires device_class.
+    suggested_unit: str | None = None
+    suggested_precision: int | None = None
 
 
 def emit_field_line(field_name: str, address: int, reg: ExcelRegister, writable: bool, comment: str) -> str:
@@ -690,6 +695,15 @@ def build_holding_components(
             add_legacy(t300, e)
         elif "geraetefilter" in uid:
             add_legacy(geraetefilter, e)
+            if uid == "proxon_nutzzeit_fwt_geraetefilter":
+                # Register holds hours (kept as native unit for statistics
+                # continuity with the old proxon.yaml sensor) - display in days,
+                # which the user finds easier to read at a glance.
+                nutzzeit_meta = geraetefilter.meta[-1]
+                nutzzeit_meta.device_class = "SensorDeviceClass.DURATION"
+                nutzzeit_meta.state_class = "SensorStateClass.TOTAL_INCREASING"
+                nutzzeit_meta.suggested_unit = "UnitOfTime.DAYS"
+                nutzzeit_meta.suggested_precision = 1
         elif "status_modbus" in uid:
             add_legacy(modbus_status, e)
         else:  # pragma: no cover - safety net, should not trigger
@@ -1139,13 +1153,15 @@ def render_platform_file(platform: str, metas: list[FieldMeta]) -> str:
         "",
     ]
     needs_entity_category = any(m.entity_category for m in metas) or platform == "switch"
+    needs_unit_of_time = any(m.suggested_unit for m in metas)
     entity_base = base_desc.replace("EntityDescription", "Entity")
     if platform == "sensor":
         lines.append(f"from {ha_module} import SensorEntity, {_SENSOR_DEVICE_CLASS_IMPORTS}")
     else:
         lines.append(f"from {ha_module} import {entity_base}, {base_desc}")
-    if needs_entity_category:
-        lines.append("from homeassistant.const import EntityCategory")
+    const_imports = [n for n, needed in (("EntityCategory", needs_entity_category), ("UnitOfTime", needs_unit_of_time)) if needed]
+    if const_imports:
+        lines.append(f"from homeassistant.const import {', '.join(const_imports)}")
     lines.append("from homeassistant.core import HomeAssistant")
     lines.append("from homeassistant.helpers.entity_platform import AddEntitiesCallback")
     lines.append("")
@@ -1209,6 +1225,10 @@ def render_platform_file(platform: str, metas: list[FieldMeta]) -> str:
                 kwargs.append(f"device_class={m.device_class}")
             if m.state_class:
                 kwargs.append(f"state_class={m.state_class}")
+            if m.suggested_unit:
+                kwargs.append(f"suggested_unit_of_measurement={m.suggested_unit}")
+            if m.suggested_precision is not None:
+                kwargs.append(f"suggested_display_precision={m.suggested_precision}")
         elif platform == "number":
             if m.unit:
                 kwargs.append(f"native_unit_of_measurement={m.unit!r}")

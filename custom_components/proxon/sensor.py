@@ -10,7 +10,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import EntityCategory
+from homeassistant.const import EntityCategory, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -66,6 +66,10 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         name='Proxon Nutzzeit FWT Gerätefilter',
         has_entity_name=False,
         native_unit_of_measurement='h',
+        device_class=SensorDeviceClass.DURATION,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_unit_of_measurement=UnitOfTime.DAYS,
+        suggested_display_precision=1,
     ),
     ProxonSensorEntityDescription(
         key='proxon_status_modbus',

@@ -27,7 +27,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import EntityCategory, UnitOfTime
+from homeassistant.const import UnitOfTime
 
 from .entity import ProxonEntity, ProxonEntityDescription
 
@@ -69,7 +69,10 @@ FILTER_RESTTAGE_DESCRIPTION = _FilterSensorDescription(
     field="proxon_nutzzeit_fwt_geraetefilter",  # not read directly - see native_value above
     has_entity_name=True,
     translation_key="proxon_filter_resttage",
-    entity_category=EntityCategory.DIAGNOSTIC,
+    # Not EntityCategory.DIAGNOSTIC: this is the actionable "when do I need to
+    # act" figure, not internal diagnostic detail - keep it a regular sensor so
+    # it appears on the device's main entity list, not tucked away under
+    # "Diagnose".
     native_unit_of_measurement=UnitOfTime.DAYS,
     device_class=SensorDeviceClass.DURATION,
     state_class=SensorStateClass.MEASUREMENT,
