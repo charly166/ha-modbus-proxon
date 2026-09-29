@@ -838,6 +838,9 @@
       "proxon_filter_wechsel_faellig": {
         "name": "Gerätefilter Wechsel fällig"
       },
+      "proxon_zone_tastensperre": {
+        "name": "Sperren Bedienteil"
+      },
       "proxon_r3_solar": {
         "name": "R3:Solar"
       },
@@ -851,9 +854,6 @@
     "switch": {
       "proxon_zone_heizelement": {
         "name": "Heizelement"
-      },
-      "proxon_zone_tastensperre": {
-        "name": "Sperren Bedienteil"
       },
       "proxon_intensivlueftung": {
         "name": "Intensivlüftung (60 Min.)"

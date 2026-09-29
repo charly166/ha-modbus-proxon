@@ -1065,7 +1065,7 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSensorEntityDescript
 ''',
     "switch": '''
 def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSwitchEntityDescription]:
-    """One Heizelement switch per zone, plus Tastensperre for HNBP/NBPn zones."""
+    """One Heizelement switch per zone."""
     out: list[ProxonSwitchEntityDescription] = []
     for zone in zones:
         component = "zbp" if zone.kind == "zbp" else "nb_zones_holding"
@@ -1079,16 +1079,23 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSwitchEntityDescript
                 has_entity_name=True,
             )
         )
+    return out
+''',
+    "binary_sensor": '''
+def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonBinarySensorEntityDescription]:
+    """Tastensperre status for HNBP/NBPn zones - read-only, see zones.py."""
+    out: list[ProxonBinarySensorEntityDescription] = []
+    for zone in zones:
         if zone.kind == "nb":
             out.append(
-                ProxonSwitchEntityDescription(
+                ProxonBinarySensorEntityDescription(
                     key=f"proxon_tastensperre_{zone.slug}",
                     component="nb_zones_holding",
                     field="tastensperre",
                     zone_index=zone.zone_index,
                     translation_key="proxon_zone_tastensperre",
                     has_entity_name=True,
-                    entity_category=EntityCategory.CONFIG,
+                    entity_category=EntityCategory.DIAGNOSTIC,
                 )
             )
     return out
@@ -1167,6 +1174,7 @@ _ZONE_ENTITY_EXTRA_IMPORTS: dict[str, str] = {
     "number": "from .zones import OFFSET_MAX, OFFSET_MIN, ZBP_SOLL_MAX, ZBP_SOLL_MIN, ZoneInfo",
     "sensor": "from .zones import ZoneInfo",
     "switch": "from .zones import ZoneInfo",
+    "binary_sensor": "from .zones import ZoneInfo",
 }
 
 
@@ -1198,7 +1206,9 @@ def render_platform_file(platform: str, metas: list[FieldMeta]) -> str:
         "from dataclasses import dataclass",
         "",
     ]
-    needs_entity_category = any(m.entity_category for m in metas) or platform == "switch"
+    needs_entity_category = any(m.entity_category for m in metas) or "EntityCategory" in _ZONE_ENTITY_CODE.get(
+        platform, ""
+    )
     needs_unit_of_time = any(m.suggested_unit for m in metas)
     entity_base = base_desc.replace("EntityDescription", "Entity")
     if platform == "sensor":
@@ -1397,10 +1407,10 @@ _EXTRA_ENTITY_STRINGS: dict = {
     },
     "binary_sensor": {
         "proxon_filter_wechsel_faellig": {"name": "Gerätefilter Wechsel fällig"},
+        "proxon_zone_tastensperre": {"name": "Sperren Bedienteil"},
     },
     "switch": {
         "proxon_zone_heizelement": {"name": "Heizelement"},
-        "proxon_zone_tastensperre": {"name": "Sperren Bedienteil"},
         "proxon_intensivlueftung": {"name": "Intensivlüftung (60 Min.)"},
     },
     "number": {

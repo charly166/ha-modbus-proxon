@@ -183,6 +183,14 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
    sobald die Restlaufzeit ≤ 14 Tage beträgt. Für die eigentliche Benachrichtigung (z.B. per
    Telegram) diesen Binärsensor in einer eigenen Automatisierung auslösen - die Integration
    versendet selbst keine Benachrichtigungen (HA-Konvention).
+10. **`Sperren Bedienteil` ist jetzt ein `binary_sensor`, kein `switch` mehr**: Auf echter
+    Hardware lässt sich die Tastensperre eines NBP/HNBP grundsätzlich nicht per Modbus setzen
+    (jeder Schreibversuch schlägt mit "Modbus Exception 0x03" fehl, unabhängig von der Zone) -
+    das Sperren/Entsperren geschieht ausschließlich am Hauptbedienpanel (HBE) selbst. Die
+    Entität zeigt den aktuellen Sperrzustand weiterhin an, ist aber nicht mehr schreibbar. Nach
+    dem Update die alte, jetzt verwaiste `switch.proxon_tastensperre_<zone>`-Entität unter
+    Einstellungen → Entitäten löschen; die neue `binary_sensor.proxon_tastensperre_<zone>`
+    behält dieselbe `unique_id`.
 
 ## Umfang / Kuration der Register
 

@@ -124,7 +124,11 @@ class NbZone(Component):
     repeating_group() - index 0 is HNBP, 1..19 are NBP1..NBP19."""
 
     heizelement = integer(253, signed=False, writable=True)
-    tastensperre = integer(273, signed=False, writable=True)
+    # Read-only: locking/unlocking an NBP's buttons is only possible from the
+    # HBE (Hauptbedieneinheit) itself - confirmed by the integration author on
+    # real hardware (Modbus exception 0x03 on every remote write attempt,
+    # regardless of zone). This register only ever reports the current state.
+    tastensperre = integer(273, signed=False)
     offset_temperatur = integer(213, signed=True, writable=True)
     mitteltemperatur = integer(233, signed=True)
 

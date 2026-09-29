@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
-from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -67,7 +66,7 @@ SWITCH_DESCRIPTIONS: tuple[ProxonSwitchEntityDescription, ...] = (
 )
 
 def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSwitchEntityDescription]:
-    """One Heizelement switch per zone, plus Tastensperre for HNBP/NBPn zones."""
+    """One Heizelement switch per zone."""
     out: list[ProxonSwitchEntityDescription] = []
     for zone in zones:
         component = "zbp" if zone.kind == "zbp" else "nb_zones_holding"
@@ -81,18 +80,6 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSwitchEntityDescript
                 has_entity_name=True,
             )
         )
-        if zone.kind == "nb":
-            out.append(
-                ProxonSwitchEntityDescription(
-                    key=f"proxon_tastensperre_{zone.slug}",
-                    component="nb_zones_holding",
-                    field="tastensperre",
-                    zone_index=zone.zone_index,
-                    translation_key="proxon_zone_tastensperre",
-                    has_entity_name=True,
-                    entity_category=EntityCategory.CONFIG,
-                )
-            )
     return out
 
 

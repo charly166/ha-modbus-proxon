@@ -8,11 +8,13 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .coordinator import ProxonConfigEntry
 from .entity import ProxonEntity, ProxonEntityDescription
+from .zones import ZoneInfo
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -68,6 +70,24 @@ BINARY_SENSOR_DESCRIPTIONS: tuple[ProxonBinarySensorEntityDescription, ...] = (
     ),
 )
 
+def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonBinarySensorEntityDescription]:
+    """Tastensperre status for HNBP/NBPn zones - read-only, see zones.py."""
+    out: list[ProxonBinarySensorEntityDescription] = []
+    for zone in zones:
+        if zone.kind == "nb":
+            out.append(
+                ProxonBinarySensorEntityDescription(
+                    key=f"proxon_tastensperre_{zone.slug}",
+                    component="nb_zones_holding",
+                    field="tastensperre",
+                    zone_index=zone.zone_index,
+                    translation_key="proxon_zone_tastensperre",
+                    has_entity_name=True,
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                )
+            )
+    return out
+
 
 from .filter import FILTER_REMINDER_DESCRIPTION, ProxonFilterReminderBinarySensor
 
@@ -78,6 +98,7 @@ async def async_setup_entry(
     """Set up Proxon binary_sensor entities."""
     coordinator = entry.runtime_data.coordinator
     entities = [ProxonBinarySensor(coordinator, d) for d in BINARY_SENSOR_DESCRIPTIONS]
+    entities += [ProxonBinarySensor(coordinator, d) for d in _zone_descriptions(entry.runtime_data.zones)]
     entities.extend([ProxonFilterReminderBinarySensor(coordinator, FILTER_REMINDER_DESCRIPTION)])
     async_add_entities(entities)
 
