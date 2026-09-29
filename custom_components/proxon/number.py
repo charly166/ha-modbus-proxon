@@ -130,7 +130,7 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonNumberEntityDescript
                     native_unit_of_measurement="°C",
                     native_min_value=ZBP_SOLL_MIN,
                     native_max_value=ZBP_SOLL_MAX,
-                    native_step=0.5,
+                    native_step=1.0,
                 )
             )
         else:

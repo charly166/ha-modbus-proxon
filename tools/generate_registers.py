@@ -440,6 +440,14 @@ _PLATFORM_OVERRIDES: dict[str, dict] = {
     "proxon_heizstab_temperatur": {"platform": "number", "min": 20.0, "max": 70.0, "step": 0.5},
 }
 
+# Registers that stay on their normal migrated platform (e.g. a read-only
+# "sensor") but whose underlying Component field must still be opened up for
+# writes, because a hand-written entity elsewhere (see intensivlueftung.py)
+# writes to the same field. The Excel documents address 133 as writable
+# (max 1440 min); the legacy proxon.yaml only ever read it as a sensor and
+# wrote via a separate raw modbus.write_register automation instead.
+_FORCE_WRITABLE = {"proxon_intensivlueftung_restzeit"}
+
 
 _DEVICE_CLASS_BY_LEGACY = {
     "temperature": ("SensorDeviceClass.TEMPERATURE", "SensorStateClass.MEASUREMENT"),
@@ -465,6 +473,17 @@ _LEGACY_UNIT_NORMALIZE = {
     "Sekunden": "s",
     "Minuten": "min",
     "Tage": "d",
+}
+
+# Correction for registers where the real FWT2.0 hardware doesn't match the
+# Excel's documented scale=1.0 - confirmed by the integration author's own
+# years-old, empirically-calibrated proxon.yaml template sensor, which always
+# multiplied the raw "Stunden Gerätefilter" register by 2 before treating it
+# as hours. The register only advances once per 2 real elapsed hours, despite
+# being labelled a 1h-resolution "Stundenzähler" in both the Excel and the
+# legacy proxon.yaml.
+_LEGACY_SCALE_OVERRIDES = {
+    "proxon_nutzzeit_fwt_geraetefilter": 2.0,
 }
 
 
@@ -608,13 +627,15 @@ def build_holding_components(
             )
         if e.legacy_offset is not None:
             reg = replace(reg, offset=e.legacy_offset * reg.scale)
+        if e.unique_id in _LEGACY_SCALE_OVERRIDES:
+            reg = replace(reg, scale=_LEGACY_SCALE_OVERRIDES[e.unique_id])
         if not reg.unit.strip() and e.unit:
             # Excel documents this address but left the unit blank - prefer
             # proxon.yaml's own unit (normalized to a proper HA unit symbol)
             # over losing the unit altogether.
             reg = replace(reg, unit=_LEGACY_UNIT_NORMALIZE.get(e.unit, e.unit))
         override = _PLATFORM_OVERRIDES.get(e.unique_id)
-        writable = e.platform == "switch" or override is not None
+        writable = e.platform == "switch" or override is not None or e.unique_id in _FORCE_WRITABLE
         fname = dedupe(slugify(e.name), used_names)
         spec.fields.append(emit_field_line(fname, e.address, reg, writable, reg.comment or e.name))
         meta = make_meta(
@@ -1082,7 +1103,7 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonNumberEntityDescript
                     native_unit_of_measurement="\N{DEGREE SIGN}C",
                     native_min_value=ZBP_SOLL_MIN,
                     native_max_value=ZBP_SOLL_MAX,
-                    native_step=0.5,
+                    native_step=1.0,
                 )
             )
         else:
@@ -1104,17 +1125,36 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonNumberEntityDescript
 ''',
 }
 
-# Filter-life sensors are computed (Standzeit + Nutzzeit combined), not a 1:1
-# register mapping - hand-written in filter.py (imports only from .entity, to
-# avoid a circular import with the generated sensor.py/binary_sensor.py that
-# reference it here).
-_FILTER_IMPORTS: dict[str, str] = {
-    "sensor": "from .filter import FILTER_RESTTAGE_DESCRIPTION, ProxonFilterResttageSensor\n",
+# Entities computed/behaving differently from a plain 1:1 register mapping
+# (filter-life sensors, the Intensivlüftung boost switch) are hand-written in
+# their own module (imports only from .entity, to avoid a circular import
+# with the generated platform files that reference them here) and spliced
+# into the matching generated platform file's async_setup_entry.
+_EXTRA_MODULE_IMPORTS: dict[str, str] = {
+    "sensor": (
+        "from .filter import (\n"
+        "    FILTER_RESTTAGE_DESCRIPTION,\n"
+        "    FILTER_TAGE_DESCRIPTION,\n"
+        "    ProxonFilterResttageSensor,\n"
+        "    ProxonFilterTageSensor,\n"
+        ")\n"
+    ),
     "binary_sensor": "from .filter import FILTER_REMINDER_DESCRIPTION, ProxonFilterReminderBinarySensor\n",
+    "switch": (
+        "from .intensivlueftung import INTENSIVLUEFTUNG_DESCRIPTION, ProxonIntensivlueftungSwitch\n"
+    ),
 }
-_FILTER_EXTRA_ENTITIES: dict[str, str] = {
-    "sensor": "ProxonFilterResttageSensor(coordinator, FILTER_RESTTAGE_DESCRIPTION)",
-    "binary_sensor": "ProxonFilterReminderBinarySensor(coordinator, FILTER_REMINDER_DESCRIPTION)",
+_EXTRA_MODULE_ENTITIES: dict[str, list[str]] = {
+    "sensor": [
+        "ProxonFilterTageSensor(coordinator, FILTER_TAGE_DESCRIPTION)",
+        "ProxonFilterResttageSensor(coordinator, FILTER_RESTTAGE_DESCRIPTION)",
+    ],
+    "binary_sensor": [
+        "ProxonFilterReminderBinarySensor(coordinator, FILTER_REMINDER_DESCRIPTION)",
+    ],
+    "switch": [
+        "ProxonIntensivlueftungSwitch(coordinator, INTENSIVLUEFTUNG_DESCRIPTION)",
+    ],
 }
 
 _ZONE_ENTITY_EXTRA_IMPORTS: dict[str, str] = {
@@ -1248,8 +1288,8 @@ def render_platform_file(platform: str, metas: list[FieldMeta]) -> str:
         lines.append(_ZONE_ENTITY_CODE[platform].strip("\n"))
         lines.append("")
     lines.append("")
-    if platform in _FILTER_IMPORTS:
-        lines.append(_FILTER_IMPORTS[platform])
+    if platform in _EXTRA_MODULE_IMPORTS:
+        lines.append(_EXTRA_MODULE_IMPORTS[platform])
     lines.append("async def async_setup_entry(")
     lines.append("    hass: HomeAssistant, entry: ProxonConfigEntry, async_add_entities: AddEntitiesCallback")
     lines.append(") -> None:")
@@ -1261,8 +1301,9 @@ def render_platform_file(platform: str, metas: list[FieldMeta]) -> str:
             "    entities += ["
             f"{entity_name}(coordinator, d) for d in _zone_descriptions(entry.runtime_data.zones)]"
         )
-    if platform in _FILTER_EXTRA_ENTITIES:
-        lines.append(f"    entities.append({_FILTER_EXTRA_ENTITIES[platform]})")
+    if platform in _EXTRA_MODULE_ENTITIES:
+        extra = ", ".join(_EXTRA_MODULE_ENTITIES[platform])
+        lines.append(f"    entities.extend([{extra}])")
     lines.append("    async_add_entities(entities)")
     lines.append("")
     return "\n".join(lines) + "\n"
@@ -1345,6 +1386,7 @@ _EXTRA_ENTITY_STRINGS: dict = {
     "sensor": {
         "proxon_zone_ist_temperatur": {"name": "Ist-Temperatur"},
         "proxon_zone_mitteltemperatur": {"name": "Mitteltemperatur"},
+        "proxon_filter_tage": {"name": "Gerätefilter Tage seit Wechsel"},
         "proxon_filter_resttage": {"name": "Gerätefilter Resttage"},
     },
     "binary_sensor": {
@@ -1353,6 +1395,7 @@ _EXTRA_ENTITY_STRINGS: dict = {
     "switch": {
         "proxon_zone_heizelement": {"name": "Heizelement"},
         "proxon_zone_tastensperre": {"name": "Sperren Bedienteil"},
+        "proxon_intensivlueftung": {"name": "Intensivlüftung (60 Min.)"},
     },
     "number": {
         "proxon_zone_offset_temperatur": {"name": "Offset-Temperatur"},

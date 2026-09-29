@@ -2489,7 +2489,12 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSensorEntityDescript
     return out
 
 
-from .filter import FILTER_RESTTAGE_DESCRIPTION, ProxonFilterResttageSensor
+from .filter import (
+    FILTER_RESTTAGE_DESCRIPTION,
+    FILTER_TAGE_DESCRIPTION,
+    ProxonFilterResttageSensor,
+    ProxonFilterTageSensor,
+)
 
 
 async def async_setup_entry(
@@ -2499,6 +2504,6 @@ async def async_setup_entry(
     coordinator = entry.runtime_data.coordinator
     entities = [ProxonSensor(coordinator, d) for d in SENSOR_DESCRIPTIONS]
     entities += [ProxonSensor(coordinator, d) for d in _zone_descriptions(entry.runtime_data.zones)]
-    entities.append(ProxonFilterResttageSensor(coordinator, FILTER_RESTTAGE_DESCRIPTION))
+    entities.extend([ProxonFilterTageSensor(coordinator, FILTER_TAGE_DESCRIPTION), ProxonFilterResttageSensor(coordinator, FILTER_RESTTAGE_DESCRIPTION)])
     async_add_entities(entities)
 

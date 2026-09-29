@@ -78,6 +78,6 @@ async def async_setup_entry(
     """Set up Proxon binary_sensor entities."""
     coordinator = entry.runtime_data.coordinator
     entities = [ProxonBinarySensor(coordinator, d) for d in BINARY_SENSOR_DESCRIPTIONS]
-    entities.append(ProxonFilterReminderBinarySensor(coordinator, FILTER_REMINDER_DESCRIPTION))
+    entities.extend([ProxonFilterReminderBinarySensor(coordinator, FILTER_REMINDER_DESCRIPTION)])
     async_add_entities(entities)
 

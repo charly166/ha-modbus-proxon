@@ -38,28 +38,62 @@ DAYS_PER_MONTH = 30
 FILTER_REMINDER_THRESHOLD_DAYS = 14
 
 
-def _filter_resttage(component) -> float | None:
-    """Remaining filter life in days, or None if either source value is unknown."""
-    standzeit_monate = component.proxon_standzeit_fwt_geraetefilter
+def _filter_tage(component) -> int | None:
+    """Elapsed filter runtime in whole days, or None if the source is unknown.
+
+    proxon_nutzzeit_fwt_geraetefilter is already in true hours (registers_holding.py
+    applies the real hardware's x2 scale), so this is just hours -> days.
+    """
     nutzzeit_stunden = component.proxon_nutzzeit_fwt_geraetefilter
-    if standzeit_monate is None or nutzzeit_stunden is None:
+    if nutzzeit_stunden is None:
         return None
-    resttage = standzeit_monate * DAYS_PER_MONTH - nutzzeit_stunden / 24
-    return max(0.0, round(resttage, 1))
+    return round(nutzzeit_stunden / 24)
+
+
+def _filter_resttage(component) -> int | None:
+    """Remaining filter life in whole days, or None if either source value is unknown."""
+    standzeit_monate = component.proxon_standzeit_fwt_geraetefilter
+    filter_tage = _filter_tage(component)
+    if standzeit_monate is None or filter_tage is None:
+        return None
+    resttage = standzeit_monate * DAYS_PER_MONTH - filter_tage
+    return max(0, round(resttage))
 
 
 @dataclass(frozen=True, kw_only=True)
 class _FilterSensorDescription(SensorEntityDescription, ProxonEntityDescription):
-    """Entity description for the computed filter-life sensor."""
+    """Entity description for a computed filter-life sensor."""
 
 
-class ProxonFilterResttageSensor(ProxonEntity, SensorEntity):
-    """Restlaufzeit des Gerätefilters in Tagen (Standzeit - Nutzzeit)."""
+class ProxonFilterTageSensor(ProxonEntity, SensorEntity):
+    """Seit dem letzten Filterwechsel vergangene Tage (Nutzzeit umgerechnet)."""
 
     entity_description: _FilterSensorDescription
 
     @property
-    def native_value(self) -> float | None:
+    def native_value(self) -> int | None:
+        return _filter_tage(self._component)
+
+
+FILTER_TAGE_DESCRIPTION = _FilterSensorDescription(
+    key="proxon_filter_tage",
+    component="geraetefilter",
+    field="proxon_nutzzeit_fwt_geraetefilter",  # not read directly - see native_value above
+    has_entity_name=True,
+    translation_key="proxon_filter_tage",
+    native_unit_of_measurement=UnitOfTime.DAYS,
+    device_class=SensorDeviceClass.DURATION,
+    state_class=SensorStateClass.TOTAL_INCREASING,
+)
+
+
+class ProxonFilterResttageSensor(ProxonEntity, SensorEntity):
+    """Restlaufzeit des Gerätefilters in Tagen (Standzeit - Filter Tage)."""
+
+    entity_description: _FilterSensorDescription
+
+    @property
+    def native_value(self) -> int | None:
         return _filter_resttage(self._component)
 
 

@@ -68,6 +68,9 @@
       "proxon_zone_mitteltemperatur": {
         "name": "Mitteltemperatur"
       },
+      "proxon_filter_tage": {
+        "name": "Gerätefilter Tage seit Wechsel"
+      },
       "proxon_filter_resttage": {
         "name": "Gerätefilter Resttage"
       },
@@ -851,6 +854,9 @@
       },
       "proxon_zone_tastensperre": {
         "name": "Sperren Bedienteil"
+      },
+      "proxon_intensivlueftung": {
+        "name": "Intensivlüftung (60 Min.)"
       },
       "proxon_legionellaschutz": {
         "name": "Legionellaschutz"
