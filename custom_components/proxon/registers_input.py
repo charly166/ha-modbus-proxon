@@ -27,8 +27,8 @@ class WarmwasserInput(Component):
 
     register_space = "input"
 
-    proxon_temperatur_wasser_unten = gauge(813, 0.1, signed=False, unit='°C', offset=-10.0)  # Proxon Temperatur Wasser Unten
-    proxon_ist_temperatur_wasser = gauge(814, 0.1, signed=False, unit='°C', offset=-10.0)  # Proxon Ist-Temperatur Wasser
+    proxon_temperatur_wasser_unten = gauge(813, 0.1, signed=False, unit='°C', offset=-100)  # Proxon Temperatur Wasser Unten
+    proxon_ist_temperatur_wasser = gauge(814, 0.1, signed=False, unit='°C', offset=-100)  # Proxon Ist-Temperatur Wasser
 
 class HeizstabStatus(Component):
     """T300 Heizstab-/Kompressorstatus (binäre Sensoren). Migriert 1:1 aus proxon.yaml."""

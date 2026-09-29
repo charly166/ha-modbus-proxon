@@ -407,8 +407,9 @@ def emit_field_line(field_name: str, address: int, reg: ExcelRegister, writable:
         kwargs.append(f"unit={unit!r}")
     if abs(reg.offset) > 1e-9:
         # modbus_connection applies `offset` in real/scaled units (value = raw*scale +
-        # offset); proxon.yaml's `offset:` was in raw units (HA core modbus convention:
-        # value = (raw + offset) * scale) - reg.offset here is already converted.
+        # offset) - confirmed against the installed homeassistant package's own modbus
+        # integration (__process_raw_value: val = scale*entry+offset), which uses the
+        # exact same convention, so proxon.yaml's `offset:` carries over unconverted.
         kwargs.append(f"offset={reg.offset!r}")
     if writable:
         kwargs.append("writable=True")
@@ -626,7 +627,11 @@ def build_holding_components(
                 comment="Nicht in der FWT2.0-Registerliste (separates Modul, z.B. T300).",
             )
         if e.legacy_offset is not None:
-            reg = replace(reg, offset=e.legacy_offset * reg.scale)
+            # proxon.yaml's `offset:` and modbus_connection's `offset=` use the exact
+            # same convention (value = raw*scale + offset, confirmed against the real
+            # homeassistant package's own modbus integration) - carries over as-is, no
+            # scale conversion needed.
+            reg = replace(reg, offset=e.legacy_offset)
         if e.unique_id in _LEGACY_SCALE_OVERRIDES:
             reg = replace(reg, scale=_LEGACY_SCALE_OVERRIDES[e.unique_id])
         if not reg.unit.strip() and e.unit:
@@ -813,10 +818,11 @@ def build_input_components(
                 comment="Nicht in der FWT2.0-Registerliste (separates Modul, z.B. T300).",
             )
         if e.legacy_offset is not None:
-            # proxon.yaml's offset is in raw units (pre-scale); modbus-connection's
-            # gauge()/integer() offset is applied post-scale - convert. Copy the
-            # register first: `reg` may be a shared instance from `by_addr`.
-            reg = replace(reg, offset=e.legacy_offset * reg.scale)
+            # proxon.yaml's `offset:` and modbus_connection's `offset=` use the exact
+            # same convention (value = raw*scale + offset, confirmed against the real
+            # homeassistant package's own modbus integration) - carries over as-is, no
+            # scale conversion needed.
+            reg = replace(reg, offset=e.legacy_offset)
         fname = dedupe(slugify(e.name), used_names)
         spec.fields.append(emit_field_line(fname, e.address, reg, False, reg.comment or e.name))
         spec.meta.append(
