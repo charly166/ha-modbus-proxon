@@ -74,6 +74,14 @@
       "proxon_filter_resttage": {
         "name": "Gerätefilter Resttage"
       },
+      "proxon_modbus_schreibrecht": {
+        "name": "Modbus Schreibrecht",
+        "state": {
+          "kein_schreibzugriff": "Kein Schreibzugriff",
+          "eingeschraenkter_schreibzugriff": "Eingeschränkter Schreibzugriff",
+          "voller_schreibzugriff": "Voller Schreibzugriff"
+        }
+      },
       "proxon_stunden_fwt_an": {
         "name": "Stunden FWT AN"
       },

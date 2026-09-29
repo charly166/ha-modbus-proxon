@@ -183,12 +183,21 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
    sobald die Restlaufzeit ≤ 14 Tage beträgt. Für die eigentliche Benachrichtigung (z.B. per
    Telegram) diesen Binärsensor in einer eigenen Automatisierung auslösen - die Integration
    versendet selbst keine Benachrichtigungen (HA-Konvention).
-10. **`Sperren Bedienteil` ist jetzt ein `binary_sensor`, kein `switch` mehr**: Auf echter
-    Hardware lässt sich die Tastensperre eines NBP/HNBP grundsätzlich nicht per Modbus setzen
-    (jeder Schreibversuch schlägt mit "Modbus Exception 0x03" fehl, unabhängig von der Zone) -
-    das Sperren/Entsperren geschieht ausschließlich am Hauptbedienpanel (HBE) selbst. Die
-    Entität zeigt den aktuellen Sperrzustand weiterhin an, ist aber nicht mehr schreibbar. Nach
-    dem Update die alte, jetzt verwaiste `switch.proxon_tastensperre_<zone>`-Entität unter
+10. **`Sperren Bedienteil` ist jetzt ein `binary_sensor`, kein `switch` mehr**: Auf manchen
+    Anlagen schlägt jeder Schreibversuch auf die Tastensperre mit "Modbus Exception 0x03" fehl,
+    unabhängig von der Zone. **Ursache** (vom Integrations-Autor recherchiert): Die Anlage hat
+    ein Rechtekonzept für Modbus-Schreibzugriffe, sichtbar in **Holding-Register 438**
+    (`0 = kein Schreibzugriff`, `1 = einige Register`, `2 = alle Register` - in dieser
+    Integration als schreibgeschützter Sensor **"Modbus Schreibrecht"** verfügbar).
+    Bei Stufe 0 oder 1 lehnt die Anlage Schreibzugriffe auf bestimmte Register ab - insbesondere
+    betroffen sind laut Rückmeldung eines Nutzers die Tastensperren und "Heizelemente Global".
+    Die Berechtigungsstufe selbst lässt sich nicht aus Home Assistant heraus ändern, sondern nur
+    über den [Proxon/Zimmermann-Kundenservice](https://www.zimmermann-lueftung.de/kundenservice).
+    Da unklar ist, welche Anlagen mit welcher Werkseinstellung ausgeliefert werden, bleibt
+    `Sperren Bedienteil` deshalb grundsätzlich nur lesbar; wer vom Support die Stufe "alle
+    Register" bestätigt bekommt, kann sich gerne (per Issue) melden, dann kann das wieder auf
+    einen schreibbaren `switch` umgestellt werden. Die Entität zeigt den aktuellen Sperrzustand
+    weiterhin an. Nach dem Update die alte, jetzt verwaiste `switch.proxon_tastensperre_<zone>`-Entität unter
     Einstellungen → Entitäten löschen; die neue `binary_sensor.proxon_tastensperre_<zone>`
     behält dieselbe `unique_id`.
 

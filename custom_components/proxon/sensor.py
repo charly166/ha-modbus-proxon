@@ -72,13 +72,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         suggested_display_precision=1,
     ),
     ProxonSensorEntityDescription(
-        key='proxon_status_modbus',
-        component='modbus_status_holding',
-        field='proxon_modbus_status',
-        name='Proxon Modbus Status',
-        has_entity_name=False,
-    ),
-    ProxonSensorEntityDescription(
         key='proxon_stunden_fwt_an',
         component='stundenzaehler',
         field='stunden_fwt_an',
@@ -2495,6 +2488,7 @@ from .filter import (
     ProxonFilterResttageSensor,
     ProxonFilterTageSensor,
 )
+from .schreibrecht import SCHREIBRECHT_DESCRIPTION, ProxonSchreibrechtSensor
 
 
 async def async_setup_entry(
@@ -2504,6 +2498,6 @@ async def async_setup_entry(
     coordinator = entry.runtime_data.coordinator
     entities = [ProxonSensor(coordinator, d) for d in SENSOR_DESCRIPTIONS]
     entities += [ProxonSensor(coordinator, d) for d in _zone_descriptions(entry.runtime_data.zones)]
-    entities.extend([ProxonFilterTageSensor(coordinator, FILTER_TAGE_DESCRIPTION), ProxonFilterResttageSensor(coordinator, FILTER_RESTTAGE_DESCRIPTION)])
+    entities.extend([ProxonFilterTageSensor(coordinator, FILTER_TAGE_DESCRIPTION), ProxonFilterResttageSensor(coordinator, FILTER_RESTTAGE_DESCRIPTION), ProxonSchreibrechtSensor(coordinator, SCHREIBRECHT_DESCRIPTION)])
     async_add_entities(entities)
 

@@ -433,6 +433,12 @@ def emit_field_line(field_name: str, address: int, reg: ExcelRegister, writable:
 # sensor/switch/binary_sensor/number, not select).
 _PLATFORM_OVERRIDES: dict[str, dict] = {
     "proxon_betriebsart": {"platform": "select"},
+    # Holding 438: not just a generic "status" register (despite the legacy
+    # proxon.yaml name) - it's the device's Modbus write-permission level
+    # (0=kein/1=einige/2=alle Register beschreibbar), which is *why* writes
+    # like Tastensperre fail on some installations. Hand-written read-only
+    # enum sensor (see schreibrecht.py) instead of a raw-integer sensor.
+    "proxon_status_modbus": {"platform": "schreibrecht", "writable": False},
     "proxon_luefterstufe": {"platform": "number", "min": 1.0, "max": 4.0, "step": 1.0},
     # min/max for the T300 fields come straight from the Excel's "T300 Sollwerte"
     # section (addresses 2000/2003, IST-Min/IST-Max columns) when present; these
@@ -640,7 +646,11 @@ def build_holding_components(
             # over losing the unit altogether.
             reg = replace(reg, unit=_LEGACY_UNIT_NORMALIZE.get(e.unit, e.unit))
         override = _PLATFORM_OVERRIDES.get(e.unique_id)
-        writable = e.platform == "switch" or override is not None or e.unique_id in _FORCE_WRITABLE
+        writable = (
+            e.platform == "switch"
+            or (override is not None and override.get("writable", True))
+            or e.unique_id in _FORCE_WRITABLE
+        )
         fname = dedupe(slugify(e.name), used_names)
         spec.fields.append(emit_field_line(fname, e.address, reg, writable, reg.comment or e.name))
         meta = make_meta(
@@ -1151,6 +1161,7 @@ _EXTRA_MODULE_IMPORTS: dict[str, str] = {
         "    ProxonFilterResttageSensor,\n"
         "    ProxonFilterTageSensor,\n"
         ")\n"
+        "from .schreibrecht import SCHREIBRECHT_DESCRIPTION, ProxonSchreibrechtSensor\n"
     ),
     "binary_sensor": "from .filter import FILTER_REMINDER_DESCRIPTION, ProxonFilterReminderBinarySensor\n",
     "switch": (
@@ -1161,6 +1172,7 @@ _EXTRA_MODULE_ENTITIES: dict[str, list[str]] = {
     "sensor": [
         "ProxonFilterTageSensor(coordinator, FILTER_TAGE_DESCRIPTION)",
         "ProxonFilterResttageSensor(coordinator, FILTER_RESTTAGE_DESCRIPTION)",
+        "ProxonSchreibrechtSensor(coordinator, SCHREIBRECHT_DESCRIPTION)",
     ],
     "binary_sensor": [
         "ProxonFilterReminderBinarySensor(coordinator, FILTER_REMINDER_DESCRIPTION)",
@@ -1404,6 +1416,14 @@ _EXTRA_ENTITY_STRINGS: dict = {
         "proxon_zone_mitteltemperatur": {"name": "Mitteltemperatur"},
         "proxon_filter_tage": {"name": "Gerätefilter Tage seit Wechsel"},
         "proxon_filter_resttage": {"name": "Gerätefilter Resttage"},
+        "proxon_modbus_schreibrecht": {
+            "name": "Modbus Schreibrecht",
+            "state": {
+                "kein_schreibzugriff": "Kein Schreibzugriff",
+                "eingeschraenkter_schreibzugriff": "Eingeschränkter Schreibzugriff",
+                "voller_schreibzugriff": "Voller Schreibzugriff",
+            },
+        },
     },
     "binary_sensor": {
         "proxon_filter_wechsel_faellig": {"name": "Gerätefilter Wechsel fällig"},
