@@ -34,6 +34,13 @@ class ProxonBinarySensor(ProxonEntity, BinarySensorEntity):
 
 BINARY_SENSOR_DESCRIPTIONS: tuple[ProxonBinarySensorEntityDescription, ...] = (
     ProxonBinarySensorEntityDescription(
+        key='proxon_heizelemente_global',
+        component='lueftung',
+        field='proxon_heizelemente_global',
+        name='Proxon Heizelemente Global',
+        has_entity_name=False,
+    ),
+    ProxonBinarySensorEntityDescription(
         key='proxon_kompressor_status',
         component='heizstab_status',
         field='proxon_kompressor_status',

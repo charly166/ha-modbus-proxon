@@ -43,13 +43,6 @@ SWITCH_DESCRIPTIONS: tuple[ProxonSwitchEntityDescription, ...] = (
         has_entity_name=False,
     ),
     ProxonSwitchEntityDescription(
-        key='proxon_heizelemente_global',
-        component='lueftung',
-        field='proxon_heizelemente_global',
-        name='Proxon Heizelemente Global',
-        has_entity_name=False,
-    ),
-    ProxonSwitchEntityDescription(
         key='proxon_heizstab',
         component='t300_warmwasser',
         field='t300_heizstab',

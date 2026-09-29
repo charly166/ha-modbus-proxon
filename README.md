@@ -183,23 +183,31 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
    sobald die Restlaufzeit ≤ 14 Tage beträgt. Für die eigentliche Benachrichtigung (z.B. per
    Telegram) diesen Binärsensor in einer eigenen Automatisierung auslösen - die Integration
    versendet selbst keine Benachrichtigungen (HA-Konvention).
-10. **`Sperren Bedienteil` ist jetzt ein `binary_sensor`, kein `switch` mehr**: Auf manchen
-    Anlagen schlägt jeder Schreibversuch auf die Tastensperre mit "Modbus Exception 0x03" fehl,
-    unabhängig von der Zone. **Ursache** (vom Integrations-Autor recherchiert): Die Anlage hat
-    ein Rechtekonzept für Modbus-Schreibzugriffe, sichtbar in **Holding-Register 438**
-    (`0 = kein Schreibzugriff`, `1 = einige Register`, `2 = alle Register` - in dieser
-    Integration als schreibgeschützter Sensor **"Modbus Schreibrecht"** verfügbar).
-    Bei Stufe 0 oder 1 lehnt die Anlage Schreibzugriffe auf bestimmte Register ab - insbesondere
-    betroffen sind laut Rückmeldung eines Nutzers die Tastensperren und "Heizelemente Global".
+10. **Modbus-Schreibrecht-Konzept**: Die Anlage hat ein Rechtekonzept für Modbus-Schreibzugriffe,
+    sichtbar in **Holding-Register 438** (`0 = kein Schreibzugriff`, `1 = einige Register`,
+    `2 = alle Register` - in dieser Integration als schreibgeschützter Sensor
+    **"Modbus Schreibrecht"** verfügbar). Bei Stufe 0 oder 1 lehnt die Anlage Schreibzugriffe auf
+    bestimmte Register mit "Modbus Exception 0x03" ab. Die Registerliste dokumentiert **pro
+    Register**, ab welcher Stufe es beschreibbar wird (Spalten D/E/F = Stufe 0/1/2); danach
+    richtet sich, welche Entitäten dieser Integration schreibbar sind:
+    - **`Sperren Bedienteil`** (alle Zonen) und **`Heizelemente Global`** benötigen laut
+      Registerliste Stufe 2 ("alle Register") und sind deshalb nur `binary_sensor` (lesbar),
+      kein `switch` mehr - sie zeigen weiterhin den aktuellen Zustand an.
+    - **Das Heizelement des ZBP** (Zentralbedienpanel, Adresse 187 - anders als bei
+      HNBP/NBP1-19) benötigt ebenfalls Stufe 2, ist in dieser Version aber noch **regulär
+      schreibbar** (Schalter + `climate`-Heizmodus) - ein Schreibversuch schlägt auf Anlagen mit
+      Stufe 0/1 daher ebenfalls mit Exception 0x03 fehl. Das komplett read-only zu machen würde
+      auch die `climate`-Entität des ZBP betreffen (Aus/Heizen-Umschaltung); vor dieser größeren
+      Änderung bei Bedarf bitte ein Issue öffnen.
+    - Alle übrigen schreibbaren Entitäten dieser Integration (Betriebsart, Lüfterstufe,
+      Intensivlüftung, Zonen-Solltemperaturen, Heizelement HNBP/NBP1-19, T300-Einstellungen)
+      benötigen laut Registerliste nur Stufe 1 und sollten auf den meisten Anlagen funktionieren.
+
     Die Berechtigungsstufe selbst lässt sich nicht aus Home Assistant heraus ändern, sondern nur
     über den [Proxon/Zimmermann-Kundenservice](https://www.zimmermann-lueftung.de/kundenservice).
-    Da unklar ist, welche Anlagen mit welcher Werkseinstellung ausgeliefert werden, bleibt
-    `Sperren Bedienteil` deshalb grundsätzlich nur lesbar; wer vom Support die Stufe "alle
-    Register" bestätigt bekommt, kann sich gerne (per Issue) melden, dann kann das wieder auf
-    einen schreibbaren `switch` umgestellt werden. Die Entität zeigt den aktuellen Sperrzustand
-    weiterhin an. Nach dem Update die alte, jetzt verwaiste `switch.proxon_tastensperre_<zone>`-Entität unter
-    Einstellungen → Entitäten löschen; die neue `binary_sensor.proxon_tastensperre_<zone>`
-    behält dieselbe `unique_id`.
+    Nach dem Update die alten, jetzt verwaisten `switch.proxon_tastensperre_<zone>`- und
+    `switch.proxon_heizelemente_global`-Entitäten unter Einstellungen → Entitäten löschen; die
+    neuen `binary_sensor`-Entitäten behalten dieselbe `unique_id`, der Verlauf läuft weiter.
 
 ## Umfang / Kuration der Register
 

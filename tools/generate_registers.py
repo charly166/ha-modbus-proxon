@@ -439,6 +439,12 @@ _PLATFORM_OVERRIDES: dict[str, dict] = {
     # like Tastensperre fail on some installations. Hand-written read-only
     # enum sensor (see schreibrecht.py) instead of a raw-integer sensor.
     "proxon_status_modbus": {"platform": "schreibrecht", "writable": False},
+    # Holding 325: the Excel's per-register write-permission columns (D/E/F =
+    # Schreibrecht-Stufe 0/1/2) confirm this needs level 2 ("alle Register"),
+    # exactly like the Tastensperre registers - installations below that level
+    # get Modbus exception 0x03 on every write. Read-only until confirmed
+    # otherwise (see README "Modbus-Schreibrecht").
+    "proxon_heizelemente_global": {"platform": "binary_sensor", "writable": False},
     "proxon_luefterstufe": {"platform": "number", "min": 1.0, "max": 4.0, "step": 1.0},
     # min/max for the T300 fields come straight from the Excel's "T300 Sollwerte"
     # section (addresses 2000/2003, IST-Min/IST-Max columns) when present; these
@@ -646,11 +652,13 @@ def build_holding_components(
             # over losing the unit altogether.
             reg = replace(reg, unit=_LEGACY_UNIT_NORMALIZE.get(e.unit, e.unit))
         override = _PLATFORM_OVERRIDES.get(e.unique_id)
-        writable = (
-            e.platform == "switch"
-            or (override is not None and override.get("writable", True))
-            or e.unique_id in _FORCE_WRITABLE
-        )
+        if override is not None and "writable" in override:
+            # Explicit override always wins - e.g. a legacy "switch" whose real
+            # hardware write requires a Modbus permission level not every
+            # installation has (see proxon_heizelemente_global below).
+            writable = override["writable"]
+        else:
+            writable = e.platform == "switch" or override is not None or e.unique_id in _FORCE_WRITABLE
         fname = dedupe(slugify(e.name), used_names)
         spec.fields.append(emit_field_line(fname, e.address, reg, writable, reg.comment or e.name))
         meta = make_meta(

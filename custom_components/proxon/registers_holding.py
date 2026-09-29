@@ -18,7 +18,7 @@ class Lueftung(Component):
     proxon_kuehlung = integer(62, signed=False, unit='AUS/AN', writable=True)  # Proxon Kuehlung
     proxon_intensivlueftung_restzeit = integer(133, signed=False, unit='Minuten', writable=True)  # Proxon Intensivlüftung Restzeit
     proxon_intensivlueftung_sollzeit = integer(189, signed=False, unit='Minuten')  # Proxon Intensivlüftung Sollzeit
-    proxon_heizelemente_global = integer(325, signed=False, unit='AUS/AN', writable=True)  # Heizelemente Global freigeben
+    proxon_heizelemente_global = integer(325, signed=False, unit='AUS/AN')  # Heizelemente Global freigeben
 
 class T300Warmwasser(Component):
     """T300 Warmwasser-Heizstab. Migriert 1:1 aus proxon.yaml."""
