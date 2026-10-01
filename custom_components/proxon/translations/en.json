@@ -18,36 +18,36 @@
         }
       },
       "zones_count": {
-        "description": "How many control panels/zones are installed? ZBP (main panel) always exists and is named separately in the next step.",
+        "description": "How many control panels/zones are installed? ZBP (main panel) always exists and is named separately in the next step. For NBP, enter the highest installed number, not the count - e.g. if you have NBP1-NBP3 and NBP5-NBP6 but no NBP4, enter 6 (NBP4 can simply be left blank in the next step).",
         "data": {
           "has_hnb": "Secondary main panel (HNBP) installed",
-          "zone_count": "Number of remote panels (NBP1..NBPx)"
+          "zone_count": "Highest installed NBP number (NBPx)"
         }
       },
       "zone_names": {
-        "description": "Pick the matching Home Assistant Area for each zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping).",
+        "description": "Pick the matching Home Assistant Area for each zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped.",
         "data": {
           "zbp_name": "Area for ZBP",
           "hnb_name": "Area for HNBP",
-          "zone_name_1": "Area for NBP1",
-          "zone_name_2": "Area for NBP2",
-          "zone_name_3": "Area for NBP3",
-          "zone_name_4": "Area for NBP4",
-          "zone_name_5": "Area for NBP5",
-          "zone_name_6": "Area for NBP6",
-          "zone_name_7": "Area for NBP7",
-          "zone_name_8": "Area for NBP8",
-          "zone_name_9": "Area for NBP9",
-          "zone_name_10": "Area for NBP10",
-          "zone_name_11": "Area for NBP11",
-          "zone_name_12": "Area for NBP12",
-          "zone_name_13": "Area for NBP13",
-          "zone_name_14": "Area for NBP14",
-          "zone_name_15": "Area for NBP15",
-          "zone_name_16": "Area for NBP16",
-          "zone_name_17": "Area for NBP17",
-          "zone_name_18": "Area for NBP18",
-          "zone_name_19": "Area for NBP19"
+          "zone_name_1": "Area for NBP1 (leave blank if not installed)",
+          "zone_name_2": "Area for NBP2 (leave blank if not installed)",
+          "zone_name_3": "Area for NBP3 (leave blank if not installed)",
+          "zone_name_4": "Area for NBP4 (leave blank if not installed)",
+          "zone_name_5": "Area for NBP5 (leave blank if not installed)",
+          "zone_name_6": "Area for NBP6 (leave blank if not installed)",
+          "zone_name_7": "Area for NBP7 (leave blank if not installed)",
+          "zone_name_8": "Area for NBP8 (leave blank if not installed)",
+          "zone_name_9": "Area for NBP9 (leave blank if not installed)",
+          "zone_name_10": "Area for NBP10 (leave blank if not installed)",
+          "zone_name_11": "Area for NBP11 (leave blank if not installed)",
+          "zone_name_12": "Area for NBP12 (leave blank if not installed)",
+          "zone_name_13": "Area for NBP13 (leave blank if not installed)",
+          "zone_name_14": "Area for NBP14 (leave blank if not installed)",
+          "zone_name_15": "Area for NBP15 (leave blank if not installed)",
+          "zone_name_16": "Area for NBP16 (leave blank if not installed)",
+          "zone_name_17": "Area for NBP17 (leave blank if not installed)",
+          "zone_name_18": "Area for NBP18 (leave blank if not installed)",
+          "zone_name_19": "Area for NBP19 (leave blank if not installed)"
         }
       }
     },

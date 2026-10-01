@@ -1361,15 +1361,15 @@ CONFIG_FLOW_STRINGS: dict = {
             "data": {"host": "Modbus Host / IP-Adresse", "port": "Modbus Port", "slave": "Modbus-Slave-Adresse"},
         },
         "zones_count": {
-            "description": "Wie viele Bedienteile/Zonen sind installiert? ZBP (Zentralbedienpanel) ist immer vorhanden und wird im nächsten Schritt separat benannt.",
-            "data": {"has_hnb": "Hauptnebenbedienpanel (HNBP) installiert", "zone_count": "Anzahl Nebenbedienpanel (NBP1..NBPx)"},
+            "description": "Wie viele Bedienteile/Zonen sind installiert? ZBP (Zentralbedienpanel) ist immer vorhanden und wird im nächsten Schritt separat benannt. Bei NBP zählt die höchste vorhandene Nummer, nicht die Anzahl - hast du z.B. NBP1-NBP3 und NBP5-NBP6, aber kein NBP4, trage hier 6 ein (NBP4 lässt sich im nächsten Schritt einfach leer lassen).",
+            "data": {"has_hnb": "Hauptnebenbedienpanel (HNBP) installiert", "zone_count": "Höchste installierte NBP-Nummer (NBPx)"},
         },
         "zone_names": {
-            "description": "Wähle für jede Zone den passenden Home-Assistant-Raum. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung).",
+            "description": "Wähle für jede Zone den passenden Home-Assistant-Raum. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen.",
             "data": {
                 "zbp_name": "Raum für ZBP",
                 "hnb_name": "Raum für HNBP",
-                **{f"zone_name_{i}": f"Raum für NBP{i}" for i in range(1, MAX_ZONE_COUNT + 1)},
+                **{f"zone_name_{i}": f"Raum für NBP{i} (leer lassen, falls nicht vorhanden)" for i in range(1, MAX_ZONE_COUNT + 1)},
             },
         },
     },
@@ -1391,15 +1391,15 @@ CONFIG_FLOW_STRINGS_EN: dict = {
             "data": {"host": "Modbus host / IP address", "port": "Modbus port", "slave": "Modbus slave address"},
         },
         "zones_count": {
-            "description": "How many control panels/zones are installed? ZBP (main panel) always exists and is named separately in the next step.",
-            "data": {"has_hnb": "Secondary main panel (HNBP) installed", "zone_count": "Number of remote panels (NBP1..NBPx)"},
+            "description": "How many control panels/zones are installed? ZBP (main panel) always exists and is named separately in the next step. For NBP, enter the highest installed number, not the count - e.g. if you have NBP1-NBP3 and NBP5-NBP6 but no NBP4, enter 6 (NBP4 can simply be left blank in the next step).",
+            "data": {"has_hnb": "Secondary main panel (HNBP) installed", "zone_count": "Highest installed NBP number (NBPx)"},
         },
         "zone_names": {
-            "description": "Pick the matching Home Assistant Area for each zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping).",
+            "description": "Pick the matching Home Assistant Area for each zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped.",
             "data": {
                 "zbp_name": "Area for ZBP",
                 "hnb_name": "Area for HNBP",
-                **{f"zone_name_{i}": f"Area for NBP{i}" for i in range(1, MAX_ZONE_COUNT + 1)},
+                **{f"zone_name_{i}": f"Area for NBP{i} (leave blank if not installed)" for i in range(1, MAX_ZONE_COUNT + 1)},
             },
         },
     },

@@ -75,12 +75,21 @@ Proxon → Neu konfigurieren* ändern (derselbe 3-Schritte-Assistent).
 | **HNBP** (Hauptnebenbedienpanel) | 0 oder 1 | Technisch wie eine NBP-Zone modelliert (Mitteltemperatur + ±3°C Offset). Seine gemessene Temperatur beeinflusst aber zusätzlich, ob die ZBP-Zieltemperatur fürs ganze Haus erreicht wird (Zone-1/Zone-2-Regelkreis der Anlage) - eine reine Fachinfo, keine Sonderlogik im Code. |
 | **NBPn** (Nebenbedienpanel) | 0-19 | Zieltemperatur = eigene Mitteltemperatur (laufender Durchschnitt) ± bis zu 3°C Offset, per `number`/`climate` einstellbar. |
 
-Jede Zone bekommt, je nach Rolle: `switch` (Heizelement; ZBP+HNBP+NBPn), `switch` (Sperren
-Bedienteil; nur HNBP/NBPn), `sensor` (Ist-Temperatur; alle), `sensor` (Mitteltemperatur; nur
-HNBP/NBPn), `number` (Soll-/Offset-Temperatur; alle) und eine `climate`-Entität (alle), die
-Ist-/Zieltemperatur und Heizelement-Status/-Steuerung zu einer normalen Thermostat-Karte
-zusammenfasst - **live berechnet bei jeder Aktualisierung**, ganz ohne die Sync-
-Automatisierungen der alten Lösung.
+Jede Zone bekommt, je nach Rolle: `switch` (Heizelement; ZBP+HNBP+NBPn - siehe aber Punkt 10
+unter "Migration" zum Modbus-Schreibrecht für das ZBP-Heizelement), `binary_sensor` (Sperren
+Bedienteil; nur HNBP/NBPn, lesbar - Grund siehe ebenda), `sensor` (Ist-Temperatur; alle),
+`sensor` (Mitteltemperatur; nur HNBP/NBPn), `number` (Soll-/Offset-Temperatur; alle) und eine
+`climate`-Entität (alle), die Ist-/Zieltemperatur und Heizelement-Status/-Steuerung zu einer
+normalen Thermostat-Karte zusammenfasst - **live berechnet bei jeder Aktualisierung**, ganz
+ohne die Sync-Automatisierungen der alten Lösung.
+
+**Lücken in der NBP-Nummerierung sind erlaubt**: Manche Installationen haben z.B. NBP1-NBP3
+und NBP5-NBP6, aber kein NBP4 (worden nachträglich entfernt, nie verbaut, o.ä.). Im
+Einrichtungs-Assistenten bei "Höchste installierte NBP-Nummer" trotzdem die höchste
+tatsächlich vorhandene Nummer eintragen (im Beispiel: 6) und im nächsten Schritt das
+Raum-Feld der fehlenden Nummer (NBP4) einfach leer lassen - diese Zone wird dann
+übersprungen (kein Gerät, keine Entitäten dafür), ihre Register werden zwar technisch
+mitgelesen (sie liegen zwischen den vorhandenen NBPs), aber nirgends angezeigt.
 
 ## Geräte-Struktur
 

@@ -18,36 +18,36 @@
         }
       },
       "zones_count": {
-        "description": "Wie viele Bedienteile/Zonen sind installiert? ZBP (Zentralbedienpanel) ist immer vorhanden und wird im nächsten Schritt separat benannt.",
+        "description": "Wie viele Bedienteile/Zonen sind installiert? ZBP (Zentralbedienpanel) ist immer vorhanden und wird im nächsten Schritt separat benannt. Bei NBP zählt die höchste vorhandene Nummer, nicht die Anzahl - hast du z.B. NBP1-NBP3 und NBP5-NBP6, aber kein NBP4, trage hier 6 ein (NBP4 lässt sich im nächsten Schritt einfach leer lassen).",
         "data": {
           "has_hnb": "Hauptnebenbedienpanel (HNBP) installiert",
-          "zone_count": "Anzahl Nebenbedienpanel (NBP1..NBPx)"
+          "zone_count": "Höchste installierte NBP-Nummer (NBPx)"
         }
       },
       "zone_names": {
-        "description": "Wähle für jede Zone den passenden Home-Assistant-Raum. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung).",
+        "description": "Wähle für jede Zone den passenden Home-Assistant-Raum. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen.",
         "data": {
           "zbp_name": "Raum für ZBP",
           "hnb_name": "Raum für HNBP",
-          "zone_name_1": "Raum für NBP1",
-          "zone_name_2": "Raum für NBP2",
-          "zone_name_3": "Raum für NBP3",
-          "zone_name_4": "Raum für NBP4",
-          "zone_name_5": "Raum für NBP5",
-          "zone_name_6": "Raum für NBP6",
-          "zone_name_7": "Raum für NBP7",
-          "zone_name_8": "Raum für NBP8",
-          "zone_name_9": "Raum für NBP9",
-          "zone_name_10": "Raum für NBP10",
-          "zone_name_11": "Raum für NBP11",
-          "zone_name_12": "Raum für NBP12",
-          "zone_name_13": "Raum für NBP13",
-          "zone_name_14": "Raum für NBP14",
-          "zone_name_15": "Raum für NBP15",
-          "zone_name_16": "Raum für NBP16",
-          "zone_name_17": "Raum für NBP17",
-          "zone_name_18": "Raum für NBP18",
-          "zone_name_19": "Raum für NBP19"
+          "zone_name_1": "Raum für NBP1 (leer lassen, falls nicht vorhanden)",
+          "zone_name_2": "Raum für NBP2 (leer lassen, falls nicht vorhanden)",
+          "zone_name_3": "Raum für NBP3 (leer lassen, falls nicht vorhanden)",
+          "zone_name_4": "Raum für NBP4 (leer lassen, falls nicht vorhanden)",
+          "zone_name_5": "Raum für NBP5 (leer lassen, falls nicht vorhanden)",
+          "zone_name_6": "Raum für NBP6 (leer lassen, falls nicht vorhanden)",
+          "zone_name_7": "Raum für NBP7 (leer lassen, falls nicht vorhanden)",
+          "zone_name_8": "Raum für NBP8 (leer lassen, falls nicht vorhanden)",
+          "zone_name_9": "Raum für NBP9 (leer lassen, falls nicht vorhanden)",
+          "zone_name_10": "Raum für NBP10 (leer lassen, falls nicht vorhanden)",
+          "zone_name_11": "Raum für NBP11 (leer lassen, falls nicht vorhanden)",
+          "zone_name_12": "Raum für NBP12 (leer lassen, falls nicht vorhanden)",
+          "zone_name_13": "Raum für NBP13 (leer lassen, falls nicht vorhanden)",
+          "zone_name_14": "Raum für NBP14 (leer lassen, falls nicht vorhanden)",
+          "zone_name_15": "Raum für NBP15 (leer lassen, falls nicht vorhanden)",
+          "zone_name_16": "Raum für NBP16 (leer lassen, falls nicht vorhanden)",
+          "zone_name_17": "Raum für NBP17 (leer lassen, falls nicht vorhanden)",
+          "zone_name_18": "Raum für NBP18 (leer lassen, falls nicht vorhanden)",
+          "zone_name_19": "Raum für NBP19 (leer lassen, falls nicht vorhanden)"
         }
       }
     },

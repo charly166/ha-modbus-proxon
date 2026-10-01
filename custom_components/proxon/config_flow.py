@@ -68,6 +68,15 @@ def _area_field(key: str, default: str | None) -> vol.Marker:
     return vol.Required(key, default=default) if default is not None else vol.Required(key)
 
 
+def _optional_area_field(key: str, default: str | None) -> vol.Marker:
+    """Like _area_field(), but Optional() - left empty means this NBPn slot
+    isn't physically installed (see zones_from_entry_data() in zones.py,
+    which skips any zone_name_i that's missing/empty). Lets installations
+    with gaps in their NBP numbering - e.g. NBP1-3 and NBP5-6 but no NBP4 -
+    be configured without inventing a fake room for the missing slot."""
+    return vol.Optional(key, default=default) if default is not None else vol.Optional(key)
+
+
 def _zone_names_schema(has_hnb: bool, zone_count: int, defaults: dict[str, Any]) -> vol.Schema:
     """Every zone is picked from Home Assistant's own Areas (AreaSelector),
     not typed freely - so the zone and the Area used elsewhere in HA for the
@@ -81,7 +90,7 @@ def _zone_names_schema(has_hnb: bool, zone_count: int, defaults: dict[str, Any])
     existing_names = defaults.get(CONF_ZONE_NAMES, [])
     for i in range(1, zone_count + 1):
         default = existing_names[i - 1] if i - 1 < len(existing_names) else None
-        schema[_area_field(f"zone_name_{i}", default)] = AreaSelector()
+        schema[_optional_area_field(f"zone_name_{i}", default)] = AreaSelector()
     return vol.Schema(schema)
 
 
@@ -174,9 +183,11 @@ class ProxonConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             zbp_name = user_input[CONF_ZBP_NAME]
             hnb_name = user_input.get(CONF_HNB_NAME)
-            zone_names = [user_input[f"zone_name_{i}"] for i in range(1, zone_count + 1)]
+            # None for any NBPn left empty - that slot isn't installed (gaps in
+            # the numbering, e.g. NBP1-3 + NBP5-6 but no NBP4, are valid).
+            zone_names = [user_input.get(f"zone_name_{i}") or None for i in range(1, zone_count + 1)]
 
-            all_areas = [zbp_name, *([hnb_name] if has_hnb else []), *zone_names]
+            all_areas = [zbp_name, *([hnb_name] if has_hnb else []), *(n for n in zone_names if n is not None)]
             if len(set(all_areas)) != len(all_areas):
                 errors["base"] = "duplicate_zone_names"
             else:

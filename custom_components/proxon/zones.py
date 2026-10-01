@@ -87,6 +87,12 @@ def zones_from_entry_data(hass: HomeAssistant, data: dict) -> list[ZoneInfo]:
             ZoneInfo(name=hnb_name, slug=slugify(hnb_name), kind="nb", zone_index=0, area_id=hnb_area)
         )
     for i, area_id in enumerate(data.get(CONF_ZONE_NAMES, [])[: data.get(CONF_ZONE_COUNT, 0)], start=1):
+        if not area_id:
+            # Gap in the NBP numbering (e.g. NBP4 not physically installed) -
+            # the config flow lets this slot be left empty rather than forcing
+            # a fake room; its registers are still polled (part of the same
+            # contiguous repeating_group block) but no entity is created.
+            continue
         name = _resolve_area(hass, area_id)
         zones.append(ZoneInfo(name=name, slug=slugify(name), kind="nb", zone_index=i, area_id=area_id))
     return zones
