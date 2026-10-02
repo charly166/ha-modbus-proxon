@@ -83,6 +83,9 @@ class ProxonRuntimeData:
     # Holding 438 as last read (None if it couldn't be read) - decides whether
     # level-2-only entities like Sperren Bedienteil are switches or read-only.
     write_level: int | None = None
+    # unique_id -> register tag ("3x0209"), filled as entities are created; used
+    # to migrate legacy numbered entity_ids (see __init__._migrate_legacy_entity_ids).
+    register_tags: dict[str, str] = field(default_factory=dict)
 
 
 type ProxonConfigEntry = ConfigEntry[ProxonRuntimeData]

@@ -255,6 +255,15 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     separater "Integral"-Helfer angelegt werden. Messlücken über 5 Minuten (Verbindungs-
     abbruch, Neustart) werden nicht hochgerechnet. Der Zähler beginnt bei 0 ab dem Zeitpunkt
     der Aktualisierung; ältere Verbräuche lassen sich daraus nicht rückwirkend ableiten.
+14. **Nummerierte Entity-IDs werden umbenannt**: Frühe Versionen legten Entitäten an, bevor ihre
+    Namen aufgelöst waren; Home Assistant vergab dafür Notfall-IDs wie `sensor.proxon`,
+    `sensor.proxon_128` und behält sie dauerhaft. Beim Laden der Integration werden solche
+    IDs jetzt einmalig nach dem Register benannt, in der Schreibweise der Registerliste:
+    `sensor.proxon_128` (AbtauDruck) wird zu `sensor.proxon_3x0209` (`3x` = Input-, `4x` =
+    Holding-Register, vierstellige Adresse). Neu angelegte Entitäten bekommen wie bisher aus
+    ihrem Namen abgeleitete IDs und sind nicht betroffen; ist eine Ziel-ID schon belegt, bleibt
+    die alte ID bestehen. Dashboards/Automationen, die eine alte nummerierte ID verwenden,
+    müssen angepasst werden (Verlaufsdaten wandern bei der Umbenennung mit).
 
 ## Umfang / Kuration der Register
 

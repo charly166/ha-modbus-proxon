@@ -68,6 +68,9 @@ class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
         self.entity_description = description
         self._attr_unique_id = description.key
         entry = coordinator.config_entry
+        tags = getattr(entry.runtime_data, "register_tags", None)
+        if tags is not None and (tag := self._register_tag()):
+            tags[description.key] = tag
         zone = _zone_for(entry.runtime_data.zones, description.component, description.zone_index, description.key)
         if zone is not None:
             # One device per zone (room), so the device list shows "Büro",
@@ -96,6 +99,16 @@ class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
                 manufacturer="Proxon",
                 model="FWT2.0",
             )
+
+    def _register_tag(self) -> str | None:
+        """Modbus register of this entity's field in the register list's own
+        notation: 3x0209 = input register 209, 4x0016 = holding register 16."""
+        try:
+            component = self._component
+            address = component.resolved_fields[self.entity_description.field].address
+            return f"{'3x' if component.register_space == 'input' else '4x'}{address:04d}"
+        except (AttributeError, KeyError):
+            return None
 
     @property
     def _component(self):

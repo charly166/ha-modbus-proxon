@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import logging
+import re
+
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from modbus_connection.tmodbus import connect_tcp
 
 from .const import CONF_SLAVE, CONF_ZONE_COUNT, DOMAIN, PLATFORMS
@@ -16,6 +20,13 @@ from .coordinator import (
 from .model import ProxonDevice
 from .tastensperre import writable_at
 from .zones import zones_from_entry_data
+
+_LOGGER = logging.getLogger(__name__)
+
+# Entity IDs like "sensor.proxon" / "sensor.proxon_128": early versions created
+# entities before their names resolved, so Home Assistant fell back to the
+# platform name plus a duplicate counter - and keeps such IDs forever.
+_LEGACY_NUMBERED_ID = re.compile(r"^([a-z_]+)\.proxon(?:_(\d+))?$")
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bool:
@@ -62,7 +73,38 @@ async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bo
     _remove_stale_devices(hass, entry)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    _migrate_legacy_entity_ids(hass, entry)
     return True
+
+
+def legacy_id_renames(entries, register_tags: dict[str, str], taken: set[str]) -> dict[str, str]:
+    """entity_id -> new entity_id for numbered legacy IDs, named after the register.
+
+    ``sensor.proxon_128`` (AbtauDruck) becomes ``sensor.proxon_3x0209``. Entities
+    whose register is unknown, or whose target ID is already in use, are left alone.
+    """
+    renames: dict[str, str] = {}
+    for entity in entries:
+        match = _LEGACY_NUMBERED_ID.match(entity.entity_id)
+        tag = register_tags.get(entity.unique_id)
+        if not match or not tag:
+            continue
+        new_id = f"{match.group(1)}.proxon_{tag}"
+        if new_id in taken or new_id in renames.values():
+            continue
+        renames[entity.entity_id] = new_id
+    return renames
+
+
+def _migrate_legacy_entity_ids(hass: HomeAssistant, entry: ProxonConfigEntry) -> None:
+    registry = er.async_get(hass)
+    entries = er.async_entries_for_config_entry(registry, entry.entry_id)
+    taken = {e.entity_id for e in registry.entities.values()}
+    renames = legacy_id_renames(entries, entry.runtime_data.register_tags, taken)
+    for old_id, new_id in renames.items():
+        registry.async_update_entity(old_id, new_entity_id=new_id)
+    if renames:
+        _LOGGER.info("Renamed %d numbered entity IDs to register-based IDs (e.g. %s)", len(renames), next(iter(renames.items())))
 
 
 def stale_devices(devices, entry_id: str, zone_slugs: list[str]) -> list:
