@@ -217,6 +217,22 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     Nach dem Update die alten, jetzt verwaisten `switch.proxon_tastensperre_<zone>`- und
     `switch.proxon_heizelemente_global`-Entitäten unter Einstellungen → Entitäten löschen; die
     neuen `binary_sensor`-Entitäten behalten dieselbe `unique_id`, der Verlauf läuft weiter.
+11. **Stromaufnahme (`Proxon Stromaufnahme Total`, Input 25)**: hatte durch denselben
+    Unit-Fallback-Fehler wie oben seine Einheit verloren (proxon.yaml dokumentierte "W", die
+    Registerliste lässt die Einheit an dieser Adresse leer) - zeigte dadurch einen unbenannten
+    Rohwert statt eines Leistungssensors. Jetzt korrekt als `device_class: power`, Einheit W.
+12. **Neu: Heizelement-Status pro Zone** (`binary_sensor`, Diagnose-Kategorie): Der Heizelement-
+    `switch` einer Zone schaltet nur die *Freigabe* frei ("darf bei Bedarf heizen"), nicht die
+    Heizung selbst. Ob das PTC-Element gerade tatsächlich heizt, steht pro Relais (R1-R20) als
+    Bit in zwei Statusregistern (Input 574 "Heizmodul 1", Input 583 "Heizmodul 2"). **Wichtig**:
+    Welches Relais zu welcher Zone gehört, folgt der physischen Verkabelung des Heizmoduls durch
+    den Installateur - das hat **keinen** verlässlichen Zusammenhang mit der NBP-Nummerierung
+    (in der Praxis gesehen: NBP2/NBP3 waren auf R4/R3 verdrahtet, also vertauscht). Die
+    Relais-Nummer lässt sich deshalb nicht automatisch ableiten und muss im Einrichtungs-
+    Assistenten optional pro Zone eingetragen werden (Feld "PTC-Relais-Nummer", leer = kein
+    Status-Sensor für diese Zone). Zum Herausfinden der richtigen Nummer: Heizelement einer Zone
+    manuell/im Bedarfsfall aktiv werden lassen und beobachten, welches Bit in den (weiterhin als
+    einfache Diagnose-Sensoren sichtbaren) rohen Registern 574/583 kippt.
 
 ## Umfang / Kuration der Register
 

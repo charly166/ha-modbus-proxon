@@ -25,10 +25,12 @@
         }
       },
       "zone_names": {
-        "description": "Pick the matching Home Assistant Area for each zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped.",
+        "description": "Pick the matching Home Assistant Area for each zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped. The PTC relay field is optional and only needed for the 'Heizelement Status' sensor - the relay number (R1-R20) is in the register list, or can be worked out by watching the raw heating-module status sensor; it has nothing to do with the NBP number.",
         "data": {
           "zbp_name": "Area for ZBP",
+          "zbp_relay": "PTC relay number for ZBP (optional, R1-R20)",
           "hnb_name": "Area for HNBP",
+          "hnb_relay": "PTC relay number for HNBP (optional, R1-R20)",
           "zone_name_1": "Area for NBP1 (leave blank if not installed)",
           "zone_name_2": "Area for NBP2 (leave blank if not installed)",
           "zone_name_3": "Area for NBP3 (leave blank if not installed)",
@@ -47,13 +49,33 @@
           "zone_name_16": "Area for NBP16 (leave blank if not installed)",
           "zone_name_17": "Area for NBP17 (leave blank if not installed)",
           "zone_name_18": "Area for NBP18 (leave blank if not installed)",
-          "zone_name_19": "Area for NBP19 (leave blank if not installed)"
+          "zone_name_19": "Area for NBP19 (leave blank if not installed)",
+          "zone_relay_1": "PTC relay number for NBP1 (optional, R1-R20)",
+          "zone_relay_2": "PTC relay number for NBP2 (optional, R1-R20)",
+          "zone_relay_3": "PTC relay number for NBP3 (optional, R1-R20)",
+          "zone_relay_4": "PTC relay number for NBP4 (optional, R1-R20)",
+          "zone_relay_5": "PTC relay number for NBP5 (optional, R1-R20)",
+          "zone_relay_6": "PTC relay number for NBP6 (optional, R1-R20)",
+          "zone_relay_7": "PTC relay number for NBP7 (optional, R1-R20)",
+          "zone_relay_8": "PTC relay number for NBP8 (optional, R1-R20)",
+          "zone_relay_9": "PTC relay number for NBP9 (optional, R1-R20)",
+          "zone_relay_10": "PTC relay number for NBP10 (optional, R1-R20)",
+          "zone_relay_11": "PTC relay number for NBP11 (optional, R1-R20)",
+          "zone_relay_12": "PTC relay number for NBP12 (optional, R1-R20)",
+          "zone_relay_13": "PTC relay number for NBP13 (optional, R1-R20)",
+          "zone_relay_14": "PTC relay number for NBP14 (optional, R1-R20)",
+          "zone_relay_15": "PTC relay number for NBP15 (optional, R1-R20)",
+          "zone_relay_16": "PTC relay number for NBP16 (optional, R1-R20)",
+          "zone_relay_17": "PTC relay number for NBP17 (optional, R1-R20)",
+          "zone_relay_18": "PTC relay number for NBP18 (optional, R1-R20)",
+          "zone_relay_19": "PTC relay number for NBP19 (optional, R1-R20)"
         }
       }
     },
     "error": {
       "cannot_connect": "Failed to connect. Please check address/port/slave id.",
-      "duplicate_zone_names": "Two zones are mapped to the same Area - please pick a distinct Area per zone."
+      "duplicate_zone_names": "Two zones are mapped to the same Area - please pick a distinct Area per zone.",
+      "duplicate_relays": "Two zones are mapped to the same PTC relay number - please pick a distinct number per zone."
     },
     "abort": {
       "already_configured": "This unit is already configured.",

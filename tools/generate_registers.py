@@ -503,6 +503,8 @@ _LEGACY_SCALE_OVERRIDES = {
 def infer_device_class(unit: str) -> tuple[str | None, str | None]:
     if unit.strip() == "°C":
         return "SensorDeviceClass.TEMPERATURE", "SensorStateClass.MEASUREMENT"
+    if unit.strip() == "W":
+        return "SensorDeviceClass.POWER", "SensorStateClass.MEASUREMENT"
     return None, None
 
 
@@ -841,6 +843,19 @@ def build_input_components(
             # homeassistant package's own modbus integration) - carries over as-is, no
             # scale conversion needed.
             reg = replace(reg, offset=e.legacy_offset)
+        if not reg.unit.strip() and e.unit:
+            # Same fallback as the holding-side add_legacy(): Excel documents this
+            # address but left the unit blank - prefer proxon.yaml's own unit
+            # (normalized to a proper HA unit symbol) over losing it altogether.
+            # (Was missing here before - e.g. proxon_stromaufnahme_total lost its
+            # "W" unit and device_class this way.)
+            reg = replace(reg, unit=_LEGACY_UNIT_NORMALIZE.get(e.unit, e.unit))
+        # Input registers can never be written (Modbus function code 4 is
+        # read-only by protocol definition), so unlike the holding-side
+        # add_legacy() there's no writable override to honor here - only the
+        # platform can be overridden (e.g. to exclude an entity from the
+        # generic codegen output in favor of a hand-written one).
+        override = _PLATFORM_OVERRIDES.get(e.unique_id)
         fname = dedupe(slugify(e.name), used_names)
         spec.fields.append(emit_field_line(fname, e.address, reg, False, reg.comment or e.name))
         spec.meta.append(
@@ -850,7 +865,7 @@ def build_input_components(
                 component_class=spec.class_name,
                 field_name=fname,
                 module="registers_input",
-                platform=e.platform,
+                platform=override["platform"] if override else e.platform,
                 writable=False,
                 reg=reg,
                 entity_category=None,
@@ -1171,7 +1186,10 @@ _EXTRA_MODULE_IMPORTS: dict[str, str] = {
         ")\n"
         "from .schreibrecht import SCHREIBRECHT_DESCRIPTION, ProxonSchreibrechtSensor\n"
     ),
-    "binary_sensor": "from .filter import FILTER_REMINDER_DESCRIPTION, ProxonFilterReminderBinarySensor\n",
+    "binary_sensor": (
+        "from .filter import FILTER_REMINDER_DESCRIPTION, ProxonFilterReminderBinarySensor\n"
+        "from .heizelement_status import heizelement_status_entities\n"
+    ),
     "switch": (
         "from .intensivlueftung import INTENSIVLUEFTUNG_DESCRIPTION, ProxonIntensivlueftungSwitch\n"
     ),
@@ -1184,6 +1202,7 @@ _EXTRA_MODULE_ENTITIES: dict[str, list[str]] = {
     ],
     "binary_sensor": [
         "ProxonFilterReminderBinarySensor(coordinator, FILTER_REMINDER_DESCRIPTION)",
+        "*heizelement_status_entities(coordinator, entry.runtime_data.zones)",
     ],
     "switch": [
         "ProxonIntensivlueftungSwitch(coordinator, INTENSIVLUEFTUNG_DESCRIPTION)",
@@ -1365,17 +1384,21 @@ CONFIG_FLOW_STRINGS: dict = {
             "data": {"has_hnb": "Hauptnebenbedienpanel (HNBP) installiert", "zone_count": "Höchste installierte NBP-Nummer (NBPx)"},
         },
         "zone_names": {
-            "description": "Wähle für jede Zone den passenden Home-Assistant-Raum. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen.",
+            "description": "Wähle für jede Zone den passenden Home-Assistant-Raum. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen. Das PTC-Relais-Feld ist optional und nur für den 'Heizelement Status'-Sensor nötig - die Relais-Nummer (R1-R20) steht in der Registerliste bzw. lässt sich durch Beobachten des rohen Heizmodul-Status-Sensors ermitteln; sie hat nichts mit der NBP-Nummer zu tun.",
             "data": {
                 "zbp_name": "Raum für ZBP",
+                "zbp_relay": "PTC-Relais-Nummer für ZBP (optional, R1-R20)",
                 "hnb_name": "Raum für HNBP",
+                "hnb_relay": "PTC-Relais-Nummer für HNBP (optional, R1-R20)",
                 **{f"zone_name_{i}": f"Raum für NBP{i} (leer lassen, falls nicht vorhanden)" for i in range(1, MAX_ZONE_COUNT + 1)},
+                **{f"zone_relay_{i}": f"PTC-Relais-Nummer für NBP{i} (optional, R1-R20)" for i in range(1, MAX_ZONE_COUNT + 1)},
             },
         },
     },
     "error": {
         "cannot_connect": "Verbindung zur Anlage fehlgeschlagen. Adresse/Port/Slave-ID prüfen.",
         "duplicate_zone_names": "Zwei Zonen sind demselben Raum zugeordnet - bitte für jede Zone einen eigenen Raum wählen.",
+        "duplicate_relays": "Zwei Zonen ist dieselbe PTC-Relais-Nummer zugeordnet - bitte für jede Zone eine eigene Nummer wählen.",
     },
     "abort": {"already_configured": "Diese Anlage ist bereits eingerichtet.", "reconfigure_successful": "Verbindungsdaten aktualisiert."},
 }
@@ -1395,17 +1418,21 @@ CONFIG_FLOW_STRINGS_EN: dict = {
             "data": {"has_hnb": "Secondary main panel (HNBP) installed", "zone_count": "Highest installed NBP number (NBPx)"},
         },
         "zone_names": {
-            "description": "Pick the matching Home Assistant Area for each zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped.",
+            "description": "Pick the matching Home Assistant Area for each zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped. The PTC relay field is optional and only needed for the 'Heizelement Status' sensor - the relay number (R1-R20) is in the register list, or can be worked out by watching the raw heating-module status sensor; it has nothing to do with the NBP number.",
             "data": {
                 "zbp_name": "Area for ZBP",
+                "zbp_relay": "PTC relay number for ZBP (optional, R1-R20)",
                 "hnb_name": "Area for HNBP",
+                "hnb_relay": "PTC relay number for HNBP (optional, R1-R20)",
                 **{f"zone_name_{i}": f"Area for NBP{i} (leave blank if not installed)" for i in range(1, MAX_ZONE_COUNT + 1)},
+                **{f"zone_relay_{i}": f"PTC relay number for NBP{i} (optional, R1-R20)" for i in range(1, MAX_ZONE_COUNT + 1)},
             },
         },
     },
     "error": {
         "cannot_connect": "Failed to connect. Please check address/port/slave id.",
         "duplicate_zone_names": "Two zones are mapped to the same Area - please pick a distinct Area per zone.",
+        "duplicate_relays": "Two zones are mapped to the same PTC relay number - please pick a distinct number per zone.",
     },
     "abort": {"already_configured": "This unit is already configured.", "reconfigure_successful": "Connection details updated."},
 }
@@ -1436,6 +1463,7 @@ _EXTRA_ENTITY_STRINGS: dict = {
     "binary_sensor": {
         "proxon_filter_wechsel_faellig": {"name": "Gerätefilter Wechsel fällig"},
         "proxon_zone_tastensperre": {"name": "Sperren Bedienteil"},
+        "proxon_zone_heizelement_status": {"name": "Heizelement Status"},
     },
     "switch": {
         "proxon_zone_heizelement": {"name": "Heizelement"},

@@ -431,6 +431,9 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         field='proxon_stromaufnahme_total',
         name='Proxon Stromaufnahme Total',
         has_entity_name=False,
+        native_unit_of_measurement='W',
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     ProxonSensorEntityDescription(
         key='proxon_lueftungsstufe_ventilator_zuluft',

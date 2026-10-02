@@ -46,7 +46,7 @@ class SonstigesInput(Component):
 
     register_space = "input"
 
-    proxon_stromaufnahme_total = gauge(25, 0.1, signed=True)  # Stromaufnahme
+    proxon_stromaufnahme_total = gauge(25, 0.1, signed=True, unit='W')  # Stromaufnahme
     proxon_lueftungsstufe_ventilator_zuluft = integer(154, signed=True)  # Proxon Lüftungsstufe Ventilator Zuluft
     proxon_aktueller_betrieb = integer(241, signed=True)  # Proxon aktueller Betrieb
     proxon_heizelement_status = integer(574, signed=True, unit='Binär')  # Bit9:R10 Bit8:R9 Bit7:R8 Bit6:R7 Bit5:R6 Bit4:R5 Bit3:R4 Bit2:R3 Bit1:R2 Bit0:R1

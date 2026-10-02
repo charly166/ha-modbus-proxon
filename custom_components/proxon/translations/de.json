@@ -25,10 +25,12 @@
         }
       },
       "zone_names": {
-        "description": "Wähle für jede Zone den passenden Home-Assistant-Raum. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen.",
+        "description": "Wähle für jede Zone den passenden Home-Assistant-Raum. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen. Das PTC-Relais-Feld ist optional und nur für den 'Heizelement Status'-Sensor nötig - die Relais-Nummer (R1-R20) steht in der Registerliste bzw. lässt sich durch Beobachten des rohen Heizmodul-Status-Sensors ermitteln; sie hat nichts mit der NBP-Nummer zu tun.",
         "data": {
           "zbp_name": "Raum für ZBP",
+          "zbp_relay": "PTC-Relais-Nummer für ZBP (optional, R1-R20)",
           "hnb_name": "Raum für HNBP",
+          "hnb_relay": "PTC-Relais-Nummer für HNBP (optional, R1-R20)",
           "zone_name_1": "Raum für NBP1 (leer lassen, falls nicht vorhanden)",
           "zone_name_2": "Raum für NBP2 (leer lassen, falls nicht vorhanden)",
           "zone_name_3": "Raum für NBP3 (leer lassen, falls nicht vorhanden)",
@@ -47,13 +49,33 @@
           "zone_name_16": "Raum für NBP16 (leer lassen, falls nicht vorhanden)",
           "zone_name_17": "Raum für NBP17 (leer lassen, falls nicht vorhanden)",
           "zone_name_18": "Raum für NBP18 (leer lassen, falls nicht vorhanden)",
-          "zone_name_19": "Raum für NBP19 (leer lassen, falls nicht vorhanden)"
+          "zone_name_19": "Raum für NBP19 (leer lassen, falls nicht vorhanden)",
+          "zone_relay_1": "PTC-Relais-Nummer für NBP1 (optional, R1-R20)",
+          "zone_relay_2": "PTC-Relais-Nummer für NBP2 (optional, R1-R20)",
+          "zone_relay_3": "PTC-Relais-Nummer für NBP3 (optional, R1-R20)",
+          "zone_relay_4": "PTC-Relais-Nummer für NBP4 (optional, R1-R20)",
+          "zone_relay_5": "PTC-Relais-Nummer für NBP5 (optional, R1-R20)",
+          "zone_relay_6": "PTC-Relais-Nummer für NBP6 (optional, R1-R20)",
+          "zone_relay_7": "PTC-Relais-Nummer für NBP7 (optional, R1-R20)",
+          "zone_relay_8": "PTC-Relais-Nummer für NBP8 (optional, R1-R20)",
+          "zone_relay_9": "PTC-Relais-Nummer für NBP9 (optional, R1-R20)",
+          "zone_relay_10": "PTC-Relais-Nummer für NBP10 (optional, R1-R20)",
+          "zone_relay_11": "PTC-Relais-Nummer für NBP11 (optional, R1-R20)",
+          "zone_relay_12": "PTC-Relais-Nummer für NBP12 (optional, R1-R20)",
+          "zone_relay_13": "PTC-Relais-Nummer für NBP13 (optional, R1-R20)",
+          "zone_relay_14": "PTC-Relais-Nummer für NBP14 (optional, R1-R20)",
+          "zone_relay_15": "PTC-Relais-Nummer für NBP15 (optional, R1-R20)",
+          "zone_relay_16": "PTC-Relais-Nummer für NBP16 (optional, R1-R20)",
+          "zone_relay_17": "PTC-Relais-Nummer für NBP17 (optional, R1-R20)",
+          "zone_relay_18": "PTC-Relais-Nummer für NBP18 (optional, R1-R20)",
+          "zone_relay_19": "PTC-Relais-Nummer für NBP19 (optional, R1-R20)"
         }
       }
     },
     "error": {
       "cannot_connect": "Verbindung zur Anlage fehlgeschlagen. Adresse/Port/Slave-ID prüfen.",
-      "duplicate_zone_names": "Zwei Zonen sind demselben Raum zugeordnet - bitte für jede Zone einen eigenen Raum wählen."
+      "duplicate_zone_names": "Zwei Zonen sind demselben Raum zugeordnet - bitte für jede Zone einen eigenen Raum wählen.",
+      "duplicate_relays": "Zwei Zonen ist dieselbe PTC-Relais-Nummer zugeordnet - bitte für jede Zone eine eigene Nummer wählen."
     },
     "abort": {
       "already_configured": "Diese Anlage ist bereits eingerichtet.",
@@ -848,6 +870,9 @@
       },
       "proxon_zone_tastensperre": {
         "name": "Sperren Bedienteil"
+      },
+      "proxon_zone_heizelement_status": {
+        "name": "Heizelement Status"
       },
       "proxon_r3_solar": {
         "name": "R3:Solar"

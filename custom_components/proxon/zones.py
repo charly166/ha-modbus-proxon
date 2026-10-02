@@ -37,9 +37,12 @@ from modbus_connection.model import Component, gauge, integer, repeating_group
 from .const import (
     CONF_HAS_HNB,
     CONF_HNB_NAME,
+    CONF_HNB_RELAY,
     CONF_ZBP_NAME,
+    CONF_ZBP_RELAY,
     CONF_ZONE_COUNT,
     CONF_ZONE_NAMES,
+    CONF_ZONE_RELAYS,
 )
 from .util import slugify
 
@@ -53,6 +56,11 @@ class ZoneInfo:
     kind: Literal["zbp", "nb"]
     zone_index: int | None  # None for ZBP; 0=HNBP, 1..19=NBPn for "nb"
     area_id: str | None = None
+    # 1-20 (R1-R20), or None if not configured - see heizelement_status.py.
+    # Independent of zone_index: it reflects physical PTC relay wiring, not
+    # Modbus NBP address order, and the two are NOT guaranteed to match (seen
+    # in practice: Modbus NBP2/NBP3 wired to relays R4/R3, swapped).
+    relay: int | None = None
 
 
 def _resolve_area(hass: HomeAssistant, area_id: str) -> str:
@@ -79,13 +87,30 @@ def zones_from_entry_data(hass: HomeAssistant, data: dict) -> list[ZoneInfo]:
     """
     zbp_area = data[CONF_ZBP_NAME]
     zbp_name = _resolve_area(hass, zbp_area)
-    zones = [ZoneInfo(name=zbp_name, slug=slugify(zbp_name), kind="zbp", zone_index=None, area_id=zbp_area)]
+    zones = [
+        ZoneInfo(
+            name=zbp_name,
+            slug=slugify(zbp_name),
+            kind="zbp",
+            zone_index=None,
+            area_id=zbp_area,
+            relay=data.get(CONF_ZBP_RELAY),
+        )
+    ]
     if data.get(CONF_HAS_HNB):
         hnb_area = data[CONF_HNB_NAME]
         hnb_name = _resolve_area(hass, hnb_area)
         zones.append(
-            ZoneInfo(name=hnb_name, slug=slugify(hnb_name), kind="nb", zone_index=0, area_id=hnb_area)
+            ZoneInfo(
+                name=hnb_name,
+                slug=slugify(hnb_name),
+                kind="nb",
+                zone_index=0,
+                area_id=hnb_area,
+                relay=data.get(CONF_HNB_RELAY),
+            )
         )
+    zone_relays = data.get(CONF_ZONE_RELAYS, [])
     for i, area_id in enumerate(data.get(CONF_ZONE_NAMES, [])[: data.get(CONF_ZONE_COUNT, 0)], start=1):
         if not area_id:
             # Gap in the NBP numbering (e.g. NBP4 not physically installed) -
@@ -94,7 +119,8 @@ def zones_from_entry_data(hass: HomeAssistant, data: dict) -> list[ZoneInfo]:
             # contiguous repeating_group block) but no entity is created.
             continue
         name = _resolve_area(hass, area_id)
-        zones.append(ZoneInfo(name=name, slug=slugify(name), kind="nb", zone_index=i, area_id=area_id))
+        relay = zone_relays[i - 1] if i - 1 < len(zone_relays) else None
+        zones.append(ZoneInfo(name=name, slug=slugify(name), kind="nb", zone_index=i, area_id=area_id, relay=relay))
     return zones
 
 # Offset-Temperatur is only adjustable ±3°C from the zone's own Mitteltemperatur.
