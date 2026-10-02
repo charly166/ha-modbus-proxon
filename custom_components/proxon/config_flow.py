@@ -107,14 +107,16 @@ def _optional_ptc_field(key: str, default: object) -> vol.Marker:
 # Form layout: one framed section per control panel (ZBP, HNBP, NBP1..NBPx), each
 # with its Area and PTC multi-select, so it's obvious which PTCs belong to which
 # room. The stored config entry data is unchanged (zbp_name/zone_names/...).
-SECTION_ZBP = "zbp"
-SECTION_HNB = "hnb"
+# Section keys double as the fallback heading if a translation is missing, so
+# they read like the final label (no underscores, upper case).
+SECTION_ZBP = "ZBP"
+SECTION_HNB = "HNBP"
 FIELD_AREA = "area"
 FIELD_PTCS = "ptcs"
 
 
 def _nbp_section_key(i: int) -> str:
-    return f"nbp_{i}"
+    return f"NBP{i}"
 
 
 def _panel_section(area_field: vol.Marker, ptc_default: object) -> section:

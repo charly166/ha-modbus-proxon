@@ -1372,17 +1372,17 @@ CONFIG_FLOW_STRINGS: dict = {
         "zone_names": {
             "description": "Pro Bedienpanel ein Abschnitt: Wähle den passenden Home-Assistant-Raum und - optional - die zugehörigen PTC-Heizelemente. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen. Die PTC-Auswahl ist nur für den 'Heizelement Status'-Sensor nötig: ein Raum kann mehrere PTCs (PTC1-PTC10) haben, ein PTC aber nur zu einem Raum gehören (siehe Stromverkabelungsplan); sie hat nichts mit der NBP-Nummer zu tun.",
             "sections": {
-                "zbp": {
-                    "name": "ZBP - Zentralbedienpanel",
+                "ZBP": {
+                    "name": "ZBP (Zentralbedienpanel)",
                     "data": {"area": "Raum", "ptcs": "PTC-Heizelemente (optional)"},
                 },
-                "hnb": {
-                    "name": "HNBP - Hauptnebenbedienpanel",
+                "HNBP": {
+                    "name": "HNBP (Hauptnebenbedienpanel)",
                     "data": {"area": "Raum", "ptcs": "PTC-Heizelemente (optional)"},
                 },
                 **{
-                    f"nbp_{i}": {
-                        "name": f"NBP{i} - Nebenbedienpanel {i}",
+                    f"NBP{i}": {
+                        "name": f"NBP{i} (Nebenbedienpanel {i})",
                         "data": {"area": "Raum (leer lassen, falls nicht vorhanden)", "ptcs": "PTC-Heizelemente (optional)"},
                     }
                     for i in range(1, MAX_ZONE_COUNT + 1)
@@ -1415,17 +1415,17 @@ CONFIG_FLOW_STRINGS_EN: dict = {
         "zone_names": {
             "description": "One section per control panel: pick the matching Home Assistant Area and - optionally - its PTC heating elements. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped. The PTC selection is only needed for the 'Heizelement Status' sensor: a room can have several PTCs (PTC1-PTC10), but a PTC belongs to one room only (see the power wiring diagram); it has nothing to do with the NBP number.",
             "sections": {
-                "zbp": {
-                    "name": "ZBP - main control panel",
+                "ZBP": {
+                    "name": "ZBP (main control panel)",
                     "data": {"area": "Area", "ptcs": "PTC heating elements (optional)"},
                 },
-                "hnb": {
-                    "name": "HNBP - secondary main panel",
+                "HNBP": {
+                    "name": "HNBP (secondary main panel)",
                     "data": {"area": "Area", "ptcs": "PTC heating elements (optional)"},
                 },
                 **{
-                    f"nbp_{i}": {
-                        "name": f"NBP{i} - remote panel {i}",
+                    f"NBP{i}": {
+                        "name": f"NBP{i} (remote panel {i})",
                         "data": {"area": "Area (leave blank if not installed)", "ptcs": "PTC heating elements (optional)"},
                     }
                     for i in range(1, MAX_ZONE_COUNT + 1)
