@@ -96,6 +96,9 @@
       "proxon_filter_resttage": {
         "name": "Gerätefilter Resttage"
       },
+      "proxon_energie_total": {
+        "name": "Energieverbrauch"
+      },
       "proxon_modbus_schreibrecht": {
         "name": "Modbus Schreibrecht",
         "state": {

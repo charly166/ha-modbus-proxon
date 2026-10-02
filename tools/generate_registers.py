@@ -1185,6 +1185,7 @@ _EXTRA_MODULE_IMPORTS: dict[str, str] = {
         "    ProxonFilterTageSensor,\n"
         ")\n"
         "from .schreibrecht import SCHREIBRECHT_DESCRIPTION, ProxonSchreibrechtSensor\n"
+        "from .energie import ENERGIE_DESCRIPTION, ProxonEnergieSensor\n"
     ),
     "binary_sensor": (
         "from .filter import FILTER_REMINDER_DESCRIPTION, ProxonFilterReminderBinarySensor\n"
@@ -1199,6 +1200,7 @@ _EXTRA_MODULE_ENTITIES: dict[str, list[str]] = {
         "ProxonFilterTageSensor(coordinator, FILTER_TAGE_DESCRIPTION)",
         "ProxonFilterResttageSensor(coordinator, FILTER_RESTTAGE_DESCRIPTION)",
         "ProxonSchreibrechtSensor(coordinator, SCHREIBRECHT_DESCRIPTION)",
+        "ProxonEnergieSensor(coordinator, ENERGIE_DESCRIPTION)",
     ],
     "binary_sensor": [
         "ProxonFilterReminderBinarySensor(coordinator, FILTER_REMINDER_DESCRIPTION)",
@@ -1451,6 +1453,7 @@ _EXTRA_ENTITY_STRINGS: dict = {
         "proxon_zone_mitteltemperatur": {"name": "Mitteltemperatur"},
         "proxon_filter_tage": {"name": "Gerätefilter Tage seit Wechsel"},
         "proxon_filter_resttage": {"name": "Gerätefilter Resttage"},
+        "proxon_energie_total": {"name": "Energieverbrauch"},
         "proxon_modbus_schreibrecht": {
             "name": "Modbus Schreibrecht",
             "state": {

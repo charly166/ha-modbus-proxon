@@ -233,6 +233,13 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     Status-Sensor für diese Zone). Zum Herausfinden der richtigen Nummer: Heizelement einer Zone
     manuell/im Bedarfsfall aktiv werden lassen und beobachten, welches Bit in den (weiterhin als
     einfache Diagnose-Sensoren sichtbaren) rohen Registern 574/583 kippt.
+13. **Neu: Energieverbrauch für das Energie-Dashboard** (`sensor.*_energieverbrauch`, Wh,
+    `device_class: energy`, `total_increasing`): Die Anlage liefert nur die Momentanleistung
+    (Input 25). Dieser Sensor integriert sie nach dem Trapez-Verfahren zu einem stetig
+    steigenden Zähler und stellt seinen Stand nach einem Neustart wieder her - es muss kein
+    separater "Integral"-Helfer angelegt werden. Messlücken über 5 Minuten (Verbindungs-
+    abbruch, Neustart) werden nicht hochgerechnet. Der Zähler beginnt bei 0 ab dem Zeitpunkt
+    der Aktualisierung; ältere Verbräuche lassen sich daraus nicht rückwirkend ableiten.
 
 ## Umfang / Kuration der Register
 
