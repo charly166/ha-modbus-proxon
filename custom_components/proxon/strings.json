@@ -25,50 +25,155 @@
         }
       },
       "zone_names": {
-        "description": "Wähle für jede Zone den passenden Home-Assistant-Raum. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen. Die PTC-Auswahl ist optional und nur für den 'Heizelement Status'-Sensor nötig: ein Raum kann mehrere PTCs (PTC1-PTC10) haben, ein PTC aber nur zu einem Raum gehören. Welches PTC zu welchem Raum gehört, steht im Stromverkabelungsplan; es hat nichts mit der NBP-Nummer zu tun.",
-        "data": {
-          "zbp_name": "Raum für ZBP",
-          "zbp_ptcs": "PTCs für ZBP (optional)",
-          "hnb_name": "Raum für HNBP",
-          "hnb_ptcs": "PTCs für HNBP (optional)",
-          "zone_name_1": "Raum für NBP1 (leer lassen, falls nicht vorhanden)",
-          "zone_name_2": "Raum für NBP2 (leer lassen, falls nicht vorhanden)",
-          "zone_name_3": "Raum für NBP3 (leer lassen, falls nicht vorhanden)",
-          "zone_name_4": "Raum für NBP4 (leer lassen, falls nicht vorhanden)",
-          "zone_name_5": "Raum für NBP5 (leer lassen, falls nicht vorhanden)",
-          "zone_name_6": "Raum für NBP6 (leer lassen, falls nicht vorhanden)",
-          "zone_name_7": "Raum für NBP7 (leer lassen, falls nicht vorhanden)",
-          "zone_name_8": "Raum für NBP8 (leer lassen, falls nicht vorhanden)",
-          "zone_name_9": "Raum für NBP9 (leer lassen, falls nicht vorhanden)",
-          "zone_name_10": "Raum für NBP10 (leer lassen, falls nicht vorhanden)",
-          "zone_name_11": "Raum für NBP11 (leer lassen, falls nicht vorhanden)",
-          "zone_name_12": "Raum für NBP12 (leer lassen, falls nicht vorhanden)",
-          "zone_name_13": "Raum für NBP13 (leer lassen, falls nicht vorhanden)",
-          "zone_name_14": "Raum für NBP14 (leer lassen, falls nicht vorhanden)",
-          "zone_name_15": "Raum für NBP15 (leer lassen, falls nicht vorhanden)",
-          "zone_name_16": "Raum für NBP16 (leer lassen, falls nicht vorhanden)",
-          "zone_name_17": "Raum für NBP17 (leer lassen, falls nicht vorhanden)",
-          "zone_name_18": "Raum für NBP18 (leer lassen, falls nicht vorhanden)",
-          "zone_name_19": "Raum für NBP19 (leer lassen, falls nicht vorhanden)",
-          "zone_ptcs_1": "PTCs für NBP1 (optional)",
-          "zone_ptcs_2": "PTCs für NBP2 (optional)",
-          "zone_ptcs_3": "PTCs für NBP3 (optional)",
-          "zone_ptcs_4": "PTCs für NBP4 (optional)",
-          "zone_ptcs_5": "PTCs für NBP5 (optional)",
-          "zone_ptcs_6": "PTCs für NBP6 (optional)",
-          "zone_ptcs_7": "PTCs für NBP7 (optional)",
-          "zone_ptcs_8": "PTCs für NBP8 (optional)",
-          "zone_ptcs_9": "PTCs für NBP9 (optional)",
-          "zone_ptcs_10": "PTCs für NBP10 (optional)",
-          "zone_ptcs_11": "PTCs für NBP11 (optional)",
-          "zone_ptcs_12": "PTCs für NBP12 (optional)",
-          "zone_ptcs_13": "PTCs für NBP13 (optional)",
-          "zone_ptcs_14": "PTCs für NBP14 (optional)",
-          "zone_ptcs_15": "PTCs für NBP15 (optional)",
-          "zone_ptcs_16": "PTCs für NBP16 (optional)",
-          "zone_ptcs_17": "PTCs für NBP17 (optional)",
-          "zone_ptcs_18": "PTCs für NBP18 (optional)",
-          "zone_ptcs_19": "PTCs für NBP19 (optional)"
+        "description": "Pro Bedienpanel ein Abschnitt: Wähle den passenden Home-Assistant-Raum und - optional - die zugehörigen PTC-Heizelemente. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen. Die PTC-Auswahl ist nur für den 'Heizelement Status'-Sensor nötig: ein Raum kann mehrere PTCs (PTC1-PTC10) haben, ein PTC aber nur zu einem Raum gehören (siehe Stromverkabelungsplan); sie hat nichts mit der NBP-Nummer zu tun.",
+        "sections": {
+          "zbp": {
+            "name": "ZBP - Zentralbedienpanel",
+            "data": {
+              "area": "Raum",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "hnb": {
+            "name": "HNBP - Hauptnebenbedienpanel",
+            "data": {
+              "area": "Raum",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_1": {
+            "name": "NBP1 - Nebenbedienpanel 1",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_2": {
+            "name": "NBP2 - Nebenbedienpanel 2",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_3": {
+            "name": "NBP3 - Nebenbedienpanel 3",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_4": {
+            "name": "NBP4 - Nebenbedienpanel 4",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_5": {
+            "name": "NBP5 - Nebenbedienpanel 5",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_6": {
+            "name": "NBP6 - Nebenbedienpanel 6",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_7": {
+            "name": "NBP7 - Nebenbedienpanel 7",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_8": {
+            "name": "NBP8 - Nebenbedienpanel 8",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_9": {
+            "name": "NBP9 - Nebenbedienpanel 9",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_10": {
+            "name": "NBP10 - Nebenbedienpanel 10",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_11": {
+            "name": "NBP11 - Nebenbedienpanel 11",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_12": {
+            "name": "NBP12 - Nebenbedienpanel 12",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_13": {
+            "name": "NBP13 - Nebenbedienpanel 13",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_14": {
+            "name": "NBP14 - Nebenbedienpanel 14",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_15": {
+            "name": "NBP15 - Nebenbedienpanel 15",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_16": {
+            "name": "NBP16 - Nebenbedienpanel 16",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_17": {
+            "name": "NBP17 - Nebenbedienpanel 17",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_18": {
+            "name": "NBP18 - Nebenbedienpanel 18",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          },
+          "nbp_19": {
+            "name": "NBP19 - Nebenbedienpanel 19",
+            "data": {
+              "area": "Raum (leer lassen, falls nicht vorhanden)",
+              "ptcs": "PTC-Heizelemente (optional)"
+            }
+          }
         }
       }
     },

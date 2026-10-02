@@ -111,6 +111,10 @@ bleiben gemeinsam unter dem zentralen Gerät (Titel der Integration).
 Neu angelegte Zonen-Geräte werden zusätzlich dem gewählten Home-Assistant-Raum vorgeschlagen
 (`suggested_area`), damit sie dort direkt einsortiert erscheinen.
 
+Verringert man in "Neu konfigurieren" die Zahl der NBP (oder tauscht einen Raum aus), werden die
+Geräte der nicht mehr konfigurierten Zonen beim nächsten Laden automatisch aus Home Assistant
+entfernt; Geräte lösche ich nur, die zu dieser Integration gehören und keiner Zone mehr entsprechen.
+
 ## T300-Trinkwasserwärmepumpe
 
 Der T300 (offiziell "Trinkwasserwärmepumpe", Modell T300) ist seit einem Update der
@@ -238,8 +242,8 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     **mehrere PTCs** haben, ein PTC gehört aber immer nur zu **einem** Raum. Welche PTCs zu
     welchem Raum gehören, folgt der physischen Verkabelung (siehe Stromverkabelungsplan) und hat
     **keinen** verlässlichen Zusammenhang mit der NBP-Nummerierung - es lässt sich deshalb nicht
-    ableiten und wird im Einrichtungs-Assistenten pro Raum/Bedienpanel per **Mehrfachauswahl
-    PTC1-PTC10** angegeben (leer = kein Status-Sensor für diesen Raum; ein PTC mehreren Räumen
+    ableiten und wird im Einrichtungs-Assistenten in einem eigenen, umrahmten Abschnitt pro
+    Bedienpanel (Raum + PTCs zusammen) per **Mehrfachauswahl PTC1-PTC10** angegeben (leer = kein Status-Sensor für diesen Raum; ein PTC mehreren Räumen
     zuzuordnen wird abgelehnt). Der Sensor ist an, solange mindestens eines der zugeordneten
     PTCs heizt; die Attribute `zugeordnete_ptcs`/`aktive_ptcs` zeigen die einzelnen PTCs. Wer
     mit v0.7.0 schon eine einzelne Relais-Nummer eingetragen hatte, behält sie als zugeordnetes

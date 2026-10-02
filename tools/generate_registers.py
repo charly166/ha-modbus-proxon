@@ -1370,14 +1370,23 @@ CONFIG_FLOW_STRINGS: dict = {
             "data": {"has_hnb": "Hauptnebenbedienpanel (HNBP) installiert", "zone_count": "Höchste installierte NBP-Nummer (NBPx)"},
         },
         "zone_names": {
-            "description": "Wähle für jede Zone den passenden Home-Assistant-Raum. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen. Die PTC-Auswahl ist optional und nur für den 'Heizelement Status'-Sensor nötig: ein Raum kann mehrere PTCs (PTC1-PTC10) haben, ein PTC aber nur zu einem Raum gehören. Welches PTC zu welchem Raum gehört, steht im Stromverkabelungsplan; es hat nichts mit der NBP-Nummer zu tun.",
-            "data": {
-                "zbp_name": "Raum für ZBP",
-                "zbp_ptcs": "PTCs für ZBP (optional)",
-                "hnb_name": "Raum für HNBP",
-                "hnb_ptcs": "PTCs für HNBP (optional)",
-                **{f"zone_name_{i}": f"Raum für NBP{i} (leer lassen, falls nicht vorhanden)" for i in range(1, MAX_ZONE_COUNT + 1)},
-                **{f"zone_ptcs_{i}": f"PTCs für NBP{i} (optional)" for i in range(1, MAX_ZONE_COUNT + 1)},
+            "description": "Pro Bedienpanel ein Abschnitt: Wähle den passenden Home-Assistant-Raum und - optional - die zugehörigen PTC-Heizelemente. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen. Die PTC-Auswahl ist nur für den 'Heizelement Status'-Sensor nötig: ein Raum kann mehrere PTCs (PTC1-PTC10) haben, ein PTC aber nur zu einem Raum gehören (siehe Stromverkabelungsplan); sie hat nichts mit der NBP-Nummer zu tun.",
+            "sections": {
+                "zbp": {
+                    "name": "ZBP - Zentralbedienpanel",
+                    "data": {"area": "Raum", "ptcs": "PTC-Heizelemente (optional)"},
+                },
+                "hnb": {
+                    "name": "HNBP - Hauptnebenbedienpanel",
+                    "data": {"area": "Raum", "ptcs": "PTC-Heizelemente (optional)"},
+                },
+                **{
+                    f"nbp_{i}": {
+                        "name": f"NBP{i} - Nebenbedienpanel {i}",
+                        "data": {"area": "Raum (leer lassen, falls nicht vorhanden)", "ptcs": "PTC-Heizelemente (optional)"},
+                    }
+                    for i in range(1, MAX_ZONE_COUNT + 1)
+                },
             },
         },
     },
@@ -1404,14 +1413,23 @@ CONFIG_FLOW_STRINGS_EN: dict = {
             "data": {"has_hnb": "Secondary main panel (HNBP) installed", "zone_count": "Highest installed NBP number (NBPx)"},
         },
         "zone_names": {
-            "description": "Pick the matching Home Assistant Area for each zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped. The PTC selection is optional and only needed for the 'Heizelement Status' sensor: a room can have several PTCs (PTC1-PTC10), but a PTC belongs to one room only. Which PTC belongs to which room is in the power wiring diagram; it has nothing to do with the NBP number.",
-            "data": {
-                "zbp_name": "Area for ZBP",
-                "zbp_ptcs": "PTCs for ZBP (optional)",
-                "hnb_name": "Area for HNBP",
-                "hnb_ptcs": "PTCs for HNBP (optional)",
-                **{f"zone_name_{i}": f"Area for NBP{i} (leave blank if not installed)" for i in range(1, MAX_ZONE_COUNT + 1)},
-                **{f"zone_ptcs_{i}": f"PTCs for NBP{i} (optional)" for i in range(1, MAX_ZONE_COUNT + 1)},
+            "description": "One section per control panel: pick the matching Home Assistant Area and - optionally - its PTC heating elements. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped. The PTC selection is only needed for the 'Heizelement Status' sensor: a room can have several PTCs (PTC1-PTC10), but a PTC belongs to one room only (see the power wiring diagram); it has nothing to do with the NBP number.",
+            "sections": {
+                "zbp": {
+                    "name": "ZBP - main control panel",
+                    "data": {"area": "Area", "ptcs": "PTC heating elements (optional)"},
+                },
+                "hnb": {
+                    "name": "HNBP - secondary main panel",
+                    "data": {"area": "Area", "ptcs": "PTC heating elements (optional)"},
+                },
+                **{
+                    f"nbp_{i}": {
+                        "name": f"NBP{i} - remote panel {i}",
+                        "data": {"area": "Area (leave blank if not installed)", "ptcs": "PTC heating elements (optional)"},
+                    }
+                    for i in range(1, MAX_ZONE_COUNT + 1)
+                },
             },
         },
     },

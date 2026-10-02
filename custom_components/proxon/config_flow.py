@@ -8,6 +8,7 @@ from typing import Any
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PORT
+from homeassistant.data_entry_flow import section
 from homeassistant.helpers.selector import (
     AreaSelector,
     BooleanSelector,
@@ -103,26 +104,55 @@ def _optional_ptc_field(key: str, default: object) -> vol.Marker:
     return vol.Optional(key, default=stored) if stored else vol.Optional(key)
 
 
+# Form layout: one framed section per control panel (ZBP, HNBP, NBP1..NBPx), each
+# with its Area and PTC multi-select, so it's obvious which PTCs belong to which
+# room. The stored config entry data is unchanged (zbp_name/zone_names/...).
+SECTION_ZBP = "zbp"
+SECTION_HNB = "hnb"
+FIELD_AREA = "area"
+FIELD_PTCS = "ptcs"
+
+
+def _nbp_section_key(i: int) -> str:
+    return f"nbp_{i}"
+
+
+def _panel_section(area_field: vol.Marker, ptc_default: object) -> section:
+    return section(
+        vol.Schema(
+            {
+                area_field: AreaSelector(),
+                _optional_ptc_field(FIELD_PTCS, ptc_default): _ptc_selector(),
+            }
+        ),
+        {"collapsed": False},
+    )
+
+
 def _zone_names_schema(has_hnb: bool, zone_count: int, defaults: dict[str, Any]) -> vol.Schema:
-    """Every zone is picked from Home Assistant's own Areas (AreaSelector),
-    not typed freely - so the zone and the Area used elsewhere in HA for the
-    same room stay in sync, and so entities/devices can be pre-assigned to
-    that Area. Each zone also gets an optional PTC multi-select for the
-    Heizelement-Status binary_sensor."""
+    """One framed section per panel: its Home Assistant Area (AreaSelector, not
+    free text - so the zone and the Area used elsewhere in HA for the same room
+    stay in sync) plus an optional PTC multi-select for the Heizelement-Status
+    binary_sensor."""
     schema: dict[Any, Any] = {
-        _area_field(CONF_ZBP_NAME, defaults.get(CONF_ZBP_NAME)): AreaSelector(),
-        _optional_ptc_field(CONF_ZBP_PTCS, defaults.get(CONF_ZBP_PTCS, defaults.get("zbp_relay"))): _ptc_selector(),
+        vol.Required(SECTION_ZBP): _panel_section(
+            _area_field(FIELD_AREA, defaults.get(CONF_ZBP_NAME)),
+            defaults.get(CONF_ZBP_PTCS, defaults.get("zbp_relay")),
+        )
     }
     if has_hnb:
-        schema[_area_field(CONF_HNB_NAME, defaults.get(CONF_HNB_NAME))] = AreaSelector()
-        schema[_optional_ptc_field(CONF_HNB_PTCS, defaults.get(CONF_HNB_PTCS, defaults.get("hnb_relay")))] = _ptc_selector()
+        schema[vol.Required(SECTION_HNB)] = _panel_section(
+            _area_field(FIELD_AREA, defaults.get(CONF_HNB_NAME)),
+            defaults.get(CONF_HNB_PTCS, defaults.get("hnb_relay")),
+        )
     existing_names = defaults.get(CONF_ZONE_NAMES, [])
     existing_ptcs = defaults.get(CONF_ZONE_PTCS, defaults.get("zone_relays", []))
     for i in range(1, zone_count + 1):
-        default = existing_names[i - 1] if i - 1 < len(existing_names) else None
-        schema[_optional_area_field(f"zone_name_{i}", default)] = AreaSelector()
+        area_default = existing_names[i - 1] if i - 1 < len(existing_names) else None
         ptc_default = existing_ptcs[i - 1] if i - 1 < len(existing_ptcs) else None
-        schema[_optional_ptc_field(f"zone_ptcs_{i}", ptc_default)] = _ptc_selector()
+        schema[vol.Required(_nbp_section_key(i))] = _panel_section(
+            _optional_area_field(FIELD_AREA, area_default), ptc_default
+        )
     return vol.Schema(schema)
 
 
@@ -213,16 +243,20 @@ class ProxonConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            zbp_name = user_input[CONF_ZBP_NAME]
-            hnb_name = user_input.get(CONF_HNB_NAME)
-            zbp_ptcs = list(ptcs_from_value(user_input.get(CONF_ZBP_PTCS)))
-            hnb_ptcs = list(ptcs_from_value(user_input.get(CONF_HNB_PTCS)))
+            zbp_in = user_input.get(SECTION_ZBP, {})
+            hnb_in = user_input.get(SECTION_HNB, {})
+            nbp_in = [user_input.get(_nbp_section_key(i), {}) for i in range(1, zone_count + 1)]
+
+            zbp_name = zbp_in[FIELD_AREA]
+            hnb_name = hnb_in.get(FIELD_AREA)
+            zbp_ptcs = list(ptcs_from_value(zbp_in.get(FIELD_PTCS)))
+            hnb_ptcs = list(ptcs_from_value(hnb_in.get(FIELD_PTCS)))
             # None for any NBPn left empty - that slot isn't installed (gaps in
             # the numbering, e.g. NBP1-3 + NBP5-6 but no NBP4, are valid).
-            zone_names = [user_input.get(f"zone_name_{i}") or None for i in range(1, zone_count + 1)]
+            zone_names = [panel.get(FIELD_AREA) or None for panel in nbp_in]
             # Empty list for any zone without assigned PTCs - that zone simply
             # gets no Heizelement-Status binary_sensor.
-            zone_ptcs = [list(ptcs_from_value(user_input.get(f"zone_ptcs_{i}"))) for i in range(1, zone_count + 1)]
+            zone_ptcs = [list(ptcs_from_value(panel.get(FIELD_PTCS))) for panel in nbp_in]
 
             all_areas = [zbp_name, *([hnb_name] if has_hnb else []), *(n for n in zone_names if n is not None)]
             all_ptcs = [*zbp_ptcs, *(hnb_ptcs if has_hnb else []), *(p for ptcs in zone_ptcs for p in ptcs)]

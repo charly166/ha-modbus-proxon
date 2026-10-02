@@ -25,50 +25,155 @@
         }
       },
       "zone_names": {
-        "description": "Pick the matching Home Assistant Area for each zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped. The PTC selection is optional and only needed for the 'Heizelement Status' sensor: a room can have several PTCs (PTC1-PTC10), but a PTC belongs to one room only. Which PTC belongs to which room is in the power wiring diagram; it has nothing to do with the NBP number.",
-        "data": {
-          "zbp_name": "Area for ZBP",
-          "zbp_ptcs": "PTCs for ZBP (optional)",
-          "hnb_name": "Area for HNBP",
-          "hnb_ptcs": "PTCs for HNBP (optional)",
-          "zone_name_1": "Area for NBP1 (leave blank if not installed)",
-          "zone_name_2": "Area for NBP2 (leave blank if not installed)",
-          "zone_name_3": "Area for NBP3 (leave blank if not installed)",
-          "zone_name_4": "Area for NBP4 (leave blank if not installed)",
-          "zone_name_5": "Area for NBP5 (leave blank if not installed)",
-          "zone_name_6": "Area for NBP6 (leave blank if not installed)",
-          "zone_name_7": "Area for NBP7 (leave blank if not installed)",
-          "zone_name_8": "Area for NBP8 (leave blank if not installed)",
-          "zone_name_9": "Area for NBP9 (leave blank if not installed)",
-          "zone_name_10": "Area for NBP10 (leave blank if not installed)",
-          "zone_name_11": "Area for NBP11 (leave blank if not installed)",
-          "zone_name_12": "Area for NBP12 (leave blank if not installed)",
-          "zone_name_13": "Area for NBP13 (leave blank if not installed)",
-          "zone_name_14": "Area for NBP14 (leave blank if not installed)",
-          "zone_name_15": "Area for NBP15 (leave blank if not installed)",
-          "zone_name_16": "Area for NBP16 (leave blank if not installed)",
-          "zone_name_17": "Area for NBP17 (leave blank if not installed)",
-          "zone_name_18": "Area for NBP18 (leave blank if not installed)",
-          "zone_name_19": "Area for NBP19 (leave blank if not installed)",
-          "zone_ptcs_1": "PTCs for NBP1 (optional)",
-          "zone_ptcs_2": "PTCs for NBP2 (optional)",
-          "zone_ptcs_3": "PTCs for NBP3 (optional)",
-          "zone_ptcs_4": "PTCs for NBP4 (optional)",
-          "zone_ptcs_5": "PTCs for NBP5 (optional)",
-          "zone_ptcs_6": "PTCs for NBP6 (optional)",
-          "zone_ptcs_7": "PTCs for NBP7 (optional)",
-          "zone_ptcs_8": "PTCs for NBP8 (optional)",
-          "zone_ptcs_9": "PTCs for NBP9 (optional)",
-          "zone_ptcs_10": "PTCs for NBP10 (optional)",
-          "zone_ptcs_11": "PTCs for NBP11 (optional)",
-          "zone_ptcs_12": "PTCs for NBP12 (optional)",
-          "zone_ptcs_13": "PTCs for NBP13 (optional)",
-          "zone_ptcs_14": "PTCs for NBP14 (optional)",
-          "zone_ptcs_15": "PTCs for NBP15 (optional)",
-          "zone_ptcs_16": "PTCs for NBP16 (optional)",
-          "zone_ptcs_17": "PTCs for NBP17 (optional)",
-          "zone_ptcs_18": "PTCs for NBP18 (optional)",
-          "zone_ptcs_19": "PTCs for NBP19 (optional)"
+        "description": "One section per control panel: pick the matching Home Assistant Area and - optionally - its PTC heating elements. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped. The PTC selection is only needed for the 'Heizelement Status' sensor: a room can have several PTCs (PTC1-PTC10), but a PTC belongs to one room only (see the power wiring diagram); it has nothing to do with the NBP number.",
+        "sections": {
+          "zbp": {
+            "name": "ZBP - main control panel",
+            "data": {
+              "area": "Area",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "hnb": {
+            "name": "HNBP - secondary main panel",
+            "data": {
+              "area": "Area",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_1": {
+            "name": "NBP1 - remote panel 1",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_2": {
+            "name": "NBP2 - remote panel 2",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_3": {
+            "name": "NBP3 - remote panel 3",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_4": {
+            "name": "NBP4 - remote panel 4",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_5": {
+            "name": "NBP5 - remote panel 5",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_6": {
+            "name": "NBP6 - remote panel 6",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_7": {
+            "name": "NBP7 - remote panel 7",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_8": {
+            "name": "NBP8 - remote panel 8",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_9": {
+            "name": "NBP9 - remote panel 9",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_10": {
+            "name": "NBP10 - remote panel 10",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_11": {
+            "name": "NBP11 - remote panel 11",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_12": {
+            "name": "NBP12 - remote panel 12",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_13": {
+            "name": "NBP13 - remote panel 13",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_14": {
+            "name": "NBP14 - remote panel 14",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_15": {
+            "name": "NBP15 - remote panel 15",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_16": {
+            "name": "NBP16 - remote panel 16",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_17": {
+            "name": "NBP17 - remote panel 17",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_18": {
+            "name": "NBP18 - remote panel 18",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          },
+          "nbp_19": {
+            "name": "NBP19 - remote panel 19",
+            "data": {
+              "area": "Area (leave blank if not installed)",
+              "ptcs": "PTC heating elements (optional)"
+            }
+          }
         }
       }
     },

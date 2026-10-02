@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import device_registry as dr
 from modbus_connection.tmodbus import connect_tcp
 
-from .const import CONF_SLAVE, CONF_ZONE_COUNT, PLATFORMS
+from .const import CONF_SLAVE, CONF_ZONE_COUNT, DOMAIN, PLATFORMS
 from .coordinator import (
     ProxonConfigEntry,
     ProxonDataUpdateCoordinator,
@@ -58,8 +59,36 @@ async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bo
 
     entry.async_on_unload(coordinator.async_add_listener(_reload_if_write_level_crossed))
 
+    _remove_stale_devices(hass, entry)
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
+
+
+def stale_devices(devices, entry_id: str, zone_slugs: list[str]) -> list:
+    """Devices of this entry that no longer belong to a configured zone.
+
+    Home Assistant never deletes devices/entities by itself when an integration
+    stops providing them, so e.g. lowering the number of NBP panels in
+    "Neu konfigurieren" would otherwise leave the removed panels' devices
+    behind. Central and T300 devices always stay.
+    """
+    keep = {entry_id, f"{entry_id}_t300", *(f"{entry_id}_zone_{slug}" for slug in zone_slugs)}
+    stale = []
+    for device in devices:
+        ours = {ident for domain, ident in device.identifiers if domain == DOMAIN}
+        if ours and not ours & keep:
+            stale.append(device)
+    return stale
+
+
+def _remove_stale_devices(hass: HomeAssistant, entry: ProxonConfigEntry) -> None:
+    registry = dr.async_get(hass)
+    devices = dr.async_entries_for_config_entry(registry, entry.entry_id)
+    for device in stale_devices(devices, entry.entry_id, [z.slug for z in entry.runtime_data.zones]):
+        # Detaches this entry; the device (and with it its entities) goes away
+        # unless another config entry also uses it.
+        registry.async_update_device(device.id, remove_config_entry_id=entry.entry_id)
 
 
 def _read_write_level(coordinator: ProxonDataUpdateCoordinator) -> int | None:

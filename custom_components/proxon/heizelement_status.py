@@ -32,6 +32,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 from homeassistant.const import EntityCategory
+from homeassistant.helpers import entity_registry as er
 
 from .entity import ProxonEntity, ProxonEntityDescription
 from .zones import ZoneInfo
@@ -88,4 +89,21 @@ def heizelement_status_entities(coordinator, zones: list[ZoneInfo]) -> list[Prox
             entity_category=EntityCategory.DIAGNOSTIC,
         )
         entities.append(ProxonHeizelementStatusBinarySensor(coordinator, description))
+    _drop_unassigned(coordinator, {e.entity_description.key for e in entities})
     return entities
+
+
+def _drop_unassigned(coordinator, keep: set[str]) -> None:
+    """Remove registry entries of zones that no longer have PTCs assigned
+    (the zone's device itself stays, so it wouldn't be cleaned up otherwise)."""
+    hass = getattr(coordinator, "hass", None)
+    if hass is None:
+        return
+    registry = er.async_get(hass)
+    for entity in er.async_entries_for_config_entry(registry, coordinator.config_entry.entry_id):
+        if (
+            entity.domain == "binary_sensor"
+            and entity.unique_id.startswith("proxon_heizelement_status_")
+            and entity.unique_id not in keep
+        ):
+            registry.async_remove(entity.entity_id)
