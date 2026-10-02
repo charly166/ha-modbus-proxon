@@ -86,6 +86,9 @@ class ProxonRuntimeData:
     # unique_id -> register tag ("3x0209"), filled as entities are created; used
     # to migrate legacy numbered entity_ids (see __init__._migrate_legacy_entity_ids).
     register_tags: dict[str, str] = field(default_factory=dict)
+    # entity_ids suggested to entities of this entry that are still being added
+    # (not registered yet), so two entities with the same name don't pick the same ID.
+    claimed_ids: set[str] = field(default_factory=set)
 
 
 type ProxonConfigEntry = ConfigEntry[ProxonRuntimeData]

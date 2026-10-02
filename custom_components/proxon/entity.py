@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity import DeviceInfo, EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import ProxonDataUpdateCoordinator
+from .util import object_id_for
 from .zones import ZoneInfo
 
 # Central, migrated sensors that physically sit on the ZBP (Zentralbedienpanel,
@@ -72,6 +74,7 @@ class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
         if tags is not None and (tag := self._register_tag()):
             tags[description.key] = tag
         zone = _zone_for(entry.runtime_data.zones, description.component, description.zone_index, description.key)
+        self._in_zone = zone is not None
         if zone is not None:
             # One device per zone (room), so the device list shows "Büro",
             # "Wohnzimmer", etc. instead of everything being lumped under a
@@ -99,6 +102,33 @@ class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
                 manufacturer="Proxon",
                 model="FWT2.0",
             )
+
+    def add_to_platform_start(self, hass, platform, parallel_updates) -> None:
+        """Suggest a short ``<domain>.proxon_<name>`` entity_id for new central entities.
+
+        Without this Home Assistant derives IDs from the device name
+        (``sensor.system_ha_proxon_fwt_2_0_modbus_abtaudruck``); room entities keep
+        that scheme, since their device name carries the room. Entities already in
+        the registry keep their ID either way.
+        """
+        super().add_to_platform_start(hass, platform, parallel_updates)
+        description = self.entity_description
+        if self.entity_id is not None or self._in_zone or not description.has_entity_name:
+            return
+        registry = er.async_get(hass)
+        if registry.async_get_entity_id(platform.domain, DOMAIN, description.key):
+            return
+        runtime = self.coordinator.config_entry.runtime_data
+        name = self.name
+        object_id = object_id_for(
+            platform.domain,
+            name if isinstance(name, str) else None,
+            runtime.register_tags.get(description.key),
+            lambda eid: eid in runtime.claimed_ids or registry.async_get(eid) is not None or hass.states.get(eid) is not None,
+        )
+        if object_id:
+            self.entity_id = f"{platform.domain}.{object_id}"
+            runtime.claimed_ids.add(self.entity_id)
 
     def _register_tag(self) -> str | None:
         """Modbus register of this entity's field in the register list's own
