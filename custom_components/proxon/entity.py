@@ -11,22 +11,27 @@ from .const import DOMAIN
 from .coordinator import ProxonDataUpdateCoordinator
 from .zones import ZoneInfo
 
+# Central, migrated sensors that physically sit on the ZBP (Zentralbedienpanel,
+# registers 21/22) and so belong on the ZBP's zone device. Keyed by the
+# description key = unique_id, so entity_ids/history stay unchanged.
+ZBP_DEVICE_KEYS = frozenset({"proxon_co2_wohnzimmer", "proxon_luftfeuchte_wohnzimmer"})
 
-def _zone_for(zones: list[ZoneInfo], component: str, zone_index: int | None) -> ZoneInfo | None:
+
+def _zone_for(zones: list[ZoneInfo], component: str, zone_index: int | None, key: str = "") -> ZoneInfo | None:
     """Match an entity description back to the zone it belongs to, if any.
 
     ``zone_index`` (set only for "nb_zones_*" components) identifies an HNBP/
-    NBPn zone; "zbp"/"zbp_input" is always the one ZBP zone. Anything else is
-    a central (non-zone) entity - returns None.
+    NBPn zone; "zbp"/"zbp_input" (or a key in ZBP_DEVICE_KEYS) is always the
+    one ZBP zone. Anything else is a central (non-zone) entity - returns None.
     """
     if zone_index is not None:
         return next((z for z in zones if z.kind == "nb" and z.zone_index == zone_index), None)
-    if component in ("zbp", "zbp_input"):
+    if component in ("zbp", "zbp_input") or key in ZBP_DEVICE_KEYS:
         return next((z for z in zones if z.kind == "zbp"), None)
     return None
 
 
-# T300 (Warmwasserboiler) components - not a "zone" (no Area picker, not part
+# T300 (Trinkwasserwärmepumpe) components - not a "zone" (no Area picker, not part
 # of the dynamic HNBP/NBPn model), but still its own device rather than
 # living on the central hub, per user feedback ("T300 wie ein eigener Raum").
 # Names are the snake_case ProxonDevice attribute names from model.py.
@@ -63,7 +68,7 @@ class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
         self.entity_description = description
         self._attr_unique_id = description.key
         entry = coordinator.config_entry
-        zone = _zone_for(entry.runtime_data.zones, description.component, description.zone_index)
+        zone = _zone_for(entry.runtime_data.zones, description.component, description.zone_index, description.key)
         if zone is not None:
             # One device per zone (room), so the device list shows "Büro",
             # "Wohnzimmer", etc. instead of everything being lumped under a
@@ -82,7 +87,7 @@ class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
                 identifiers={(DOMAIN, f"{entry.entry_id}_t300")},
                 name="T300",
                 manufacturer="Proxon",
-                model="T300 Warmwasserboiler",
+                model="T300 Trinkwasserwärmepumpe",
             )
         else:
             self._attr_device_info = DeviceInfo(

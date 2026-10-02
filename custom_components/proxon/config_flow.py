@@ -14,6 +14,9 @@ from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
     TextSelector,
 )
 from modbus_connection.tmodbus import connect_tcp
@@ -21,21 +24,22 @@ from modbus_connection.tmodbus import connect_tcp
 from .const import (
     CONF_HAS_HNB,
     CONF_HNB_NAME,
-    CONF_HNB_RELAY,
+    CONF_HNB_PTCS,
     CONF_SLAVE,
     CONF_ZBP_NAME,
-    CONF_ZBP_RELAY,
+    CONF_ZBP_PTCS,
     CONF_ZONE_COUNT,
     CONF_ZONE_NAMES,
-    CONF_ZONE_RELAYS,
+    CONF_ZONE_PTCS,
     DEFAULT_PORT,
     DEFAULT_SLAVE,
     DEFAULT_ZONE_COUNT,
     DOMAIN,
-    MAX_RELAY,
+    MAX_PTC,
     MAX_ZONE_COUNT,
 )
 from .model import ProxonDevice
+from .zones import ptcs_from_value
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -81,40 +85,44 @@ def _optional_area_field(key: str, default: str | None) -> vol.Marker:
     return vol.Optional(key, default=default) if default is not None else vol.Optional(key)
 
 
-def _relay_selector() -> vol.All:
-    return vol.All(
-        NumberSelector(NumberSelectorConfig(min=1, max=MAX_RELAY, mode=NumberSelectorMode.BOX)),
-        vol.Coerce(int),
+def _ptc_selector() -> SelectSelector:
+    return SelectSelector(
+        SelectSelectorConfig(
+            options=[{"value": str(n), "label": f"PTC{n}"} for n in range(1, MAX_PTC + 1)],
+            multiple=True,
+            mode=SelectSelectorMode.DROPDOWN,
+        )
     )
 
 
-def _optional_relay_field(key: str, default: int | None) -> vol.Marker:
-    """Optional PTC relay number (R1-R20) for the Heizelement-Status
+def _optional_ptc_field(key: str, default: object) -> vol.Marker:
+    """Optional PTC multi-select (PTC1-PTC10) for the Heizelement-Status
     binary_sensor - left empty means that zone gets no such entity. Unlike
-    the Area, there's no sensible default to guess (see ZoneInfo.relay)."""
-    return vol.Optional(key, default=default) if default is not None else vol.Optional(key)
+    the Area, there's no sensible default to guess (see ZoneInfo.ptcs)."""
+    stored = [str(n) for n in ptcs_from_value(default)]
+    return vol.Optional(key, default=stored) if stored else vol.Optional(key)
 
 
 def _zone_names_schema(has_hnb: bool, zone_count: int, defaults: dict[str, Any]) -> vol.Schema:
     """Every zone is picked from Home Assistant's own Areas (AreaSelector),
     not typed freely - so the zone and the Area used elsewhere in HA for the
     same room stay in sync, and so entities/devices can be pre-assigned to
-    that Area. Each zone also gets an optional PTC relay number field for the
+    that Area. Each zone also gets an optional PTC multi-select for the
     Heizelement-Status binary_sensor."""
     schema: dict[Any, Any] = {
         _area_field(CONF_ZBP_NAME, defaults.get(CONF_ZBP_NAME)): AreaSelector(),
-        _optional_relay_field(CONF_ZBP_RELAY, defaults.get(CONF_ZBP_RELAY)): _relay_selector(),
+        _optional_ptc_field(CONF_ZBP_PTCS, defaults.get(CONF_ZBP_PTCS, defaults.get("zbp_relay"))): _ptc_selector(),
     }
     if has_hnb:
         schema[_area_field(CONF_HNB_NAME, defaults.get(CONF_HNB_NAME))] = AreaSelector()
-        schema[_optional_relay_field(CONF_HNB_RELAY, defaults.get(CONF_HNB_RELAY))] = _relay_selector()
+        schema[_optional_ptc_field(CONF_HNB_PTCS, defaults.get(CONF_HNB_PTCS, defaults.get("hnb_relay")))] = _ptc_selector()
     existing_names = defaults.get(CONF_ZONE_NAMES, [])
-    existing_relays = defaults.get(CONF_ZONE_RELAYS, [])
+    existing_ptcs = defaults.get(CONF_ZONE_PTCS, defaults.get("zone_relays", []))
     for i in range(1, zone_count + 1):
         default = existing_names[i - 1] if i - 1 < len(existing_names) else None
         schema[_optional_area_field(f"zone_name_{i}", default)] = AreaSelector()
-        relay_default = existing_relays[i - 1] if i - 1 < len(existing_relays) else None
-        schema[_optional_relay_field(f"zone_relay_{i}", relay_default)] = _relay_selector()
+        ptc_default = existing_ptcs[i - 1] if i - 1 < len(existing_ptcs) else None
+        schema[_optional_ptc_field(f"zone_ptcs_{i}", ptc_default)] = _ptc_selector()
     return vol.Schema(schema)
 
 
@@ -207,42 +215,35 @@ class ProxonConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             zbp_name = user_input[CONF_ZBP_NAME]
             hnb_name = user_input.get(CONF_HNB_NAME)
-            zbp_relay = user_input.get(CONF_ZBP_RELAY)
-            hnb_relay = user_input.get(CONF_HNB_RELAY)
+            zbp_ptcs = list(ptcs_from_value(user_input.get(CONF_ZBP_PTCS)))
+            hnb_ptcs = list(ptcs_from_value(user_input.get(CONF_HNB_PTCS)))
             # None for any NBPn left empty - that slot isn't installed (gaps in
             # the numbering, e.g. NBP1-3 + NBP5-6 but no NBP4, are valid).
             zone_names = [user_input.get(f"zone_name_{i}") or None for i in range(1, zone_count + 1)]
-            # None for any zone without a configured PTC relay number - that
-            # zone simply gets no Heizelement-Status binary_sensor.
-            zone_relays = [user_input.get(f"zone_relay_{i}") for i in range(1, zone_count + 1)]
+            # Empty list for any zone without assigned PTCs - that zone simply
+            # gets no Heizelement-Status binary_sensor.
+            zone_ptcs = [list(ptcs_from_value(user_input.get(f"zone_ptcs_{i}"))) for i in range(1, zone_count + 1)]
 
             all_areas = [zbp_name, *([hnb_name] if has_hnb else []), *(n for n in zone_names if n is not None)]
-            all_relays = [
-                r
-                for r in (zbp_relay, *([hnb_relay] if has_hnb else []), *zone_relays)
-                if r is not None
-            ]
+            all_ptcs = [*zbp_ptcs, *(hnb_ptcs if has_hnb else []), *(p for ptcs in zone_ptcs for p in ptcs)]
             if len(set(all_areas)) != len(all_areas):
                 errors["base"] = "duplicate_zone_names"
-            elif len(set(all_relays)) != len(all_relays):
-                errors["base"] = "duplicate_relays"
+            elif len(set(all_ptcs)) != len(all_ptcs):
+                # A PTC heating element is wired to exactly one room.
+                errors["base"] = "duplicate_ptcs"
             else:
                 self._data[CONF_ZBP_NAME] = zbp_name
-                if zbp_relay is not None:
-                    self._data[CONF_ZBP_RELAY] = zbp_relay
-                else:
-                    self._data.pop(CONF_ZBP_RELAY, None)
+                self._data[CONF_ZBP_PTCS] = zbp_ptcs
                 if has_hnb:
                     self._data[CONF_HNB_NAME] = hnb_name
-                    if hnb_relay is not None:
-                        self._data[CONF_HNB_RELAY] = hnb_relay
-                    else:
-                        self._data.pop(CONF_HNB_RELAY, None)
+                    self._data[CONF_HNB_PTCS] = hnb_ptcs
                 else:
                     self._data.pop(CONF_HNB_NAME, None)
-                    self._data.pop(CONF_HNB_RELAY, None)
+                    self._data.pop(CONF_HNB_PTCS, None)
                 self._data[CONF_ZONE_NAMES] = zone_names
-                self._data[CONF_ZONE_RELAYS] = zone_relays
+                self._data[CONF_ZONE_PTCS] = zone_ptcs
+                for legacy in ("zbp_relay", "hnb_relay", "zone_relays"):
+                    self._data.pop(legacy, None)
 
                 if self._is_reconfigure():
                     return self.async_update_reload_and_abort(self._get_reconfigure_entry(), data=self._data)

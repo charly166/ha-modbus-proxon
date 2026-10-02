@@ -95,13 +95,15 @@ mitgelesen (sie liegen zwischen den vorhandenen NBPs), aber nirgends angezeigt.
 
 Jede Zone ist ihr **eigenes Gerät** in Home Assistant, benannt nach dem im Assistenten
 gewählten Raum (z.B. "Büro", "Wohnzimmer") - nicht alles unter einem einzigen "Proxon"-Gerät.
-Die Entitäten selbst tragen dadurch nur noch ihre Funktion im Namen ("Ist-Temperatur",
+Auch die am ZBP sitzenden Sensoren (Luftfeuchte und CO2 im Wohnzimmer, Register 22/21) gehören
+zum ZBP-Gerät; ihre Entity-IDs bleiben dabei unverändert. Die Entitäten selbst tragen dadurch
+nur noch ihre Funktion im Namen ("Ist-Temperatur",
 "Offset-Temperatur", "Heizelement", "Sperren Bedienteil"); Home Assistant setzt den
 Gerätenamen automatisch davor (z.B. "Büro Ist-Temperatur"). Die `climate`-Entität einer Zone
 trägt gar keinen eigenen Namenszusatz - sie erscheint als Hauptentität direkt unter dem
 Gerätenamen ("Büro").
 
-Der **T300-Warmwasserboiler** ist, obwohl kein per Raum-Auswahl konfigurierbarer "Zone",
+Die **T300-Trinkwasserwärmepumpe** ist, obwohl kein per Raum-Auswahl konfigurierbarer "Zone",
 ebenfalls ein **eigenes Gerät** ("T300") - nicht Teil des zentralen Geräts. Alle übrigen,
 wirklich zentralen Register (Lüftung, Bypass, Betriebsstundenzähler, Diagnosewerte, ...)
 bleiben gemeinsam unter dem zentralen Gerät (Titel der Integration).
@@ -109,14 +111,15 @@ bleiben gemeinsam unter dem zentralen Gerät (Titel der Integration).
 Neu angelegte Zonen-Geräte werden zusätzlich dem gewählten Home-Assistant-Raum vorgeschlagen
 (`suggested_area`), damit sie dort direkt einsortiert erscheinen.
 
-## T300-Warmwasserboiler
+## T300-Trinkwasserwärmepumpe
 
-Seit einem Update der Registerliste ist der T300 vollständig dokumentiert. Das Gerät "T300"
+Der T300 (offiziell "Trinkwasserwärmepumpe", Modell T300) ist seit einem Update der
+Registerliste vollständig dokumentiert. Das Gerät "T300"
 bündelt jetzt:
 
 - Die bereits zuvor migrierten 6 Entitäten (Soll-/Ist-Temperatur Wasser, Wasser Unten,
   Heizstab-Temperatur/-Schalter/-Status, Kompressor-Status).
-- **Neu**: `select` "Betriebsart" (Aus/Bedarf/Lüftungsstufe 1/Lüftungsstufe 2),
+- **Neu**: `select` "Betriebsart" (Aus/An),
   `number` "Filterwechselintervall T300" (Monate), `switch` "Legionellaschutz".
 - **Neu**: ca. 80 Diagnose-Sensoren aus dem Kältekreis (Messtemperaturen T5/T6/T9/T11/T13,
   Drücke, Zustände, Fehlerzähler) sowie 3 zusätzliche Relais-Status (Solar/Ventilator/Abtau)
@@ -199,9 +202,16 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     bestimmte Register mit "Modbus Exception 0x03" ab. Die Registerliste dokumentiert **pro
     Register**, ab welcher Stufe es beschreibbar wird (Spalten D/E/F = Stufe 0/1/2); danach
     richtet sich, welche Entitäten dieser Integration schreibbar sind:
-    - **`Sperren Bedienteil`** (alle Zonen) und **`Heizelemente Global`** benötigen laut
-      Registerliste Stufe 2 ("alle Register") und sind deshalb nur `binary_sensor` (lesbar),
-      kein `switch` mehr - sie zeigen weiterhin den aktuellen Zustand an.
+    - **`Sperren Bedienteil`** (alle Zonen) benötigt laut Registerliste Stufe 2 ("alle
+      Register"). Die Integration liest das Schreibrecht bei **jedem Poll** mit und richtet die
+      Entität danach aus: bei Stufe 2 ist es ein bedienbarer `switch`, bei Stufe 0/1 ein
+      schreibgeschützter `binary_sensor`, der nur den Zustand anzeigt. Wird das Schreibrecht
+      später hochgestuft (oder herabgesetzt), lädt sich die Integration von selbst neu und die
+      Entität wechselt die Form - der Nutzer muss nichts einstellen. Ist das Schreibrecht nicht
+      lesbar, bleibt es vorsichtshalber beim `binary_sensor`. Beide Varianten teilen sich die
+      `unique_id`; die jeweils andere, verwaiste Variante wird dabei automatisch entfernt.
+    - **`Heizelemente Global`** benötigt ebenfalls Stufe 2, ist aber (noch) fest ein
+      `binary_sensor` (lesbar), kein `switch`.
     - **Das Heizelement des ZBP** (Zentralbedienpanel, Adresse 187 - anders als bei
       HNBP/NBP1-19) benötigt ebenfalls Stufe 2, ist in dieser Version aber noch **regulär
       schreibbar** (Schalter + `climate`-Heizmodus) - ein Schreibversuch schlägt auf Anlagen mit
@@ -214,25 +224,26 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
 
     Die Berechtigungsstufe selbst lässt sich nicht aus Home Assistant heraus ändern, sondern nur
     über den [Proxon/Zimmermann-Kundenservice](https://www.zimmermann-lueftung.de/kundenservice).
-    Nach dem Update die alten, jetzt verwaisten `switch.proxon_tastensperre_<zone>`- und
-    `switch.proxon_heizelemente_global`-Entitäten unter Einstellungen → Entitäten löschen; die
-    neuen `binary_sensor`-Entitäten behalten dieselbe `unique_id`, der Verlauf läuft weiter.
+    Nach dem Update die alte, jetzt verwaiste `switch.proxon_heizelemente_global`-Entität unter
+    Einstellungen → Entitäten löschen; der neue `binary_sensor` behält dieselbe `unique_id`, der
+    Verlauf läuft weiter.
 11. **Stromaufnahme (`Proxon Stromaufnahme Total`, Input 25)**: hatte durch denselben
     Unit-Fallback-Fehler wie oben seine Einheit verloren (proxon.yaml dokumentierte "W", die
     Registerliste lässt die Einheit an dieser Adresse leer) - zeigte dadurch einen unbenannten
     Rohwert statt eines Leistungssensors. Jetzt korrekt als `device_class: power`, Einheit W.
 12. **Neu: Heizelement-Status pro Zone** (`binary_sensor`, Diagnose-Kategorie): Der Heizelement-
     `switch` einer Zone schaltet nur die *Freigabe* frei ("darf bei Bedarf heizen"), nicht die
-    Heizung selbst. Ob das PTC-Element gerade tatsächlich heizt, steht pro Relais (R1-R20) als
-    Bit in zwei Statusregistern (Input 574 "Heizmodul 1", Input 583 "Heizmodul 2"). **Wichtig**:
-    Welches Relais zu welcher Zone gehört, folgt der physischen Verkabelung des Heizmoduls durch
-    den Installateur - das hat **keinen** verlässlichen Zusammenhang mit der NBP-Nummerierung
-    (in der Praxis gesehen: NBP2/NBP3 waren auf R4/R3 verdrahtet, also vertauscht). Die
-    Relais-Nummer lässt sich deshalb nicht automatisch ableiten und muss im Einrichtungs-
-    Assistenten optional pro Zone eingetragen werden (Feld "PTC-Relais-Nummer", leer = kein
-    Status-Sensor für diese Zone). Zum Herausfinden der richtigen Nummer: Heizelement einer Zone
-    manuell/im Bedarfsfall aktiv werden lassen und beobachten, welches Bit in den (weiterhin als
-    einfache Diagnose-Sensoren sichtbaren) rohen Registern 574/583 kippt.
+    Heizung selbst. Ob die PTC-Heizelemente gerade tatsächlich heizen, steht pro PTC als Bit in
+    Input 574 ("Heizmodul 1 Relais Status", Bit0 = PTC1 ... Bit9 = PTC10). Ein Raum kann
+    **mehrere PTCs** haben, ein PTC gehört aber immer nur zu **einem** Raum. Welche PTCs zu
+    welchem Raum gehören, folgt der physischen Verkabelung (siehe Stromverkabelungsplan) und hat
+    **keinen** verlässlichen Zusammenhang mit der NBP-Nummerierung - es lässt sich deshalb nicht
+    ableiten und wird im Einrichtungs-Assistenten pro Raum/Bedienpanel per **Mehrfachauswahl
+    PTC1-PTC10** angegeben (leer = kein Status-Sensor für diesen Raum; ein PTC mehreren Räumen
+    zuzuordnen wird abgelehnt). Der Sensor ist an, solange mindestens eines der zugeordneten
+    PTCs heizt; die Attribute `zugeordnete_ptcs`/`aktive_ptcs` zeigen die einzelnen PTCs. Wer
+    mit v0.7.0 schon eine einzelne Relais-Nummer eingetragen hatte, behält sie als zugeordnetes
+    PTC.
 13. **Neu: Energieverbrauch für das Energie-Dashboard** (`sensor.*_energieverbrauch`, Wh,
     `device_class: energy`, `total_increasing`): Die Anlage liefert nur die Momentanleistung
     (Input 25). Dieser Sensor integriert sie nach dem Trapez-Verfahren zu einem stetig
@@ -255,7 +266,7 @@ Tastensperre, Ist-/Mittel-/Offset-Temperatur, Status).
 Bewusst ausgelassen: PID-Regelparameter, Test-/Service-/Bedienteil-/Datum-&-Uhrzeit-Register,
 die beiden Zeitprogramm-Blöcke (>100 Zeit-Slots), rohe ADC-/Kalibrierregister sowie - beim
 T300-Abschnitt - die zahlreichen Installateur-/PID-Regel-/Datum-Uhrzeit-Register (siehe
-Abschnitt "T300-Warmwasserboiler" oben für das, was dort *wurde* übernommen). Details und
+Abschnitt "T300-Trinkwasserwärmepumpe" oben für das, was dort *wurde* übernommen). Details und
 Begründung stehen als Kommentar am Anfang von
 [`tools/generate_registers.py`](tools/generate_registers.py).
 

@@ -37,12 +37,13 @@ from modbus_connection.model import Component, gauge, integer, repeating_group
 from .const import (
     CONF_HAS_HNB,
     CONF_HNB_NAME,
-    CONF_HNB_RELAY,
+    CONF_HNB_PTCS,
     CONF_ZBP_NAME,
-    CONF_ZBP_RELAY,
+    CONF_ZBP_PTCS,
     CONF_ZONE_COUNT,
     CONF_ZONE_NAMES,
-    CONF_ZONE_RELAYS,
+    CONF_ZONE_PTCS,
+    MAX_PTC,
 )
 from .util import slugify
 
@@ -56,11 +57,31 @@ class ZoneInfo:
     kind: Literal["zbp", "nb"]
     zone_index: int | None  # None for ZBP; 0=HNBP, 1..19=NBPn for "nb"
     area_id: str | None = None
-    # 1-20 (R1-R20), or None if not configured - see heizelement_status.py.
-    # Independent of zone_index: it reflects physical PTC relay wiring, not
-    # Modbus NBP address order, and the two are NOT guaranteed to match (seen
-    # in practice: Modbus NBP2/NBP3 wired to relays R4/R3, swapped).
-    relay: int | None = None
+    # Assigned PTC heating elements (1-10), empty if not configured - see
+    # heizelement_status.py. Independent of zone_index: it reflects how the
+    # installer wired the PTCs, not Modbus NBP address order.
+    ptcs: tuple[int, ...] = ()
+
+
+def ptcs_from_value(value: object) -> tuple[int, ...]:
+    """Normalize a stored PTC assignment to a sorted tuple of valid PTC numbers.
+
+    Accepts the multi-select list the config flow stores (strings or ints),
+    and - for entries created by v0.7.0, which stored one relay number per
+    zone - a single int; numbers outside 1-10 are dropped.
+    """
+    if value is None or value == "":
+        return ()
+    items = value if isinstance(value, (list, tuple)) else [value]
+    out = set()
+    for item in items:
+        try:
+            number = int(item)
+        except (TypeError, ValueError):
+            continue
+        if 1 <= number <= MAX_PTC:
+            out.add(number)
+    return tuple(sorted(out))
 
 
 def _resolve_area(hass: HomeAssistant, area_id: str) -> str:
@@ -94,7 +115,7 @@ def zones_from_entry_data(hass: HomeAssistant, data: dict) -> list[ZoneInfo]:
             kind="zbp",
             zone_index=None,
             area_id=zbp_area,
-            relay=data.get(CONF_ZBP_RELAY),
+            ptcs=ptcs_from_value(data.get(CONF_ZBP_PTCS, data.get("zbp_relay"))),
         )
     ]
     if data.get(CONF_HAS_HNB):
@@ -107,10 +128,10 @@ def zones_from_entry_data(hass: HomeAssistant, data: dict) -> list[ZoneInfo]:
                 kind="nb",
                 zone_index=0,
                 area_id=hnb_area,
-                relay=data.get(CONF_HNB_RELAY),
+                ptcs=ptcs_from_value(data.get(CONF_HNB_PTCS, data.get("hnb_relay"))),
             )
         )
-    zone_relays = data.get(CONF_ZONE_RELAYS, [])
+    zone_ptcs = data.get(CONF_ZONE_PTCS, data.get("zone_relays", []))
     for i, area_id in enumerate(data.get(CONF_ZONE_NAMES, [])[: data.get(CONF_ZONE_COUNT, 0)], start=1):
         if not area_id:
             # Gap in the NBP numbering (e.g. NBP4 not physically installed) -
@@ -119,8 +140,8 @@ def zones_from_entry_data(hass: HomeAssistant, data: dict) -> list[ZoneInfo]:
             # contiguous repeating_group block) but no entity is created.
             continue
         name = _resolve_area(hass, area_id)
-        relay = zone_relays[i - 1] if i - 1 < len(zone_relays) else None
-        zones.append(ZoneInfo(name=name, slug=slugify(name), kind="nb", zone_index=i, area_id=area_id, relay=relay))
+        ptcs = ptcs_from_value(zone_ptcs[i - 1] if i - 1 < len(zone_ptcs) else None)
+        zones.append(ZoneInfo(name=name, slug=slugify(name), kind="nb", zone_index=i, area_id=area_id, ptcs=ptcs))
     return zones
 
 # Offset-Temperatur is only adjustable ±3°C from the zone's own Mitteltemperatur.
@@ -156,11 +177,9 @@ class NbZone(Component):
     repeating_group() - index 0 is HNBP, 1..19 are NBP1..NBP19."""
 
     heizelement = integer(253, signed=False, writable=True)
-    # Read-only: locking/unlocking an NBP's buttons is only possible from the
-    # HBE (Hauptbedieneinheit) itself - confirmed by the integration author on
-    # real hardware (Modbus exception 0x03 on every remote write attempt,
-    # regardless of zone). This register only ever reports the current state.
-    tastensperre = integer(273, signed=False)
+    # Writable only at Modbus write permission level 2 (Holding 438) - see
+    # tastensperre.py, which only exposes this as a switch when that holds.
+    tastensperre = integer(273, signed=False, writable=True)
     offset_temperatur = integer(213, signed=True, writable=True)
     mitteltemperatur = integer(233, signed=True)
 

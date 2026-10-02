@@ -259,7 +259,7 @@ def parse_legacy_yaml() -> list[LegacyEntity]:
 # --------------------------------------------------------------------------
 
 
-# T300 (Warmwasserboiler) "Sollwerte" section of the Holding Register sheet
+# T300 (Trinkwasserwärmepumpe) "Sollwerte" section of the Holding Register sheet
 # (addresses 2000+): a handful of genuinely operational values, picked out of
 # a much larger block of installer/PID-tuning/date-time registers (same
 # curation philosophy as the main controller - see module docstring):
@@ -321,7 +321,7 @@ def extra_input_addresses(by_addr: dict[int, ExcelRegister]) -> list[int]:
             continue
         if 588 <= addr <= 650:  # remote panel (NBE) block - zone-shaped, handled by zones.py
             continue
-        if 800 <= addr <= 900:  # T300 (Warmwasserboiler) diagnostics block
+        if 800 <= addr <= 900:  # T300 (Trinkwasserwärmepumpe) diagnostics block
             addrs.append(addr)
             continue
         if addr <= 269:  # main operational/diagnostic block
@@ -1114,25 +1114,6 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSwitchEntityDescript
         )
     return out
 ''',
-    "binary_sensor": '''
-def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonBinarySensorEntityDescription]:
-    """Tastensperre status for HNBP/NBPn zones - read-only, see zones.py."""
-    out: list[ProxonBinarySensorEntityDescription] = []
-    for zone in zones:
-        if zone.kind == "nb":
-            out.append(
-                ProxonBinarySensorEntityDescription(
-                    key=f"proxon_tastensperre_{zone.slug}",
-                    component="nb_zones_holding",
-                    field="tastensperre",
-                    zone_index=zone.zone_index,
-                    translation_key="proxon_zone_tastensperre",
-                    has_entity_name=True,
-                    entity_category=EntityCategory.DIAGNOSTIC,
-                )
-            )
-    return out
-''',
     "number": '''
 def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonNumberEntityDescription]:
     """ZBP: absolute Soll-Temperatur (10-30\N{DEGREE SIGN}C). HNBP/NBPn: \N{PLUS-MINUS SIGN}3\N{DEGREE SIGN}C Offset-Temperatur."""
@@ -1190,9 +1171,11 @@ _EXTRA_MODULE_IMPORTS: dict[str, str] = {
     "binary_sensor": (
         "from .filter import FILTER_REMINDER_DESCRIPTION, ProxonFilterReminderBinarySensor\n"
         "from .heizelement_status import heizelement_status_entities\n"
+        "from .tastensperre import tastensperre_binary_sensors\n"
     ),
     "switch": (
         "from .intensivlueftung import INTENSIVLUEFTUNG_DESCRIPTION, ProxonIntensivlueftungSwitch\n"
+        "from .tastensperre import tastensperre_switches\n"
     ),
 }
 _EXTRA_MODULE_ENTITIES: dict[str, list[str]] = {
@@ -1205,9 +1188,11 @@ _EXTRA_MODULE_ENTITIES: dict[str, list[str]] = {
     "binary_sensor": [
         "ProxonFilterReminderBinarySensor(coordinator, FILTER_REMINDER_DESCRIPTION)",
         "*heizelement_status_entities(coordinator, entry.runtime_data.zones)",
+        "*tastensperre_binary_sensors(coordinator, entry)",
     ],
     "switch": [
         "ProxonIntensivlueftungSwitch(coordinator, INTENSIVLUEFTUNG_DESCRIPTION)",
+        "*tastensperre_switches(coordinator, entry)",
     ],
 }
 
@@ -1215,7 +1200,6 @@ _ZONE_ENTITY_EXTRA_IMPORTS: dict[str, str] = {
     "number": "from .zones import OFFSET_MAX, OFFSET_MIN, ZBP_SOLL_MAX, ZBP_SOLL_MIN, ZoneInfo",
     "sensor": "from .zones import ZoneInfo",
     "switch": "from .zones import ZoneInfo",
-    "binary_sensor": "from .zones import ZoneInfo",
 }
 
 
@@ -1386,21 +1370,21 @@ CONFIG_FLOW_STRINGS: dict = {
             "data": {"has_hnb": "Hauptnebenbedienpanel (HNBP) installiert", "zone_count": "Höchste installierte NBP-Nummer (NBPx)"},
         },
         "zone_names": {
-            "description": "Wähle für jede Zone den passenden Home-Assistant-Raum. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen. Das PTC-Relais-Feld ist optional und nur für den 'Heizelement Status'-Sensor nötig - die Relais-Nummer (R1-R20) steht in der Registerliste bzw. lässt sich durch Beobachten des rohen Heizmodul-Status-Sensors ermitteln; sie hat nichts mit der NBP-Nummer zu tun.",
+            "description": "Wähle für jede Zone den passenden Home-Assistant-Raum. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen. Die PTC-Auswahl ist optional und nur für den 'Heizelement Status'-Sensor nötig: ein Raum kann mehrere PTCs (PTC1-PTC10) haben, ein PTC aber nur zu einem Raum gehören. Welches PTC zu welchem Raum gehört, steht im Stromverkabelungsplan; es hat nichts mit der NBP-Nummer zu tun.",
             "data": {
                 "zbp_name": "Raum für ZBP",
-                "zbp_relay": "PTC-Relais-Nummer für ZBP (optional, R1-R20)",
+                "zbp_ptcs": "PTCs für ZBP (optional)",
                 "hnb_name": "Raum für HNBP",
-                "hnb_relay": "PTC-Relais-Nummer für HNBP (optional, R1-R20)",
+                "hnb_ptcs": "PTCs für HNBP (optional)",
                 **{f"zone_name_{i}": f"Raum für NBP{i} (leer lassen, falls nicht vorhanden)" for i in range(1, MAX_ZONE_COUNT + 1)},
-                **{f"zone_relay_{i}": f"PTC-Relais-Nummer für NBP{i} (optional, R1-R20)" for i in range(1, MAX_ZONE_COUNT + 1)},
+                **{f"zone_ptcs_{i}": f"PTCs für NBP{i} (optional)" for i in range(1, MAX_ZONE_COUNT + 1)},
             },
         },
     },
     "error": {
         "cannot_connect": "Verbindung zur Anlage fehlgeschlagen. Adresse/Port/Slave-ID prüfen.",
         "duplicate_zone_names": "Zwei Zonen sind demselben Raum zugeordnet - bitte für jede Zone einen eigenen Raum wählen.",
-        "duplicate_relays": "Zwei Zonen ist dieselbe PTC-Relais-Nummer zugeordnet - bitte für jede Zone eine eigene Nummer wählen.",
+        "duplicate_ptcs": "Ein PTC ist mehreren Zonen zugeordnet - jedes PTC kann nur zu einem Raum gehören.",
     },
     "abort": {"already_configured": "Diese Anlage ist bereits eingerichtet.", "reconfigure_successful": "Verbindungsdaten aktualisiert."},
 }
@@ -1420,21 +1404,21 @@ CONFIG_FLOW_STRINGS_EN: dict = {
             "data": {"has_hnb": "Secondary main panel (HNBP) installed", "zone_count": "Highest installed NBP number (NBPx)"},
         },
         "zone_names": {
-            "description": "Pick the matching Home Assistant Area for each zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped. The PTC relay field is optional and only needed for the 'Heizelement Status' sensor - the relay number (R1-R20) is in the register list, or can be worked out by watching the raw heating-module status sensor; it has nothing to do with the NBP number.",
+            "description": "Pick the matching Home Assistant Area for each zone. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped. The PTC selection is optional and only needed for the 'Heizelement Status' sensor: a room can have several PTCs (PTC1-PTC10), but a PTC belongs to one room only. Which PTC belongs to which room is in the power wiring diagram; it has nothing to do with the NBP number.",
             "data": {
                 "zbp_name": "Area for ZBP",
-                "zbp_relay": "PTC relay number for ZBP (optional, R1-R20)",
+                "zbp_ptcs": "PTCs for ZBP (optional)",
                 "hnb_name": "Area for HNBP",
-                "hnb_relay": "PTC relay number for HNBP (optional, R1-R20)",
+                "hnb_ptcs": "PTCs for HNBP (optional)",
                 **{f"zone_name_{i}": f"Area for NBP{i} (leave blank if not installed)" for i in range(1, MAX_ZONE_COUNT + 1)},
-                **{f"zone_relay_{i}": f"PTC relay number for NBP{i} (optional, R1-R20)" for i in range(1, MAX_ZONE_COUNT + 1)},
+                **{f"zone_ptcs_{i}": f"PTCs for NBP{i} (optional)" for i in range(1, MAX_ZONE_COUNT + 1)},
             },
         },
     },
     "error": {
         "cannot_connect": "Failed to connect. Please check address/port/slave id.",
         "duplicate_zone_names": "Two zones are mapped to the same Area - please pick a distinct Area per zone.",
-        "duplicate_relays": "Two zones are mapped to the same PTC relay number - please pick a distinct number per zone.",
+        "duplicate_ptcs": "A PTC is assigned to more than one zone - each PTC can belong to one room only.",
     },
     "abort": {"already_configured": "This unit is already configured.", "reconfigure_successful": "Connection details updated."},
 }
@@ -1470,6 +1454,7 @@ _EXTRA_ENTITY_STRINGS: dict = {
     },
     "switch": {
         "proxon_zone_heizelement": {"name": "Heizelement"},
+        "proxon_zone_tastensperre": {"name": "Sperren Bedienteil"},
         "proxon_intensivlueftung": {"name": "Intensivlüftung (60 Min.)"},
     },
     "number": {
@@ -1492,9 +1477,7 @@ _EXTRA_ENTITY_STRINGS: dict = {
             "name": "Betriebsart",
             "state": {
                 "aus": "Aus",
-                "bedarf": "Bedarf",
-                "lueftungsstufe_1": "Lüftungsstufe 1",
-                "lueftungsstufe_2": "Lüftungsstufe 2",
+                "an": "An",
             },
         },
     },

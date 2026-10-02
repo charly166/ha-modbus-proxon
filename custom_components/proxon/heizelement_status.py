@@ -1,26 +1,30 @@
-"""Heizelement-Status (PTC-Relais) als Binärsensor pro Zone.
+"""Heizelement-Status (PTC) als Binärsensor pro Zone.
 
 Hand-written: the Heizelement `switch`/`climate` only grants *permission* for
-a zone's PTC heating element to switch on if needed to reach the target
-temperature - it doesn't show whether the element is actually heating right
-now. That live status is a per-relay bit in one of two bitmask registers
-(Input 574 "Heizmodul 1", Input 583 "Heizmodul 2" - already migrated as the
-raw sensors proxon_heizelement_status/_2, see registers_input.py), confirmed
-by the Excel's own comment: "Bit0:R1 .. Bit9:R10" per module.
+a zone's PTC heating elements to switch on if needed to reach the target
+temperature - it doesn't show whether they are actually heating right now.
+That live status is one bit per PTC in a bitmask register (Input 574
+"Heizmodul 1 Relais Status", already migrated as the raw sensor
+proxon_heizelement_status, see registers_input.py), confirmed by the Excel's
+own comment: "Bit0:R1 .. Bit9:R10". PTC1-PTC10 are taken to be relays R1-R10.
 
-Which PTC relay (R1-R20) belongs to which zone is **not** derivable from the
-zone's Modbus NBP address/zone_index - it's purely a function of how the
-installer physically wired the heating module's relay outputs. Confirmed by
-a real installation where this didn't line up with NBP numbering at all
-(NBP2/NBP3 wired to R4/R3, swapped). So the relay number is a separate,
-explicitly user-configured per-zone setting (see config_flow.py/zones.py),
-left blank by default - no entity is created for a zone until its relay
-number is set.
+A room can have several PTCs, but each PTC heats exactly one room. Which PTCs
+belong to which zone is **not** derivable from the zone's Modbus NBP address/
+zone_index - it's purely a function of how the installer wired the heating
+module (confirmed by a real installation where it didn't line up with NBP
+numbering at all). So the assignment is a separate, explicitly user-configured
+multi-select per zone (see config_flow.py/zones.py), left empty by default - no
+entity is created for a zone until it has at least one PTC assigned.
+
+The sensor is on while *any* of the zone's PTCs is heating; the individual
+PTCs are exposed as attributes.
 """
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Any
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -37,40 +41,47 @@ from .zones import ZoneInfo
 class _HeizelementStatusDescription(BinarySensorEntityDescription, ProxonEntityDescription):
     """Entity description for a zone's Heizelement-Status binary_sensor."""
 
-    relay: int  # 1-10 -> Heizmodul 1 (Input 574), 11-20 -> Heizmodul 2 (Input 575)
+    ptcs: tuple[int, ...]  # 1-10 -> bit (n - 1) of Input 574
 
 
 class ProxonHeizelementStatusBinarySensor(ProxonEntity, BinarySensorEntity):
-    """Zeigt, ob das PTC-Heizelement dieser Zone gerade tatsächlich heizt."""
+    """Zeigt, ob mindestens ein PTC-Heizelement dieser Zone gerade heizt."""
 
     entity_description: _HeizelementStatusDescription
 
-    @property
-    def is_on(self) -> bool | None:
-        relay = self.entity_description.relay
-        sonstiges = self.coordinator.device.sonstiges_input
-        if relay <= 10:
-            raw, bit = sonstiges.proxon_heizelement_status, relay - 1
-        else:
-            raw, bit = sonstiges.proxon_heizelement_status_2, relay - 11
+    def _active_ptcs(self) -> list[int] | None:
+        raw = self.coordinator.device.sonstiges_input.proxon_heizelement_status
         if raw is None:
             return None
-        return bool(raw & (1 << bit))
+        return [n for n in self.entity_description.ptcs if raw & (1 << (n - 1))]
+
+    @property
+    def is_on(self) -> bool | None:
+        active = self._active_ptcs()
+        return None if active is None else bool(active)
+
+    @property
+    def extra_state_attributes(self) -> Mapping[str, Any] | None:
+        active = self._active_ptcs()
+        return {
+            "zugeordnete_ptcs": [f"PTC{n}" for n in self.entity_description.ptcs],
+            "aktive_ptcs": None if active is None else [f"PTC{n}" for n in active],
+        }
 
 
 def heizelement_status_entities(coordinator, zones: list[ZoneInfo]) -> list[ProxonHeizelementStatusBinarySensor]:
-    """Build one Heizelement-Status entity per zone with a configured relay."""
+    """Build one Heizelement-Status entity per zone with at least one assigned PTC."""
     entities = []
     for zone in zones:
-        if zone.relay is None:
+        if not zone.ptcs:
             continue
         component = "zbp" if zone.kind == "zbp" else "nb_zones_holding"
         description = _HeizelementStatusDescription(
             key=f"proxon_heizelement_status_{zone.slug}",
             component=component,
-            field="heizelement",  # not actually read - is_on() above reads the relay bitmask directly
+            field="heizelement",  # not actually read - is_on reads the PTC bitmask directly
             zone_index=zone.zone_index,
-            relay=zone.relay,
+            ptcs=zone.ptcs,
             translation_key="proxon_zone_heizelement_status",
             has_entity_name=True,
             device_class=BinarySensorDeviceClass.HEAT,

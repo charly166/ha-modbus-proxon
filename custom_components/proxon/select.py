@@ -29,14 +29,14 @@ BETRIEBSART_OPTIONS = {
 }
 BETRIEBSART_VALUES = {v: k for k, v in BETRIEBSART_OPTIONS.items()}
 
-# Excel: "Betriebsart (0=AUS 1=Bedarf 2=LF1 3=LF2)" - the T300 boiler's own,
-# separate operating mode (address 2002), unrelated to the main unit's
-# Betriebsart above.
+# Excel (Holding 2002): "Betriebsart (0=AUS 1=AN)" - the T300
+# (Trinkwasserwärmepumpe)'s own, separate operating mode, unrelated to the
+# main unit's Betriebsart above. Earlier Excel versions listed more modes
+# (Bedarf/Lüftungsstufe 1/2); the manufacturer's current documentation only
+# has on/off.
 T300_BETRIEBSART_OPTIONS = {
     0: "aus",
-    1: "bedarf",
-    2: "lueftungsstufe_1",
-    3: "lueftungsstufe_2",
+    1: "an",
 }
 T300_BETRIEBSART_VALUES = {v: k for k, v in T300_BETRIEBSART_OPTIONS.items()}
 

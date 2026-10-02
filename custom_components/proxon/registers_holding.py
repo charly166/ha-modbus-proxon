@@ -26,7 +26,7 @@ class T300Warmwasser(Component):
     proxon_soll_temperatur_wasser = gauge(2000, 0.1, signed=False, unit='°C', writable=True)  # Proxon Soll-Temperatur Wasser
     t300_heizstab = integer(2001, signed=False, unit='AUS/AN', writable=True)  # Heizstab
     proxon_heizstab_temperatur = gauge(2003, 0.1, signed=False, unit='°C', writable=True)  # Proxon Heizstab Temperatur
-    betriebsart_t300 = integer(2002, signed=False, writable=True)  # Betriebsart (0=AUS 1=Bedarf 2=LF1 3=LF2
+    betriebsart_t300 = integer(2002, signed=False, unit='AUS/AN', writable=True)  # Betriebsart (0=AUS 1=AN)
     filterwechselintervall_t300 = integer(2024, signed=False, unit='Monate', writable=True)  # Filterwechselintervall T300
     legionellaschutz = integer(2025, signed=False, unit='AUS/AN', writable=True)  # Legionellaschutz
 
@@ -41,7 +41,7 @@ class Geraetefilter(Component):
 class ModbusStatusHolding(Component):
     """Modbus-Statusregister. Migriert 1:1 aus proxon.yaml."""
 
-    proxon_modbus_status = integer(438, signed=False)  # Proxon Modbus Status
+    proxon_modbus_status = integer(438, signed=False)  # https://www.zimmermann-lueftung.de/kundenservice
 
 class Stundenzaehler(Component):
     """Betriebsstundenzähler (S01-S33). Neu hinzugefügt (nicht in der bisherigen proxon.yaml)."""

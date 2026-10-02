@@ -80,6 +80,9 @@ class ProxonRuntimeData:
     coordinator: ProxonDataUpdateCoordinator
     connection: ModbusConnection
     zones: list[ZoneInfo]
+    # Holding 438 as last read (None if it couldn't be read) - decides whether
+    # level-2-only entities like Sperren Bedienteil are switches or read-only.
+    write_level: int | None = None
 
 
 type ProxonConfigEntry = ConfigEntry[ProxonRuntimeData]

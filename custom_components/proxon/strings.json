@@ -25,12 +25,12 @@
         }
       },
       "zone_names": {
-        "description": "Wähle für jede Zone den passenden Home-Assistant-Raum. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen. Das PTC-Relais-Feld ist optional und nur für den 'Heizelement Status'-Sensor nötig - die Relais-Nummer (R1-R20) steht in der Registerliste bzw. lässt sich durch Beobachten des rohen Heizmodul-Status-Sensors ermitteln; sie hat nichts mit der NBP-Nummer zu tun.",
+        "description": "Wähle für jede Zone den passenden Home-Assistant-Raum. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen. Die PTC-Auswahl ist optional und nur für den 'Heizelement Status'-Sensor nötig: ein Raum kann mehrere PTCs (PTC1-PTC10) haben, ein PTC aber nur zu einem Raum gehören. Welches PTC zu welchem Raum gehört, steht im Stromverkabelungsplan; es hat nichts mit der NBP-Nummer zu tun.",
         "data": {
           "zbp_name": "Raum für ZBP",
-          "zbp_relay": "PTC-Relais-Nummer für ZBP (optional, R1-R20)",
+          "zbp_ptcs": "PTCs für ZBP (optional)",
           "hnb_name": "Raum für HNBP",
-          "hnb_relay": "PTC-Relais-Nummer für HNBP (optional, R1-R20)",
+          "hnb_ptcs": "PTCs für HNBP (optional)",
           "zone_name_1": "Raum für NBP1 (leer lassen, falls nicht vorhanden)",
           "zone_name_2": "Raum für NBP2 (leer lassen, falls nicht vorhanden)",
           "zone_name_3": "Raum für NBP3 (leer lassen, falls nicht vorhanden)",
@@ -50,32 +50,32 @@
           "zone_name_17": "Raum für NBP17 (leer lassen, falls nicht vorhanden)",
           "zone_name_18": "Raum für NBP18 (leer lassen, falls nicht vorhanden)",
           "zone_name_19": "Raum für NBP19 (leer lassen, falls nicht vorhanden)",
-          "zone_relay_1": "PTC-Relais-Nummer für NBP1 (optional, R1-R20)",
-          "zone_relay_2": "PTC-Relais-Nummer für NBP2 (optional, R1-R20)",
-          "zone_relay_3": "PTC-Relais-Nummer für NBP3 (optional, R1-R20)",
-          "zone_relay_4": "PTC-Relais-Nummer für NBP4 (optional, R1-R20)",
-          "zone_relay_5": "PTC-Relais-Nummer für NBP5 (optional, R1-R20)",
-          "zone_relay_6": "PTC-Relais-Nummer für NBP6 (optional, R1-R20)",
-          "zone_relay_7": "PTC-Relais-Nummer für NBP7 (optional, R1-R20)",
-          "zone_relay_8": "PTC-Relais-Nummer für NBP8 (optional, R1-R20)",
-          "zone_relay_9": "PTC-Relais-Nummer für NBP9 (optional, R1-R20)",
-          "zone_relay_10": "PTC-Relais-Nummer für NBP10 (optional, R1-R20)",
-          "zone_relay_11": "PTC-Relais-Nummer für NBP11 (optional, R1-R20)",
-          "zone_relay_12": "PTC-Relais-Nummer für NBP12 (optional, R1-R20)",
-          "zone_relay_13": "PTC-Relais-Nummer für NBP13 (optional, R1-R20)",
-          "zone_relay_14": "PTC-Relais-Nummer für NBP14 (optional, R1-R20)",
-          "zone_relay_15": "PTC-Relais-Nummer für NBP15 (optional, R1-R20)",
-          "zone_relay_16": "PTC-Relais-Nummer für NBP16 (optional, R1-R20)",
-          "zone_relay_17": "PTC-Relais-Nummer für NBP17 (optional, R1-R20)",
-          "zone_relay_18": "PTC-Relais-Nummer für NBP18 (optional, R1-R20)",
-          "zone_relay_19": "PTC-Relais-Nummer für NBP19 (optional, R1-R20)"
+          "zone_ptcs_1": "PTCs für NBP1 (optional)",
+          "zone_ptcs_2": "PTCs für NBP2 (optional)",
+          "zone_ptcs_3": "PTCs für NBP3 (optional)",
+          "zone_ptcs_4": "PTCs für NBP4 (optional)",
+          "zone_ptcs_5": "PTCs für NBP5 (optional)",
+          "zone_ptcs_6": "PTCs für NBP6 (optional)",
+          "zone_ptcs_7": "PTCs für NBP7 (optional)",
+          "zone_ptcs_8": "PTCs für NBP8 (optional)",
+          "zone_ptcs_9": "PTCs für NBP9 (optional)",
+          "zone_ptcs_10": "PTCs für NBP10 (optional)",
+          "zone_ptcs_11": "PTCs für NBP11 (optional)",
+          "zone_ptcs_12": "PTCs für NBP12 (optional)",
+          "zone_ptcs_13": "PTCs für NBP13 (optional)",
+          "zone_ptcs_14": "PTCs für NBP14 (optional)",
+          "zone_ptcs_15": "PTCs für NBP15 (optional)",
+          "zone_ptcs_16": "PTCs für NBP16 (optional)",
+          "zone_ptcs_17": "PTCs für NBP17 (optional)",
+          "zone_ptcs_18": "PTCs für NBP18 (optional)",
+          "zone_ptcs_19": "PTCs für NBP19 (optional)"
         }
       }
     },
     "error": {
       "cannot_connect": "Verbindung zur Anlage fehlgeschlagen. Adresse/Port/Slave-ID prüfen.",
       "duplicate_zone_names": "Zwei Zonen sind demselben Raum zugeordnet - bitte für jede Zone einen eigenen Raum wählen.",
-      "duplicate_relays": "Zwei Zonen ist dieselbe PTC-Relais-Nummer zugeordnet - bitte für jede Zone eine eigene Nummer wählen."
+      "duplicate_ptcs": "Ein PTC ist mehreren Zonen zugeordnet - jedes PTC kann nur zu einem Raum gehören."
     },
     "abort": {
       "already_configured": "Diese Anlage ist bereits eingerichtet.",
@@ -891,6 +891,9 @@
       "proxon_zone_heizelement": {
         "name": "Heizelement"
       },
+      "proxon_zone_tastensperre": {
+        "name": "Sperren Bedienteil"
+      },
       "proxon_intensivlueftung": {
         "name": "Intensivlüftung (60 Min.)"
       },
@@ -932,9 +935,7 @@
         "name": "Betriebsart",
         "state": {
           "aus": "Aus",
-          "bedarf": "Bedarf",
-          "lueftungsstufe_1": "Lüftungsstufe 1",
-          "lueftungsstufe_2": "Lüftungsstufe 2"
+          "an": "An"
         }
       }
     }

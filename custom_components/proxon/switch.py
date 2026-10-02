@@ -77,6 +77,7 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSwitchEntityDescript
 
 
 from .intensivlueftung import INTENSIVLUEFTUNG_DESCRIPTION, ProxonIntensivlueftungSwitch
+from .tastensperre import tastensperre_switches
 
 
 async def async_setup_entry(
@@ -86,6 +87,6 @@ async def async_setup_entry(
     coordinator = entry.runtime_data.coordinator
     entities = [ProxonSwitch(coordinator, d) for d in SWITCH_DESCRIPTIONS]
     entities += [ProxonSwitch(coordinator, d) for d in _zone_descriptions(entry.runtime_data.zones)]
-    entities.extend([ProxonIntensivlueftungSwitch(coordinator, INTENSIVLUEFTUNG_DESCRIPTION)])
+    entities.extend([ProxonIntensivlueftungSwitch(coordinator, INTENSIVLUEFTUNG_DESCRIPTION), *tastensperre_switches(coordinator, entry)])
     async_add_entities(entities)
 
