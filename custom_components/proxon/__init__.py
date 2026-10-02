@@ -9,6 +9,7 @@ from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
+from homeassistant.util import slugify as ha_slugify
 from modbus_connection.tmodbus import connect_tcp
 
 from .const import CONF_SLAVE, CONF_ZONE_COUNT, DOMAIN, PLATFORMS
@@ -19,7 +20,7 @@ from .coordinator import (
 )
 from .model import ProxonDevice
 from .tastensperre import writable_at
-from .util import object_id_for
+from .util import object_id_for, slugify
 from .zones import zones_from_entry_data
 
 _LOGGER = logging.getLogger(__name__)
@@ -79,30 +80,51 @@ async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bo
     return True
 
 
-def legacy_id_renames(entries, register_tags: dict[str, str], taken: set[str]) -> dict[str, str]:
-    """entity_id -> new entity_id for numbered legacy IDs, named after the entity.
+def _clean_base_ids(domain: str, entity) -> list[str]:
+    """The entity_ids this entity would get without a collision suffix."""
+    name = entity.name or entity.original_name
+    if not name:
+        return []
+    bases = [f"{domain}.{ha_slugify(name)}"]  # how HA names entities without device prefix
+    bases.append(f"{domain}.proxon_{slugify(name)}")  # our short IDs for central entities
+    return bases
 
-    ``sensor.proxon_128`` (AbtauDruck) becomes ``sensor.proxon_abtaudruck``; if
-    that is taken, ``sensor.proxon_abtaudruck_3x0209``; without a usable name,
-    ``sensor.proxon_3x0209``. Entities whose register is unknown get the name-based
-    ID only. Everything else (new-style IDs) is left alone.
+
+def legacy_id_renames(entries, register_tags: dict[str, str], taken: set[str]) -> dict[str, str]:
+    """entity_id -> new entity_id for entities with numbered/suffixed legacy IDs.
+
+    - ``sensor.proxon_128`` (AbtauDruck) becomes ``sensor.proxon_abtaudruck``; if
+      that is taken, ``sensor.proxon_abtaudruck_3x0209``; without a usable name,
+      ``sensor.proxon_3x0209``. Without a known register only the name-based ID.
+    - ``sensor.proxon_aktueller_betrieb_2`` loses its collision number once the
+      clean ID is free again (the clashing leftover entity is gone). The clean ID
+      is derived from the entity's own name, never by stripping digits.
+    Everything else (new-style IDs) is left alone.
     """
     renames: dict[str, str] = {}
     claimed = set(taken)
     for entity in entries:
+        domain = entity.entity_id.split(".", 1)[0]
         match = _LEGACY_NUMBERED_ID.match(entity.entity_id)
-        if not match:
+        if match:
+            object_id = object_id_for(
+                domain,
+                entity.name or entity.original_name,
+                register_tags.get(entity.unique_id),
+                lambda eid: eid in claimed,
+            )
+            new_id = f"{domain}.{object_id}" if object_id else None
+        else:
+            new_id = next(
+                (
+                    base
+                    for base in _clean_base_ids(domain, entity)
+                    if re.fullmatch(re.escape(base) + r"(?:_\d+)+", entity.entity_id) and base not in claimed
+                ),
+                None,
+            )
+        if new_id is None:
             continue
-        domain = match.group(1)
-        object_id = object_id_for(
-            domain,
-            entity.name or entity.original_name,
-            register_tags.get(entity.unique_id),
-            lambda eid: eid in claimed,
-        )
-        if object_id is None:
-            continue
-        new_id = f"{domain}.{object_id}"
         claimed.add(new_id)
         renames[entity.entity_id] = new_id
     return renames
@@ -116,7 +138,7 @@ def _migrate_legacy_entity_ids(hass: HomeAssistant, entry: ProxonConfigEntry) ->
     for old_id, new_id in renames.items():
         registry.async_update_entity(old_id, new_entity_id=new_id)
     if renames:
-        _LOGGER.info("Renamed %d numbered entity IDs to name-based IDs (e.g. %s)", len(renames), next(iter(renames.items())))
+        _LOGGER.info("Renamed %d legacy entity IDs to clean name-based IDs (e.g. %s)", len(renames), next(iter(renames.items())))
 
 
 def stale_devices(devices, entry_id: str, zone_slugs: list[str]) -> list:

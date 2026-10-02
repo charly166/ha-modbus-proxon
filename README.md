@@ -267,6 +267,8 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     statt der langen, aus dem Gerätenamen abgeleiteten. Bereits vergebene "richtige" IDs bleiben
     unangetastet; Dashboards/Automationen, die eine alte nummerierte ID verwenden, müssen
     angepasst werden (Verlaufsdaten wandern bei der Umbenennung mit).
+    Dieselbe Migration entfernt auch Kollisionsnummern wie `sensor.proxon_aktueller_betrieb_2`,
+    sobald die ID ohne Nummer wieder frei ist (z. B. nach dem Löschen verwaister Altentitäten).
 
 ## Umfang / Kuration der Register
 
