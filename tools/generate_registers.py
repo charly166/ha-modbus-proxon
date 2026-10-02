@@ -464,7 +464,10 @@ _FORCE_WRITABLE = {"proxon_intensivlueftung_restzeit"}
 
 _DEVICE_CLASS_BY_LEGACY = {
     "temperature": ("SensorDeviceClass.TEMPERATURE", "SensorStateClass.MEASUREMENT"),
-    "aqi": ("SensorDeviceClass.AQI", "SensorStateClass.MEASUREMENT"),
+    # proxon.yaml tagged the ZBP CO2 sensor "aqi", but AQI has no unit while the
+    # sensor reports ppm - Home Assistant logs a warning for that combination.
+    # CO2 is the matching device class (ppm).
+    "aqi": ("SensorDeviceClass.CO2", "SensorStateClass.MEASUREMENT"),
     "humidity": ("SensorDeviceClass.HUMIDITY", "SensorStateClass.MEASUREMENT"),
     "duration": ("SensorDeviceClass.DURATION", "SensorStateClass.TOTAL_INCREASING"),
 }

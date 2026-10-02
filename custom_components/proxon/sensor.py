@@ -352,7 +352,7 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         name='Proxon CO2 Wohnzimmer',
         has_entity_name=False,
         native_unit_of_measurement='ppm',
-        device_class=SensorDeviceClass.AQI,
+        device_class=SensorDeviceClass.CO2,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     ProxonSensorEntityDescription(
