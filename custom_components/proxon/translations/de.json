@@ -204,6 +204,28 @@
       "proxon_energie_total": {
         "name": "Energieverbrauch"
       },
+      "proxon_aktueller_betrieb_text": {
+        "name": "Aktueller Betrieb (Text)",
+        "state": {
+          "lueftungsbetrieb": "Lüftungsbetrieb",
+          "heizbetrieb": "Heizbetrieb",
+          "kuehlbetrieb": "Kühlbetrieb"
+        }
+      },
+      "proxon_geraete_modell_text": {
+        "name": "Geräte-Modell (Text)",
+        "state": {
+          "fwt": "FWT",
+          "p": "P"
+        }
+      },
+      "proxon_geraete_typ_text": {
+        "name": "Geräte-Typ (Text)",
+        "state": {
+          "nur_heizen": "Nur Heizen",
+          "heizen_und_kuehlen": "Heizen und Kühlen"
+        }
+      },
       "proxon_modbus_schreibrecht": {
         "name": "Modbus Schreibrecht",
         "state": {

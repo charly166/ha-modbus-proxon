@@ -269,6 +269,12 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     angepasst werden (Verlaufsdaten wandern bei der Umbenennung mit).
     Dieselbe Migration entfernt auch Kollisionsnummern wie `sensor.proxon_aktueller_betrieb_2`,
     sobald die ID ohne Nummer wieder frei ist (z. B. nach dem Löschen verwaister Altentitäten).
+15. **Textsensoren für Zahlen-Enums** (`device_class: enum`, nur lesbar), zusätzlich zu den
+    unverändert bleibenden Rohwert-Sensoren: **Aktueller Betrieb (Text)** (Input 241: 0 =
+    Lüftungsbetrieb, 1 = Heizbetrieb, 2 = Kühlbetrieb), **Geräte-Modell (Text)** (Holding 17:
+    0 = FWT, 1 = P) und **Geräte-Typ (Text)** (Holding 18: 0 = Nur Heizen, 1 = Heizen und Kühlen;
+    Modell und Typ als Diagnose-Entitäten). Ein Wert außerhalb dieser Zuordnung ergibt den
+    Zustand "unbekannt".
 
 ## Umfang / Kuration der Register
 

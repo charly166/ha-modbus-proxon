@@ -2486,6 +2486,7 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSensorEntityDescript
 
 
 from .energie import ENERGIE_DESCRIPTION, ProxonEnergieSensor
+from .enum_sensoren import ENUM_SENSOR_DESCRIPTIONS, ProxonEnumSensor
 from .filter import (
     FILTER_RESTTAGE_DESCRIPTION,
     FILTER_TAGE_DESCRIPTION,
@@ -2502,6 +2503,6 @@ async def async_setup_entry(
     coordinator = entry.runtime_data.coordinator
     entities = [ProxonSensor(coordinator, d) for d in SENSOR_DESCRIPTIONS]
     entities += [ProxonSensor(coordinator, d) for d in _zone_descriptions(entry.runtime_data.zones)]
-    entities.extend([ProxonFilterTageSensor(coordinator, FILTER_TAGE_DESCRIPTION), ProxonFilterResttageSensor(coordinator, FILTER_RESTTAGE_DESCRIPTION), ProxonSchreibrechtSensor(coordinator, SCHREIBRECHT_DESCRIPTION), ProxonEnergieSensor(coordinator, ENERGIE_DESCRIPTION)])
+    entities.extend([ProxonFilterTageSensor(coordinator, FILTER_TAGE_DESCRIPTION), ProxonFilterResttageSensor(coordinator, FILTER_RESTTAGE_DESCRIPTION), ProxonSchreibrechtSensor(coordinator, SCHREIBRECHT_DESCRIPTION), ProxonEnergieSensor(coordinator, ENERGIE_DESCRIPTION), *(ProxonEnumSensor(coordinator, d) for d in ENUM_SENSOR_DESCRIPTIONS)])
     async_add_entities(entities)
 
