@@ -89,7 +89,7 @@ def _optional_area_field(key: str, default: str | None) -> vol.Marker:
 def _ptc_selector() -> SelectSelector:
     return SelectSelector(
         SelectSelectorConfig(
-            options=[{"value": str(n), "label": f"PTC{n}"} for n in range(1, MAX_PTC + 1)],
+            options=[{"value": str(n), "label": f"K{n}"} for n in range(1, MAX_PTC + 1)],
             multiple=True,
             mode=SelectSelectorMode.DROPDOWN,
         )
@@ -97,7 +97,7 @@ def _ptc_selector() -> SelectSelector:
 
 
 def _optional_ptc_field(key: str, default: object) -> vol.Marker:
-    """Optional PTC multi-select (PTC1-PTC10) for the Heizelement-Status
+    """Optional multi-select of PTC module channels (K1-K10) for the Heizelement-Status
     binary_sensor - left empty means that zone gets no such entity. Unlike
     the Area, there's no sensible default to guess (see ZoneInfo.ptcs)."""
     stored = [str(n) for n in ptcs_from_value(default)]

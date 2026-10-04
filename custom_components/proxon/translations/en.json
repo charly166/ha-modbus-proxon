@@ -25,153 +25,153 @@
         }
       },
       "zone_names": {
-        "description": "One section per control panel: pick the matching Home Assistant Area and - optionally - its PTC heating elements. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped. The PTC selection is only needed for the 'Heizelement Status' sensor: a room can have several PTCs (PTC1-PTC10), but a PTC belongs to one room only (see the power wiring diagram); it has nothing to do with the NBP number.",
+        "description": "One section per control panel: pick the matching Home Assistant Area and - optionally - its PTC module channels. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped. The channel selection is only needed for the 'Heizelement Status' sensor: the central PTC module has channels K1-K10 (see the power wiring diagram), each feeding one or more PTCs of exactly one room. A room can have several channels, but a channel belongs to one room only; it has nothing to do with the NBP number.",
         "sections": {
           "ZBP": {
             "name": "ZBP (main control panel)",
             "data": {
               "area": "Area",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "HNBP": {
             "name": "HNBP (secondary main panel)",
             "data": {
               "area": "Area",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP1": {
             "name": "NBP1 (remote panel 1)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP2": {
             "name": "NBP2 (remote panel 2)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP3": {
             "name": "NBP3 (remote panel 3)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP4": {
             "name": "NBP4 (remote panel 4)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP5": {
             "name": "NBP5 (remote panel 5)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP6": {
             "name": "NBP6 (remote panel 6)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP7": {
             "name": "NBP7 (remote panel 7)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP8": {
             "name": "NBP8 (remote panel 8)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP9": {
             "name": "NBP9 (remote panel 9)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP10": {
             "name": "NBP10 (remote panel 10)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP11": {
             "name": "NBP11 (remote panel 11)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP12": {
             "name": "NBP12 (remote panel 12)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP13": {
             "name": "NBP13 (remote panel 13)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP14": {
             "name": "NBP14 (remote panel 14)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP15": {
             "name": "NBP15 (remote panel 15)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP16": {
             "name": "NBP16 (remote panel 16)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP17": {
             "name": "NBP17 (remote panel 17)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP18": {
             "name": "NBP18 (remote panel 18)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           },
           "NBP19": {
             "name": "NBP19 (remote panel 19)",
             "data": {
               "area": "Area (leave blank if not installed)",
-              "ptcs": "PTC heating elements (optional)"
+              "ptcs": "PTC channels K1-K10 (optional)"
             }
           }
         }
@@ -180,7 +180,7 @@
     "error": {
       "cannot_connect": "Failed to connect. Please check address/port/slave id.",
       "duplicate_zone_names": "Two zones are mapped to the same Area - please pick a distinct Area per zone.",
-      "duplicate_ptcs": "A PTC is assigned to more than one zone - each PTC can belong to one room only."
+      "duplicate_ptcs": "A PTC channel is assigned to more than one zone - each channel can belong to one room only."
     },
     "abort": {
       "already_configured": "This unit is already configured.",

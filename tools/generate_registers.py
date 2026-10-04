@@ -1375,20 +1375,20 @@ CONFIG_FLOW_STRINGS: dict = {
             "data": {"has_hnb": "Hauptnebenbedienpanel (HNBP) installiert", "zone_count": "Höchste installierte NBP-Nummer (NBPx)"},
         },
         "zone_names": {
-            "description": "Pro Bedienpanel ein Abschnitt: Wähle den passenden Home-Assistant-Raum und - optional - die zugehörigen PTC-Heizelemente. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen. Die PTC-Auswahl ist nur für den 'Heizelement Status'-Sensor nötig: ein Raum kann mehrere PTCs (PTC1-PTC10) haben, ein PTC aber nur zu einem Raum gehören (siehe Stromverkabelungsplan); sie hat nichts mit der NBP-Nummer zu tun.",
+            "description": "Pro Bedienpanel ein Abschnitt: Wähle den passenden Home-Assistant-Raum und - optional - die zugehörigen Kanäle des PTC-Moduls. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen. Die Kanal-Auswahl ist nur für den 'Heizelement Status'-Sensor nötig: Das zentrale PTC-Modul hat die Kanäle K1-K10 (im Stromverkabelungsplan), jeder Kanal versorgt ein oder mehrere PTCs genau eines Raums. Ein Raum kann mehrere Kanäle haben, ein Kanal gehört aber nur zu einem Raum; die Zuordnung hat nichts mit der NBP-Nummer zu tun.",
             "sections": {
                 "ZBP": {
                     "name": "ZBP (Zentralbedienpanel)",
-                    "data": {"area": "Raum", "ptcs": "PTC-Heizelemente (optional)"},
+                    "data": {"area": "Raum", "ptcs": "PTC-Kanäle K1-K10 (optional)"},
                 },
                 "HNBP": {
                     "name": "HNBP (Hauptnebenbedienpanel)",
-                    "data": {"area": "Raum", "ptcs": "PTC-Heizelemente (optional)"},
+                    "data": {"area": "Raum", "ptcs": "PTC-Kanäle K1-K10 (optional)"},
                 },
                 **{
                     f"NBP{i}": {
                         "name": f"NBP{i} (Nebenbedienpanel {i})",
-                        "data": {"area": "Raum (leer lassen, falls nicht vorhanden)", "ptcs": "PTC-Heizelemente (optional)"},
+                        "data": {"area": "Raum (leer lassen, falls nicht vorhanden)", "ptcs": "PTC-Kanäle K1-K10 (optional)"},
                     }
                     for i in range(1, MAX_ZONE_COUNT + 1)
                 },
@@ -1398,7 +1398,7 @@ CONFIG_FLOW_STRINGS: dict = {
     "error": {
         "cannot_connect": "Verbindung zur Anlage fehlgeschlagen. Adresse/Port/Slave-ID prüfen.",
         "duplicate_zone_names": "Zwei Zonen sind demselben Raum zugeordnet - bitte für jede Zone einen eigenen Raum wählen.",
-        "duplicate_ptcs": "Ein PTC ist mehreren Zonen zugeordnet - jedes PTC kann nur zu einem Raum gehören.",
+        "duplicate_ptcs": "Ein PTC-Kanal ist mehreren Zonen zugeordnet - jeder Kanal kann nur zu einem Raum gehören.",
     },
     "abort": {"already_configured": "Diese Anlage ist bereits eingerichtet.", "reconfigure_successful": "Verbindungsdaten aktualisiert."},
 }
@@ -1418,20 +1418,20 @@ CONFIG_FLOW_STRINGS_EN: dict = {
             "data": {"has_hnb": "Secondary main panel (HNBP) installed", "zone_count": "Highest installed NBP number (NBPx)"},
         },
         "zone_names": {
-            "description": "One section per control panel: pick the matching Home Assistant Area and - optionally - its PTC heating elements. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped. The PTC selection is only needed for the 'Heizelement Status' sensor: a room can have several PTCs (PTC1-PTC10), but a PTC belongs to one room only (see the power wiring diagram); it has nothing to do with the NBP number.",
+            "description": "One section per control panel: pick the matching Home Assistant Area and - optionally - its PTC module channels. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped. The channel selection is only needed for the 'Heizelement Status' sensor: the central PTC module has channels K1-K10 (see the power wiring diagram), each feeding one or more PTCs of exactly one room. A room can have several channels, but a channel belongs to one room only; it has nothing to do with the NBP number.",
             "sections": {
                 "ZBP": {
                     "name": "ZBP (main control panel)",
-                    "data": {"area": "Area", "ptcs": "PTC heating elements (optional)"},
+                    "data": {"area": "Area", "ptcs": "PTC channels K1-K10 (optional)"},
                 },
                 "HNBP": {
                     "name": "HNBP (secondary main panel)",
-                    "data": {"area": "Area", "ptcs": "PTC heating elements (optional)"},
+                    "data": {"area": "Area", "ptcs": "PTC channels K1-K10 (optional)"},
                 },
                 **{
                     f"NBP{i}": {
                         "name": f"NBP{i} (remote panel {i})",
-                        "data": {"area": "Area (leave blank if not installed)", "ptcs": "PTC heating elements (optional)"},
+                        "data": {"area": "Area (leave blank if not installed)", "ptcs": "PTC channels K1-K10 (optional)"},
                     }
                     for i in range(1, MAX_ZONE_COUNT + 1)
                 },
@@ -1441,7 +1441,7 @@ CONFIG_FLOW_STRINGS_EN: dict = {
     "error": {
         "cannot_connect": "Failed to connect. Please check address/port/slave id.",
         "duplicate_zone_names": "Two zones are mapped to the same Area - please pick a distinct Area per zone.",
-        "duplicate_ptcs": "A PTC is assigned to more than one zone - each PTC can belong to one room only.",
+        "duplicate_ptcs": "A PTC channel is assigned to more than one zone - each channel can belong to one room only.",
     },
     "abort": {"already_configured": "This unit is already configured.", "reconfigure_successful": "Connection details updated."},
 }

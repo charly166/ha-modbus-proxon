@@ -237,17 +237,30 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     Rohwert statt eines Leistungssensors. Jetzt korrekt als `device_class: power`, Einheit W.
 12. **Neu: Heizelement-Status pro Zone** (`binary_sensor`, Diagnose-Kategorie): Der Heizelement-
     `switch` einer Zone schaltet nur die *Freigabe* frei ("darf bei Bedarf heizen"), nicht die
-    Heizung selbst. Ob die PTC-Heizelemente gerade tatsächlich heizen, steht pro PTC als Bit in
-    Input 574 ("Heizmodul 1 Relais Status", Bit0 = PTC1 ... Bit9 = PTC10). Ein Raum kann
-    **mehrere PTCs** haben, ein PTC gehört aber immer nur zu **einem** Raum. Welche PTCs zu
-    welchem Raum gehören, folgt der physischen Verkabelung (siehe Stromverkabelungsplan) und hat
-    **keinen** verlässlichen Zusammenhang mit der NBP-Nummerierung - es lässt sich deshalb nicht
-    ableiten und wird im Einrichtungs-Assistenten in einem eigenen, umrahmten Abschnitt pro
-    Bedienpanel (Raum + PTCs zusammen) per **Mehrfachauswahl PTC1-PTC10** angegeben (leer = kein Status-Sensor für diesen Raum; ein PTC mehreren Räumen
-    zuzuordnen wird abgelehnt). Der Sensor ist an, solange mindestens eines der zugeordneten
-    PTCs heizt; die Attribute `zugeordnete_ptcs`/`aktive_ptcs` zeigen die einzelnen PTCs. Wer
-    mit v0.7.0 schon eine einzelne Relais-Nummer eingetragen hatte, behält sie als zugeordnetes
-    PTC.
+    Heizung selbst. Ob die PTC-Heizelemente gerade tatsächlich heizen, zeigt das **zentrale
+    PTC-Modul** ("Heizmodul 1", Input 574): es hat **zehn Kanäle K1-K10** (Bit0 = K1 ... Bit9 =
+    K10, im Stromverkabelungsplan als K1-K10 bezeichnet), und jeder Kanal versorgt ein bis drei
+    PTCs **eines** Raums. Ein Raum kann mehrere Kanäle haben (z. B. das ZBP mit K1+K2), ein Kanal
+    gehört aber immer nur zu einem Raum. Die Zuordnung Kanal → Raum folgt der Verkabelung des
+    Installateurs und hat **keinen** Zusammenhang mit der NBP-Nummerierung; sie lässt sich nicht
+    ableiten und wird im Einrichtungs-Assistenten in einem umrahmten Abschnitt pro Bedienpanel
+    (Raum + Kanäle) per **Mehrfachauswahl K1-K10** angegeben (leer = kein Status-Sensor für diesen
+    Raum; ein Kanal mehreren Räumen wird abgelehnt). Der Sensor ist an, solange mindestens einer
+    der zugeordneten Kanäle aktiv ist; die Attribute `zugeordnete_kanaele`/`aktive_kanaele`
+    zeigen die einzelnen Kanäle. Wer mit v0.7.0 eine einzelne Relais-Nummer eingetragen hatte,
+    behält sie als zugeordneten Kanal.
+
+    *So findet man die Zuordnung*: im Stromverkabelungsplan stehen die Kanäle K1-K10 am
+    PTC-Modul und darunter die Räume (bei Bedarf handschriftlich ergänzt). Zusätzlich helfen die
+    Betriebsstundenzähler "Stunden PTC Heizmodul 1 Relais n An": Kanäle desselben Raums laufen
+    mit gleichen Stunden, ein unbenutzter Kanal bleibt bei 0 (an einer geprüften Anlage: K1 und
+    K2 je 481 h = ZBP, K10 = 0 h). Beispiel dieser Anlage laut Plan: ZBP = K1+K2, NBP1 = K3,
+    NBP2 = K4, NBP3 = K5, NBP4 = K6, NBP5 = K7, NBP6 = K8, HNBP = K9, K10 frei.
+
+    **"Heizmodul 2"** (Input 583, `Proxon Heizelement Status 2`, "Stunden PTC Heizmodul 2 ...")
+    sind dagegen die drei Heizstufen im Gerät selbst (typisch mehrere tausend Betriebsstunden auf
+    drei Relais) und gehören **nicht** zu den Räumen; für den Raum-Status wird nur Input 574
+    gelesen.
 13. **Neu: Energieverbrauch für das Energie-Dashboard** (`sensor.*_energieverbrauch`, Wh,
     `device_class: energy`, `total_increasing`): Die Anlage liefert nur die Momentanleistung
     (Input 25). Dieser Sensor integriert sie nach dem Trapez-Verfahren zu einem stetig

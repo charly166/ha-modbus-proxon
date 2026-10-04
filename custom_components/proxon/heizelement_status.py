@@ -1,23 +1,26 @@
-"""Heizelement-Status (PTC) als Binärsensor pro Zone.
+"""Heizelement-Status (PTC-Kanäle) als Binärsensor pro Zone.
 
 Hand-written: the Heizelement `switch`/`climate` only grants *permission* for
 a zone's PTC heating elements to switch on if needed to reach the target
 temperature - it doesn't show whether they are actually heating right now.
-That live status is one bit per PTC in a bitmask register (Input 574
-"Heizmodul 1 Relais Status", already migrated as the raw sensor
-proxon_heizelement_status, see registers_input.py), confirmed by the Excel's
-own comment: "Bit0:R1 .. Bit9:R10". PTC1-PTC10 are taken to be relays R1-R10.
 
-A room can have several PTCs, but each PTC heats exactly one room. Which PTCs
-belong to which zone is **not** derivable from the zone's Modbus NBP address/
-zone_index - it's purely a function of how the installer wired the heating
-module (confirmed by a real installation where it didn't line up with NBP
-numbering at all). So the assignment is a separate, explicitly user-configured
-multi-select per zone (see config_flow.py/zones.py), left empty by default - no
-entity is created for a zone until it has at least one PTC assigned.
+That live status comes from the central PTC module ("Heizmodul 1", Input 574),
+which has ten relay channels K1-K10 (Excel: "Bit0:R1 .. Bit9:R10"); each channel
+feeds one or more PTCs of exactly one room (see the wiring diagram). Confirmed
+on a real installation: the hour counters "PTC Heizmodul 1 Relais n" match the
+plan (K1/K2 share a room and run identical hours, K10 is unused at 0 h).
+Not to be confused with "Heizmodul 2" (Input 583), the unit's own three heating
+stages - not room PTCs.
 
-The sensor is on while *any* of the zone's PTCs is heating; the individual
-PTCs are exposed as attributes.
+Which channels belong to which zone is **not** derivable from the zone's Modbus
+NBP address/zone_index - it's how the installer wired the module (a room can use
+several channels, e.g. the ZBP uses K1+K2). So the assignment is a separate,
+explicitly user-configured multi-select per zone (see config_flow.py/zones.py),
+left empty by default - no entity is created for a zone until it has at least
+one channel assigned.
+
+The sensor is on while *any* of the zone's channels is active; the individual
+channels are exposed as attributes. (Config keys keep the historical name "ptcs".)
 """
 
 from __future__ import annotations
@@ -42,11 +45,11 @@ from .zones import ZoneInfo
 class _HeizelementStatusDescription(BinarySensorEntityDescription, ProxonEntityDescription):
     """Entity description for a zone's Heizelement-Status binary_sensor."""
 
-    ptcs: tuple[int, ...]  # 1-10 -> bit (n - 1) of Input 574
+    ptcs: tuple[int, ...]  # channel numbers K1-K10 -> bit (n - 1) of Input 574
 
 
 class ProxonHeizelementStatusBinarySensor(ProxonEntity, BinarySensorEntity):
-    """Zeigt, ob mindestens ein PTC-Heizelement dieser Zone gerade heizt."""
+    """Zeigt, ob mindestens ein PTC-Kanal dieser Zone gerade aktiv ist (heizt)."""
 
     entity_description: _HeizelementStatusDescription
 
@@ -65,8 +68,8 @@ class ProxonHeizelementStatusBinarySensor(ProxonEntity, BinarySensorEntity):
     def extra_state_attributes(self) -> Mapping[str, Any] | None:
         active = self._active_ptcs()
         return {
-            "zugeordnete_ptcs": [f"PTC{n}" for n in self.entity_description.ptcs],
-            "aktive_ptcs": None if active is None else [f"PTC{n}" for n in active],
+            "zugeordnete_kanaele": [f"K{n}" for n in self.entity_description.ptcs],
+            "aktive_kanaele": None if active is None else [f"K{n}" for n in active],
         }
 
 
