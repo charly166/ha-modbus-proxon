@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 from modbus_connection.tmodbus import ModbusConnection
 
 from .const import DOMAIN, UPDATE_INTERVAL_SECONDS
@@ -45,6 +46,19 @@ class ProxonDataUpdateCoordinator(DataUpdateCoordinator[ProxonUpdateReport]):
             update_interval=timedelta(seconds=UPDATE_INTERVAL_SECONDS),
         )
         self.device = device
+        # Last failed write (shown by the diagnostic sensor 'Letzter Schreibfehler').
+        self.last_write_error: str | None = None
+        self.last_write_error_at: datetime | None = None
+        self.last_write_error_key: str | None = None
+        self.write_error_count = 0
+
+    def record_write_error(self, key: str, err: Exception) -> None:
+        """Remember a failed write and tell the listening sensor."""
+        self.last_write_error = f"{type(err).__name__}: {err}"[:255]
+        self.last_write_error_at = dt_util.utcnow()
+        self.last_write_error_key = key
+        self.write_error_count += 1
+        self.async_update_listeners()
 
     async def _async_update_data(self) -> ProxonUpdateReport:
         failed: set[str] = set()

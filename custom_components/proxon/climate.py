@@ -45,6 +45,7 @@ class ProxonZoneClimate(ProxonEntity, ClimateEntity):
     """One zone's heating control, as a native climate entity."""
 
     entity_description: ProxonZoneClimateDescription
+    _RULE_ICONS = False
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_precision = PRECISION_TENTHS
     _attr_hvac_modes = (HVACMode.OFF, HVACMode.HEAT)

@@ -31,6 +31,8 @@ class _EnumSensorDescription(SensorEntityDescription, ProxonEntityDescription):
     """Entity description for a register value shown as text."""
 
     options_map: dict[int, str]
+    # Option -> icon, so e.g. "Heizbetrieb" and "Kühlbetrieb" look different.
+    state_icons: dict[str, str] | None = None
 
 
 class ProxonEnumSensor(ProxonEntity, SensorEntity):
@@ -41,6 +43,13 @@ class ProxonEnumSensor(ProxonEntity, SensorEntity):
     @property
     def native_value(self) -> str | None:
         return self.entity_description.options_map.get(self._value)
+
+    @property
+    def icon(self) -> str | None:
+        icons = self.entity_description.state_icons
+        if icons and (state := self.native_value) in icons:
+            return icons[state]
+        return super().icon
 
 
 def _description(key: str, component: str, field: str, options_map: dict[int, str], **kwargs) -> _EnumSensorDescription:
@@ -62,6 +71,7 @@ AKTUELLER_BETRIEB_DESCRIPTION = _description(
     "sonstiges_input",
     "proxon_aktueller_betrieb",
     {0: "lueftungsbetrieb", 1: "heizbetrieb", 2: "kuehlbetrieb"},
+    state_icons={"lueftungsbetrieb": "mdi:fan", "heizbetrieb": "mdi:radiator", "kuehlbetrieb": "mdi:snowflake"},
 )
 GERAETE_MODELL_DESCRIPTION = _description(
     "proxon_geraete_modell_text",
@@ -78,8 +88,18 @@ GERAETE_TYP_DESCRIPTION = _description(
     entity_category=EntityCategory.DIAGNOSTIC,
 )
 
+# Zustand 4-Wegeventil Heizen/Kühlen (Betriebswerte): 0 = Heizen, 1 = Kühlen.
+VIERWEGEVENTIL_DESCRIPTION = _description(
+    "proxon_vierwegeventil_text",
+    "betriebswerte",
+    "proxon_zustand_4_wegeventil_heizen_kuehlen",
+    {0: "heizen", 1: "kuehlen"},
+    state_icons={"heizen": "mdi:radiator", "kuehlen": "mdi:snowflake"},
+)
+
 ENUM_SENSOR_DESCRIPTIONS = (
     AKTUELLER_BETRIEB_DESCRIPTION,
+    VIERWEGEVENTIL_DESCRIPTION,
     GERAETE_MODELL_DESCRIPTION,
     GERAETE_TYP_DESCRIPTION,
 )

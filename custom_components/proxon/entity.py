@@ -10,6 +10,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import ProxonDataUpdateCoordinator
+from .presentation import GROUP_CATEGORY, look_for, rule_icon
 from .util import object_id_for
 from .zones import ZoneInfo
 
@@ -64,6 +65,9 @@ class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
 
     entity_description: ProxonEntityDescription
     _attr_should_poll = False
+    # Keyword-based fallback icons for entities without an explicit entry in
+    # presentation.py; off for entities with their own icon logic (climate).
+    _RULE_ICONS = True
 
     def __init__(self, coordinator: ProxonDataUpdateCoordinator, description: ProxonEntityDescription) -> None:
         super().__init__(coordinator)
@@ -75,6 +79,7 @@ class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
             tags[description.key] = tag
         zone = _zone_for(entry.runtime_data.zones, description.component, description.zone_index, description.key)
         self._in_zone = zone is not None
+        self._apply_look(description)
         if zone is not None:
             # One device per zone (room), so the device list shows "Büro",
             # "Wohnzimmer", etc. instead of everything being lumped under a
@@ -102,6 +107,17 @@ class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
                 manufacturer="Proxon",
                 model="FWT2.0",
             )
+
+    def _apply_look(self, description: ProxonEntityDescription) -> None:
+        """Group (entity category) and icon from presentation.py."""
+        look = look_for(description.key, description.translation_key)
+        icon = look.icon if look else None
+        if look and look.group is not None:
+            self._attr_entity_category = GROUP_CATEGORY[look.group]
+        if icon is None and self._RULE_ICONS and not description.icon and not getattr(description, "device_class", None):
+            icon = rule_icon(description.key)
+        if icon:
+            self._attr_icon = icon
 
     def add_to_platform_start(self, hass, platform, parallel_updates) -> None:
         """Suggest a short ``<domain>.proxon_<name>`` entity_id for new central entities.
@@ -152,7 +168,11 @@ class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
         return getattr(self._component, self.entity_description.field)
 
     async def _async_write(self, value) -> None:
-        await self._component.write(self.entity_description.field, value)
+        try:
+            await self._component.write(self.entity_description.field, value)
+        except Exception as err:
+            self.coordinator.record_write_error(self.entity_description.key, err)
+            raise
         await self.coordinator.async_request_refresh()
 
     @property

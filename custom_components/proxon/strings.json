@@ -212,6 +212,16 @@
           "kuehlbetrieb": "Kühlbetrieb"
         }
       },
+      "proxon_vierwegeventil_text": {
+        "name": "4-Wegeventil",
+        "state": {
+          "heizen": "Heizen",
+          "kuehlen": "Kühlen"
+        }
+      },
+      "proxon_letzter_schreibfehler": {
+        "name": "Letzter Schreibfehler"
+      },
       "proxon_geraete_modell_text": {
         "name": "Geräte-Modell (Text)",
         "state": {
@@ -997,6 +1007,18 @@
     "binary_sensor": {
       "proxon_filter_wechsel_faellig": {
         "name": "Gerätefilter Wechsel fällig"
+      },
+      "proxon_bypass": {
+        "name": "Bypass"
+      },
+      "proxon_erdwaerme": {
+        "name": "Erdwärme"
+      },
+      "proxon_magnetventil": {
+        "name": "Magnetventil"
+      },
+      "proxon_ptc_relais_aktiv": {
+        "name": "PTC-Relais aktiv"
       },
       "proxon_zone_tastensperre": {
         "name": "Sperren Bedienteil"

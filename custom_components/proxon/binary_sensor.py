@@ -78,6 +78,7 @@ BINARY_SENSOR_DESCRIPTIONS: tuple[ProxonBinarySensorEntityDescription, ...] = (
 
 from .filter import FILTER_REMINDER_DESCRIPTION, ProxonFilterReminderBinarySensor
 from .heizelement_status import heizelement_status_entities
+from .status_sensoren import STATUS_BINARY_ENTITIES
 from .tastensperre import tastensperre_binary_sensors
 
 
@@ -87,6 +88,6 @@ async def async_setup_entry(
     """Set up Proxon binary_sensor entities."""
     coordinator = entry.runtime_data.coordinator
     entities = [ProxonBinarySensor(coordinator, d) for d in BINARY_SENSOR_DESCRIPTIONS]
-    entities.extend([ProxonFilterReminderBinarySensor(coordinator, FILTER_REMINDER_DESCRIPTION), *heizelement_status_entities(coordinator, entry.runtime_data.zones), *tastensperre_binary_sensors(coordinator, entry)])
+    entities.extend([ProxonFilterReminderBinarySensor(coordinator, FILTER_REMINDER_DESCRIPTION), *(cls(coordinator, d) for cls, d in STATUS_BINARY_ENTITIES), *heizelement_status_entities(coordinator, entry.runtime_data.zones), *tastensperre_binary_sensors(coordinator, entry)])
     async_add_entities(entities)
 

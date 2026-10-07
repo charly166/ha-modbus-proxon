@@ -34,7 +34,6 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
-from homeassistant.const import EntityCategory
 from homeassistant.helpers import entity_registry as er
 
 from .entity import ProxonEntity, ProxonEntityDescription
@@ -89,7 +88,6 @@ def heizelement_status_entities(coordinator, zones: list[ZoneInfo]) -> list[Prox
             translation_key="proxon_zone_heizelement_status",
             has_entity_name=True,
             device_class=BinarySensorDeviceClass.HEAT,
-            entity_category=EntityCategory.DIAGNOSTIC,
         )
         entities.append(ProxonHeizelementStatusBinarySensor(coordinator, description))
     _drop_unassigned(coordinator, {e.entity_description.key for e in entities})

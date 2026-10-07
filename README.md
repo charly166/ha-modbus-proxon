@@ -289,6 +289,25 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     Modell und Typ als Diagnose-Entitäten). Ein Wert außerhalb dieser Zuordnung ergibt den
     Zustand "unbekannt".
 
+16. **Geräteseite in Steuerung / Sensoren / Konfiguration / Diagnose gegliedert**: Home
+    Assistant sortiert die Geräteseite nach der Entitätskategorie. Bisher landeten fast alle
+    ~270 Sensoren pauschal in "Diagnose". Jetzt stehen die wichtigen Werte dort, wo man sie
+    erwartet (Betriebsart, Lüfterstufe, Intensivlüftung, Kühlung → **Steuerung**; Temperaturen,
+    Drehzahlen, Kompressor, Heizelement-Status, Stromaufnahme → **Sensoren**; Trinkwasser-Sollwerte,
+    Legionellenschutz, Bypass-Einstellungen → **Konfiguration**; alles Technische bleibt in
+    **Diagnose**). Die Zuordnung steht zentral in `presentation.py` (Tabelle) und gilt auch für die
+    generierten Entitäten; Entity-IDs und Verlauf bleiben unverändert. Alle Entitäten haben
+    außerdem passende MDI-Icons (explizit für die wichtigen, über Stichwortregeln für den Rest;
+    der Aktuelle Betrieb und das 4-Wegeventil wechseln das Icon mit dem Zustand).
+    Neu dazu: Binärsensoren **Bypass**, **Erdwärme**, **Magnetventil** (Diagnose) und
+    **PTC-Relais aktiv** (an, sobald irgendein Kanal K1-K10 des PTC-Moduls schaltet), der
+    Textsensor **4-Wegeventil** (Heizen/Kühlen) und der Diagnosesensor **Letzter
+    Schreibfehler** (zeigt z. B. ein fehlendes Modbus-Schreibrecht, Register 438). Die
+    Pseudo-Einheiten "AUS/AN" und "Binär" aus der Excel-Liste werden nicht mehr als
+    Einheit angezeigt. Die Idee der Gliederung und die Icon-Wahl sind der MIT-lizenzierten
+    Integration [Fummy1990/ha-lan-proxon](https://github.com/Fummy1990/ha-lan-proxon)
+    nachempfunden (kein Code übernommen). Die T300 bleibt – anders als dort – ein eigenes Gerät.
+
 ## Umfang / Kuration der Register
 
 Die vollständige Registerliste (`Modbus Liste FWT2.0 ver2 - für Kunden.xlsx`) umfasst über 450

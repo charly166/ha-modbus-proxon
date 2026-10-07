@@ -1155,6 +1155,9 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonNumberEntityDescript
 ''',
 }
 
+# Excel "units" that merely document the value coding (0/1, bit mask) - not real units.
+_PSEUDO_UNITS = frozenset({"AUS/AN", "Binär"})
+
 # Entities computed/behaving differently from a plain 1:1 register mapping
 # (filter-life sensors, the Intensivlüftung boost switch) are hand-written in
 # their own module (imports only from .entity, to avoid a circular import
@@ -1171,10 +1174,12 @@ _EXTRA_MODULE_IMPORTS: dict[str, str] = {
         "from .schreibrecht import SCHREIBRECHT_DESCRIPTION, ProxonSchreibrechtSensor\n"
         "from .energie import ENERGIE_DESCRIPTION, ProxonEnergieSensor\n"
         "from .enum_sensoren import ENUM_SENSOR_DESCRIPTIONS, ProxonEnumSensor\n"
+        "from .status_sensoren import LETZTER_SCHREIBFEHLER_DESCRIPTION, ProxonLetzterSchreibfehlerSensor\n"
     ),
     "binary_sensor": (
         "from .filter import FILTER_REMINDER_DESCRIPTION, ProxonFilterReminderBinarySensor\n"
         "from .heizelement_status import heizelement_status_entities\n"
+        "from .status_sensoren import STATUS_BINARY_ENTITIES\n"
         "from .tastensperre import tastensperre_binary_sensors\n"
     ),
     "switch": (
@@ -1189,9 +1194,11 @@ _EXTRA_MODULE_ENTITIES: dict[str, list[str]] = {
         "ProxonSchreibrechtSensor(coordinator, SCHREIBRECHT_DESCRIPTION)",
         "ProxonEnergieSensor(coordinator, ENERGIE_DESCRIPTION)",
         "*(ProxonEnumSensor(coordinator, d) for d in ENUM_SENSOR_DESCRIPTIONS)",
+        "ProxonLetzterSchreibfehlerSensor(coordinator, LETZTER_SCHREIBFEHLER_DESCRIPTION)",
     ],
     "binary_sensor": [
         "ProxonFilterReminderBinarySensor(coordinator, FILTER_REMINDER_DESCRIPTION)",
+        "*(cls(coordinator, d) for cls, d in STATUS_BINARY_ENTITIES)",
         "*heizelement_status_entities(coordinator, entry.runtime_data.zones)",
         "*tastensperre_binary_sensors(coordinator, entry)",
     ],
@@ -1305,7 +1312,7 @@ def render_platform_file(platform: str, metas: list[FieldMeta]) -> str:
         if m.entity_category:
             kwargs.append(f"entity_category={m.entity_category}")
         if platform == "sensor":
-            if m.unit:
+            if m.unit and m.unit not in _PSEUDO_UNITS:
                 kwargs.append(f"native_unit_of_measurement={m.unit!r}")
             if m.device_class:
                 kwargs.append(f"device_class={m.device_class}")
@@ -1316,7 +1323,7 @@ def render_platform_file(platform: str, metas: list[FieldMeta]) -> str:
             if m.suggested_precision is not None:
                 kwargs.append(f"suggested_display_precision={m.suggested_precision}")
         elif platform == "number":
-            if m.unit:
+            if m.unit and m.unit not in _PSEUDO_UNITS:
                 kwargs.append(f"native_unit_of_measurement={m.unit!r}")
             if m.min_value is not None:
                 kwargs.append(f"native_min_value={m.min_value!r}")
@@ -1469,6 +1476,11 @@ _EXTRA_ENTITY_STRINGS: dict = {
                 "kuehlbetrieb": "Kühlbetrieb",
             },
         },
+        "proxon_vierwegeventil_text": {
+            "name": "4-Wegeventil",
+            "state": {"heizen": "Heizen", "kuehlen": "Kühlen"},
+        },
+        "proxon_letzter_schreibfehler": {"name": "Letzter Schreibfehler"},
         "proxon_geraete_modell_text": {
             "name": "Geräte-Modell (Text)",
             "state": {"fwt": "FWT", "p": "P"},
@@ -1488,6 +1500,10 @@ _EXTRA_ENTITY_STRINGS: dict = {
     },
     "binary_sensor": {
         "proxon_filter_wechsel_faellig": {"name": "Gerätefilter Wechsel fällig"},
+        "proxon_bypass": {"name": "Bypass"},
+        "proxon_erdwaerme": {"name": "Erdwärme"},
+        "proxon_magnetventil": {"name": "Magnetventil"},
+        "proxon_ptc_relais_aktiv": {"name": "PTC-Relais aktiv"},
         "proxon_zone_tastensperre": {"name": "Sperren Bedienteil"},
         "proxon_zone_heizelement_status": {"name": "Heizelement Status"},
     },

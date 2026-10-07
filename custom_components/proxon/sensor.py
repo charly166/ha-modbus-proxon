@@ -334,7 +334,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_geraete_modell_0_fwt_1_p',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='AUS/AN',
     ),
     ProxonSensorEntityDescription(
         key='proxon_geraete_typ_0_nur_heizen_1_heizen_und_kuehlen',
@@ -343,7 +342,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_geraete_typ_0_nur_heizen_1_heizen_und_kuehlen',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='AUS/AN',
     ),
     ProxonSensorEntityDescription(
         key='proxon_co2_wohnzimmer',
@@ -455,7 +453,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         field='proxon_heizelement_status',
         name='Proxon Heizelement Status',
         has_entity_name=False,
-        native_unit_of_measurement='Binär',
     ),
     ProxonSensorEntityDescription(
         key='proxon_heizelement_status_2',
@@ -463,7 +460,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         field='proxon_heizelement_status_2',
         name='Proxon Heizelement Status 2',
         has_entity_name=False,
-        native_unit_of_measurement='Binär',
     ),
     ProxonSensorEntityDescription(
         key='proxon_akt_drehzahl_zuluftventilator',
@@ -517,7 +513,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_relaisstatushauptplatine',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='Binär',
     ),
     ProxonSensorEntityDescription(
         key='proxon_es997stufe',
@@ -799,7 +794,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_wprelaisstatus',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='Binär',
     ),
     ProxonSensorEntityDescription(
         key='proxon_statusventilatoren',
@@ -843,7 +837,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_errorflagsnebenplatine',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='Binär',
     ),
     ProxonSensorEntityDescription(
         key='proxon_bypassresthaltezeit',
@@ -1096,7 +1089,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_lscontrolfuerrorinput',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='AUS/AN',
     ),
     ProxonSensorEntityDescription(
         key='proxon_furesettimecounter',
@@ -1304,7 +1296,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_einausstatus',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='Binär',
     ),
     ProxonSensorEntityDescription(
         key='proxon_akt_ventilator_stufe_abluft',
@@ -1387,7 +1378,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_erdwaerme_zustand',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='AUS/AN',
     ),
     ProxonSensorEntityDescription(
         key='proxon_zustand_magnetventil_aus_an',
@@ -1396,7 +1386,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_zustand_magnetventil_aus_an',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='AUS/AN',
     ),
     ProxonSensorEntityDescription(
         key='proxon_zustand_bypass',
@@ -1405,7 +1394,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_zustand_bypass',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='AUS/AN',
     ),
     ProxonSensorEntityDescription(
         key='proxon_zustand_4_wegeventil_heizen_kuehlen',
@@ -1414,7 +1402,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_zustand_4_wegeventil_heizen_kuehlen',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='AUS/AN',
     ),
     ProxonSensorEntityDescription(
         key='proxon_vorwaermeventilzustand',
@@ -1423,7 +1410,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_vorwaermeventilzustand',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='AUS/AN',
     ),
     ProxonSensorEntityDescription(
         key='proxon_fuleistungmodbus',
@@ -1629,7 +1615,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_fumaxrpmupdatatet_fl',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='AUS/AN',
     ),
     ProxonSensorEntityDescription(
         key='proxon_fumaxrpmset',
@@ -1707,7 +1692,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_heizmodul_1_selbsttest_ergebnis',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='Binär',
     ),
     ProxonSensorEntityDescription(
         key='proxon_heizmodul_1_status',
@@ -1735,7 +1719,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_heizmodul_2_selbsttest_ergebnis',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='Binär',
     ),
     ProxonSensorEntityDescription(
         key='proxon_heizmodul_2_status',
@@ -2140,7 +2123,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_fehlerlist',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='Binär',
     ),
     ProxonSensorEntityDescription(
         key='proxon_fanrpm',
@@ -2158,7 +2140,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_eco_nodeonoff',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='AUS/AN',
     ),
     ProxonSensorEntityDescription(
         key='proxon_pid_max_vordamfer_reduktion',
@@ -2183,7 +2164,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_noteheizfreigabestate',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='AUS/AN',
     ),
     ProxonSensorEntityDescription(
         key='proxon_p19fehlercnt',
@@ -2437,7 +2417,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_pv_eheiz_an',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='AUS/AN',
     ),
     ProxonSensorEntityDescription(
         key='proxon_pv_wp_an',
@@ -2446,7 +2425,6 @@ SENSOR_DESCRIPTIONS: tuple[ProxonSensorEntityDescription, ...] = (
         translation_key='proxon_pv_wp_an',
         has_entity_name=True,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement='AUS/AN',
     ),
 )
 
@@ -2494,6 +2472,10 @@ from .filter import (
     ProxonFilterTageSensor,
 )
 from .schreibrecht import SCHREIBRECHT_DESCRIPTION, ProxonSchreibrechtSensor
+from .status_sensoren import (
+    LETZTER_SCHREIBFEHLER_DESCRIPTION,
+    ProxonLetzterSchreibfehlerSensor,
+)
 
 
 async def async_setup_entry(
@@ -2503,6 +2485,6 @@ async def async_setup_entry(
     coordinator = entry.runtime_data.coordinator
     entities = [ProxonSensor(coordinator, d) for d in SENSOR_DESCRIPTIONS]
     entities += [ProxonSensor(coordinator, d) for d in _zone_descriptions(entry.runtime_data.zones)]
-    entities.extend([ProxonFilterTageSensor(coordinator, FILTER_TAGE_DESCRIPTION), ProxonFilterResttageSensor(coordinator, FILTER_RESTTAGE_DESCRIPTION), ProxonSchreibrechtSensor(coordinator, SCHREIBRECHT_DESCRIPTION), ProxonEnergieSensor(coordinator, ENERGIE_DESCRIPTION), *(ProxonEnumSensor(coordinator, d) for d in ENUM_SENSOR_DESCRIPTIONS)])
+    entities.extend([ProxonFilterTageSensor(coordinator, FILTER_TAGE_DESCRIPTION), ProxonFilterResttageSensor(coordinator, FILTER_RESTTAGE_DESCRIPTION), ProxonSchreibrechtSensor(coordinator, SCHREIBRECHT_DESCRIPTION), ProxonEnergieSensor(coordinator, ENERGIE_DESCRIPTION), *(ProxonEnumSensor(coordinator, d) for d in ENUM_SENSOR_DESCRIPTIONS), ProxonLetzterSchreibfehlerSensor(coordinator, LETZTER_SCHREIBFEHLER_DESCRIPTION)])
     async_add_entities(entities)
 
