@@ -70,15 +70,15 @@ def _status(key: str, component: str, field: str, device_class: BinarySensorDevi
 
 
 BYPASS_DESCRIPTION = _status(
-    "proxon_bypass", "betriebswerte", "proxon_zustand_bypass", BinarySensorDeviceClass.OPENING
+    "proxon_bypass", "betriebswerte", "zustand_bypass", BinarySensorDeviceClass.OPENING
 )
 ERDWAERME_DESCRIPTION = _status(
-    "proxon_erdwaerme", "betriebswerte", "proxon_erdwaerme_zustand", BinarySensorDeviceClass.RUNNING
+    "proxon_erdwaerme", "betriebswerte", "erdwaerme_zustand", BinarySensorDeviceClass.RUNNING
 )
 MAGNETVENTIL_DESCRIPTION = _status(
     "proxon_magnetventil",
     "betriebswerte",
-    "proxon_zustand_magnetventil_aus_an",
+    "zustand_magnetventil_aus_an",
     BinarySensorDeviceClass.OPENING,
     entity_category=EntityCategory.DIAGNOSTIC,
 )

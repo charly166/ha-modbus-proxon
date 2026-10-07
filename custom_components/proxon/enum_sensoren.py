@@ -92,7 +92,7 @@ GERAETE_TYP_DESCRIPTION = _description(
 VIERWEGEVENTIL_DESCRIPTION = _description(
     "proxon_vierwegeventil_text",
     "betriebswerte",
-    "proxon_zustand_4_wegeventil_heizen_kuehlen",
+    "zustand_4_wegeventil_heizen_kuehlen",
     {0: "heizen", 1: "kuehlen"},
     state_icons={"heizen": "mdi:radiator", "kuehlen": "mdi:snowflake"},
 )
