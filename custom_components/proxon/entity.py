@@ -10,7 +10,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import ProxonDataUpdateCoordinator
-from .presentation import GROUP_CATEGORY, look_for, rule_icon
+from .presentation import DEFAULT_DISABLED, GROUP_CATEGORY, look_for, rule_icon
 from .util import object_id_for
 from .zones import ZoneInfo
 
@@ -118,6 +118,8 @@ class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
             icon = rule_icon(description.key)
         if icon:
             self._attr_icon = icon
+        if description.key in DEFAULT_DISABLED:
+            self._attr_entity_registry_enabled_default = False
 
     def add_to_platform_start(self, hass, platform, parallel_updates) -> None:
         """Suggest a short ``<domain>.proxon_<name>`` entity_id for new central entities.

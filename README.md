@@ -308,6 +308,18 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     Integration [Fummy1990/ha-lan-proxon](https://github.com/Fummy1990/ha-lan-proxon)
     nachempfunden (kein Code übernommen). Die T300 bleibt – anders als dort – ein eigenes Gerät.
 
+17. **68 Debug-, Platzhalter- und Rohwert-Sensoren sind standardmäßig deaktiviert**: Die
+    Entitäten werden weiterhin angelegt, stehen aber in der Entitätsliste als "deaktiviert" und
+    lassen sich dort jederzeit aktivieren (Zahnrad → "Aktiviert"). Betroffen sind (Liste:
+    `DEFAULT_DISABLED` in `presentation.py`): ständig schwankende Debug-Werte (z. B.
+    `FuErrorCounter`, `PowerFU`, `LsControlPulsbreite`), Sensoren mit Platzhalterwerten
+    (nicht angeschlossene Fühler 625,36 °C, E-Ventil-Position 255, `Clock*` immer 0), Rohwerte,
+    für die es jetzt Text-/Binärsensoren gibt (Aktueller Betrieb, Bypass, 4-Wegeventil, ...)
+    sowie Funktionen, die oft dauerhaft 0 liefern (JAZ, Umluft, Wp-Timer). Das entlastet Recorder
+    und Entitätsliste; der Modbus-Verkehr bleibt gleich, da jedes Register-Block weiterhin
+    gelesen wird. Das gilt nur für neu angelegte Entitäten - bestehende Installationen behalten
+    ihren aktuellen Zustand. Fehlerwerte (ErrorStatus, FU-Fehlercodes, Störung) bleiben aktiv.
+
 ## Umfang / Kuration der Register
 
 Die vollständige Registerliste (`Modbus Liste FWT2.0 ver2 - für Kunden.xlsx`) umfasst über 450

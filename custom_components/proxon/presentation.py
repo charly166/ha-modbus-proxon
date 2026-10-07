@@ -112,6 +112,89 @@ LOOKS: dict[str, Look] = {
     "proxon_energie_total": _l(None, "mdi:lightning-bolt"),
 }
 
+# Standardmäßig deaktiviert (Entität wird angelegt, ist aber in der Entitätsliste als
+# "deaktiviert" markiert und lässt sich dort jederzeit aktivieren). Gilt nur für neu
+# angelegte Entitäten - bereits vorhandene behalten ihren Zustand. Gründe: Debug-Werte, die
+# sich ständig ändern (Recorder-Last), Platzhalter-/Unsinnswerte, Rohwerte mit besserer
+# Ersatz-Entität und Funktionen, die auf vielen Anlagen dauerhaft 0 liefern.
+DEFAULT_DISABLED: frozenset[str] = frozenset(
+    {
+        # Debug-Werte, ändern sich ständig
+        "proxon_lscontrolpulsbreite",
+        "proxon_lscontrolfuerrorinput",
+        "proxon_delta_sauggas_verdampfer_temp",
+        "proxon_delta_sauggas_kondensator_temp",
+        "proxon_akt_max_leistung_kompressor",
+        "proxon_fuerrorcounter",
+        "proxon_powerfu",
+        "proxon_powerpcb",
+        # Platzhalter-/Unsinnswerte (Fühler nicht angeschlossen, Wert nie gesetzt)
+        "proxon_t9_t_aul_vor_ewt",
+        "proxon_tempzusatz1",
+        "proxon_tempzusatz2",
+        "proxon_adausentemp",
+        "proxon_adsusaettemp",
+        "proxon_fu_temperaturecabinet",
+        "proxon_heizmodul_2_temperatur",
+        "proxon_e_ventil_heizung_position",
+        "proxon_e_ventil_kuehlung_position",
+        "proxon_e_ventil_vorwaerme_position",
+        "proxon_stepsetpointposcool",
+        "proxon_stepsetpointposheat",
+        "proxon_stepsetpointpospreh",
+        "proxon_clockdate",
+        "proxon_clockday",
+        "proxon_clockhour",
+        "proxon_clockmin",
+        "proxon_clockmonth",
+        # Rohwerte, für die es eine Text-/Binärsensor-Entität gibt
+        "proxon_akteller_betrieb",
+        "proxon_geraete_modell_0_fwt_1_p",
+        "proxon_geraete_typ_0_nur_heizen_1_heizen_und_kuehlen",
+        "proxon_zustand_4_wegeventil_heizen_kuehlen",
+        "proxon_zustand_bypass",
+        "proxon_erdwaerme_zustand",
+        "proxon_zustand_magnetventil_aus_an",
+        "proxon_heizelement_status",  # ersetzt durch "PTC-Relais aktiv"
+        "proxon_fu_motorcurrent",  # doppelt zu "FU Motor Strom"
+        # Funktionen, die oft dauerhaft 0 liefern
+        "proxon_jaz_komp_1min",
+        "proxon_jaz_komp_1_stunde",
+        "proxon_jaz_komp_24_stunde",
+        "proxon_jaz_komp_365_tage",
+        "proxon_jaz_komp_days",
+        "proxon_jaz_total_1min",
+        "proxon_jaz_total_1_stunde",
+        "proxon_jaz_total_24_stunde",
+        "proxon_jaz_total_365_tage",
+        "proxon_jaz_total_days",
+        "proxon_stunden_umluft_an",
+        "proxon_stunden_umluftfilter",
+        "proxon_umluftaktive",
+        "proxon_wptimerschonzeit",
+        "proxon_wptimermindestlaufzeit",
+        "proxon_wptimerabtaunachlauf",
+        "proxon_wptimerentlastung",
+        "proxon_wptimerauslauf",
+        "proxon_wpabtautimer",
+        "proxon_wpabtauschwellecounter",
+        "proxon_wpminabtauintervalltimer",
+        "proxon_restwpzusatzabtauverzzeit",
+        "proxon_conwpstoptimer",
+        "proxon_nachabtauleistungrestorevalue",
+        "proxon_nachabtausuperheatrestorevalue",
+        "proxon_nachabtaumaxsuperheat",
+        "proxon_schieberresthaltezeit",
+        "proxon_schieberverfahrauftrag",
+        "proxon_schieberberechnungrestzeit",
+        "proxon_zuluftsollzone1",
+        "proxon_zuluftsollzone2",
+        "proxon_fuinittimecounter",
+        "proxon_furesettimecounter",
+    }
+)
+
+
 # Stichwort-Regeln für alle Entitäten ohne eigenen Eintrag/Icon (nur Icon, Gruppe
 # bleibt unverändert). Die erste passende Regel gewinnt.
 _RULES: tuple[tuple[re.Pattern[str], str], ...] = tuple(
