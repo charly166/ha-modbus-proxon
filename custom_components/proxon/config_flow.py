@@ -6,6 +6,7 @@ import logging
 from typing import Any
 
 import voluptuous as vol
+from homeassistant.components.modbus import async_get_temporary_unit
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.data_entry_flow import section
@@ -20,7 +21,7 @@ from homeassistant.helpers.selector import (
     SelectSelectorMode,
     TextSelector,
 )
-from modbus_connection.tmodbus import connect_tcp
+from modbus_connection import ModbusTcpParams
 
 from .const import (
     CONF_HAS_HNB,
@@ -177,20 +178,16 @@ class ProxonConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.source == "reconfigure"
 
     async def _async_probe(self, data: dict[str, Any]) -> None:
-        """Verify we can talk to the device using a short-lived connection.
+        """Verify we can talk to the device.
 
-        We open our own connection directly via modbus-connection rather
-        than Home Assistant Core's `modbus` integration - see __init__.py
-        for why - and close it again immediately after the probe.
+        The connection is borrowed from Home Assistant Core's `modbus`
+        integration for the duration of the probe (shared if already open).
         """
-        connection = await connect_tcp(data[CONF_HOST], port=int(data[CONF_PORT]))
-        try:
-            unit = connection.for_unit(int(data[CONF_SLAVE]))
+        params = ModbusTcpParams(host=data[CONF_HOST], port=int(data[CONF_PORT]))
+        async with async_get_temporary_unit(self.hass, params, int(data[CONF_SLAVE])) as unit:
             device = ProxonDevice(unit)
             # A cheap, always-present register block: confirms the slave answers at all.
             await device.zbp.async_update()
-        finally:
-            await connection.close()
 
     async def _async_step_connection(self, user_input: dict[str, Any] | None) -> ConfigFlowResult:
         errors: dict[str, str] = {}

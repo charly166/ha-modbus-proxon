@@ -10,7 +10,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
-from modbus_connection.tmodbus import ModbusConnection
 
 from .const import DOMAIN, UPDATE_INTERVAL_SECONDS
 from .model import ProxonDevice
@@ -92,7 +91,6 @@ class ProxonRuntimeData:
 
     device: ProxonDevice
     coordinator: ProxonDataUpdateCoordinator
-    connection: ModbusConnection
     zones: list[ZoneInfo]
     # Holding 438 as last read (None if it couldn't be read) - decides whether
     # level-2-only entities like Sperren Bedienteil are switches or read-only.

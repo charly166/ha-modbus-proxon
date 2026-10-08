@@ -17,13 +17,13 @@ sind (die FWT2.0 unterstützt architektonisch 1 ZBP + 1 HNBP + bis zu 19 NBP-Zon
 Entitäten dafür dynamisch an - unabhängig davon, wie viele Räume die konkrete Anlage hat.
 
 Der im Blogpost beschriebene zweite Baustein – eine über Home Assistant Cores eingebaute
-`modbus`-Integration geteilte Verbindung (`async_get_unit`/`async_get_temporary_unit`) – ist
-in aktuellen, veröffentlichten Home-Assistant-Versionen noch nicht enthalten (Stand geprüft:
-Home Assistant 2026.9.3; `homeassistant.components.modbus` hat diese Funktionen dort noch
-nicht). Diese Integration öffnet deshalb aktuell eine **eigene** Modbus-TCP-Verbindung direkt
-über `modbus-connection` (`modbus_connection.tmodbus.connect_tcp`), statt sie mit anderen
-Integrationen zu teilen. Sobald HA Core die geteilte Verbindung veröffentlicht, kann darauf
-umgestellt werden (betrifft nur `__init__.py`/`config_flow.py`, nicht das Registermodell).
+`modbus`-Integration geteilte Verbindung – wird seit Version 0.13.0 genutzt: Die Verbindung
+kommt per `async_get_unit` (im Config-Flow `async_get_temporary_unit`) aus dem Kern. Dadurch
+erscheint die Wärmepumpe im **Modbus-Panel** (Home Assistant 2026.10, Einstellungen →
+Konnektivität), und mehrere Integrationen, die dasselbe Gerät ansprechen, teilen sich eine
+Verbindung. Voraussetzung ist deshalb **Home Assistant 2026.9 oder neuer** (`hacs.json`); die
+Integration hängt vom Kern-`modbus` ab (`dependencies` in `manifest.json`). Bis Version 0.12.x
+öffnete sie eine eigene Verbindung, die im Panel nicht auftauchte.
 
 Diese Integration ersetzt die bisherige, handgepflegte `proxon.yaml` (`modbus:`-Plattform)
 **und** die darauf aufbauenden `climate_template`-Entitäten/Automatisierungen (siehe

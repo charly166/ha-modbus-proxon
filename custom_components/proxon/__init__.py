@@ -5,12 +5,13 @@ from __future__ import annotations
 import logging
 import re
 
+from homeassistant.components.modbus import async_get_unit
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import slugify as ha_slugify
-from modbus_connection.tmodbus import connect_tcp
+from modbus_connection import ModbusTcpParams
 
 from .const import CONF_SLAVE, CONF_ZONE_COUNT, DOMAIN, PLATFORMS
 from .coordinator import (
@@ -35,15 +36,17 @@ _LEGACY_NUMBERED_ID = re.compile(r"^([a-z_]+)\.proxon(?:_(?:\d+|[34]x\d{4}))?$")
 async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bool:
     """Set up Proxon from a config entry.
 
-    We open our own Modbus TCP connection directly via modbus-connection
-    (rather than sharing one through Home Assistant Core's `modbus`
-    integration) because `async_get_unit`/`async_get_temporary_unit` are not
-    yet available in released Home Assistant Core versions. This connection
-    is dedicated to this config entry and closed again in
-    async_unload_entry().
+    The Modbus connection is requested from Home Assistant Core's `modbus`
+    integration (`async_get_unit`), so it shows up in the Modbus panel and is
+    shared with any other integration talking to the same device. Core opens it
+    lazily and closes it once the last config entry holding a unit on it unloads.
     """
-    connection = await connect_tcp(entry.data[CONF_HOST], port=int(entry.data[CONF_PORT]))
-    unit = connection.for_unit(int(entry.data[CONF_SLAVE]))
+    unit = async_get_unit(
+        hass,
+        entry,
+        ModbusTcpParams(host=entry.data[CONF_HOST], port=int(entry.data[CONF_PORT])),
+        int(entry.data[CONF_SLAVE]),
+    )
 
     device = ProxonDevice(unit, zone_count=entry.data[CONF_ZONE_COUNT])
     coordinator = ProxonDataUpdateCoordinator(hass, entry, device)
@@ -52,7 +55,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bo
     entry.runtime_data = ProxonRuntimeData(
         device=device,
         coordinator=coordinator,
-        connection=connection,
         zones=zones_from_entry_data(hass, entry.data),
         write_level=_read_write_level(coordinator),
     )
@@ -176,7 +178,4 @@ def _read_write_level(coordinator: ProxonDataUpdateCoordinator) -> int | None:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bool:
     """Unload a config entry."""
-    unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if unloaded:
-        await entry.runtime_data.connection.close()
-    return unloaded
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
