@@ -315,13 +315,13 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     (`DEFAULT_DISABLED` in `presentation.py`) stammt aus der Praxis: ständig schwankende
     Debug-Werte, Platzhalterwerte (nicht angeschlossene Fühler, `Clock*` immer 0), Rohwerte mit
     besserer Ersatz-Entität (Aktueller Betrieb, Bypass, 4-Wegeventil, ...), selten gebrauchte
-    Funktionen (JAZ, Umluft, Wp-Timer) sowie Betriebsstunden, Fehlerzähler/-status und
+    Funktionen (JAZ, Umluft, Wp-Timer) sowie Betriebsstunden, Fehlerzähler und
     Kältekreis-Interna. Sichtbar bleiben u. a. Temperaturen, Drehzahlen, Stromaufnahme,
-    Kompressorleistung, Störung, Fehlerliste, Firmware, Filterwerte und Heizelement-/PTC-Status.
+    Kompressorleistung, Störung, Fehlerliste, `ErrorStatus1-4`, Firmware, Filterwerte und Heizelement-/PTC-Status.
     Das entlastet Recorder und Entitätsliste; der Modbus-Verkehr bleibt gleich, da jeder
     Register-Block weiterhin gelesen wird. Das gilt nur für neu angelegte Entitäten - bestehende
-    Installationen behalten ihren aktuellen Zustand. Wer z. B. die Fehlerwerte
-    (`ErrorStatus1-4`, `FU_ErrorCode`) oder die Betriebsstunden braucht, aktiviert sie einfach.
+    Installationen behalten ihren aktuellen Zustand. Wer z. B. `FU_ErrorCode`
+    oder die Betriebsstunden braucht, aktiviert sie einfach.
 
 ## Umfang / Kuration der Register
 
