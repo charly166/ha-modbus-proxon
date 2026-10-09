@@ -214,8 +214,9 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
       Entität wechselt die Form - der Nutzer muss nichts einstellen. Ist das Schreibrecht nicht
       lesbar, bleibt es vorsichtshalber beim `binary_sensor`. Beide Varianten teilen sich die
       `unique_id`; die jeweils andere, verwaiste Variante wird dabei automatisch entfernt.
-    - **`Heizelemente Global`** benötigt ebenfalls Stufe 2, ist aber (noch) fest ein
-      `binary_sensor` (lesbar), kein `switch`.
+    - **`Heizelemente Global`** benötigt ebenfalls Stufe 2 und verhält sich genauso wie
+      `Sperren Bedienteil`: bei Stufe 2 ein bedienbarer `switch`, sonst ein schreibgeschützter
+      `binary_sensor` (gleiche `unique_id`, der Verlauf läuft weiter).
     - **Das Heizelement des ZBP** (Zentralbedienpanel, Adresse 187 - anders als bei
       HNBP/NBP1-19) benötigt ebenfalls Stufe 2, ist in dieser Version aber noch **regulär
       schreibbar** (Schalter + `climate`-Heizmodus) - ein Schreibversuch schlägt auf Anlagen mit

@@ -93,7 +93,7 @@ LOOKS: dict[str, Look] = {
     "proxon_r3_solar": _l(DIAGNOSE, "mdi:solar-power"),
     "proxon_r5_ventilator": _l(DIAGNOSE, "mdi:fan"),
     "proxon_r6_abtau": _l(DIAGNOSE, "mdi:snowflake-melt"),
-    "proxon_heizelemente_global": _l(None, "mdi:radiator"),
+    "proxon_heizelemente_global": _l(STEUERUNG, "mdi:radiator"),
     "proxon_bypass": _l(SENSOR, "mdi:valve"),
     "proxon_erdwaerme": _l(SENSOR, "mdi:home-thermometer-outline"),
     "proxon_magnetventil": _l(DIAGNOSE, "mdi:valve"),

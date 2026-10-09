@@ -444,7 +444,9 @@ _PLATFORM_OVERRIDES: dict[str, dict] = {
     # exactly like the Tastensperre registers - installations below that level
     # get Modbus exception 0x03 on every write. Read-only until confirmed
     # otherwise (see README "Modbus-Schreibrecht").
-    "proxon_heizelemente_global": {"platform": "binary_sensor", "writable": False},
+    # Hand-written (heizelemente_global.py): switch at write level 2, else binary_sensor -
+    # same pattern as Tastensperre. The register itself must be declared writable.
+    "proxon_heizelemente_global": {"platform": "heizelemente_global", "writable": True},
     "proxon_luefterstufe": {"platform": "number", "min": 1.0, "max": 4.0, "step": 1.0},
     # min/max for the T300 fields come straight from the Excel's "T300 Sollwerte"
     # section (addresses 2000/2003, IST-Min/IST-Max columns) when present; these
@@ -1181,10 +1183,12 @@ _EXTRA_MODULE_IMPORTS: dict[str, str] = {
         "from .heizelement_status import heizelement_status_entities\n"
         "from .status_sensoren import STATUS_BINARY_ENTITIES\n"
         "from .tastensperre import tastensperre_binary_sensors\n"
+        "from .heizelemente_global import heizelemente_global_binary_sensors\n"
     ),
     "switch": (
         "from .intensivlueftung import INTENSIVLUEFTUNG_DESCRIPTION, ProxonIntensivlueftungSwitch\n"
         "from .tastensperre import tastensperre_switches\n"
+        "from .heizelemente_global import heizelemente_global_switches\n"
     ),
 }
 _EXTRA_MODULE_ENTITIES: dict[str, list[str]] = {
@@ -1201,10 +1205,12 @@ _EXTRA_MODULE_ENTITIES: dict[str, list[str]] = {
         "*(cls(coordinator, d) for cls, d in STATUS_BINARY_ENTITIES)",
         "*heizelement_status_entities(coordinator, entry.runtime_data.zones)",
         "*tastensperre_binary_sensors(coordinator, entry)",
+        "*heizelemente_global_binary_sensors(coordinator, entry)",
     ],
     "switch": [
         "ProxonIntensivlueftungSwitch(coordinator, INTENSIVLUEFTUNG_DESCRIPTION)",
         "*tastensperre_switches(coordinator, entry)",
+        "*heizelemente_global_switches(coordinator, entry)",
     ],
 }
 
