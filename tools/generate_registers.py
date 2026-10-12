@@ -1190,6 +1190,9 @@ _EXTRA_MODULE_IMPORTS: dict[str, str] = {
         "from .tastensperre import tastensperre_switches\n"
         "from .heizelemente_global import heizelemente_global_switches\n"
     ),
+    "number": (
+        "from .intensivlueftung import DAUER_DESCRIPTION, ProxonIntensivlueftungDauerNumber\n"
+    ),
 }
 _EXTRA_MODULE_ENTITIES: dict[str, list[str]] = {
     "sensor": [
@@ -1211,6 +1214,9 @@ _EXTRA_MODULE_ENTITIES: dict[str, list[str]] = {
         "ProxonIntensivlueftungSwitch(coordinator, INTENSIVLUEFTUNG_DESCRIPTION)",
         "*tastensperre_switches(coordinator, entry)",
         "*heizelemente_global_switches(coordinator, entry)",
+    ],
+    "number": [
+        "ProxonIntensivlueftungDauerNumber(coordinator, DAUER_DESCRIPTION)",
     ],
 }
 
@@ -1521,6 +1527,13 @@ _EXTRA_ENTITY_STRINGS: dict = {
     "number": {
         "proxon_zone_offset_temperatur": {"name": "Offset-Temperatur"},
         "proxon_zone_soll_temperatur": {"name": "Soll-Temperatur"},
+        "proxon_intensivlueftung_dauer": {"name": "Intensivlüftung Dauer"},
+    },
+    "button": {
+        "proxon_intensivlueftung_15_min": {"name": "Intensivlüftung 15 Minuten"},
+        "proxon_intensivlueftung_30_min": {"name": "Intensivlüftung 30 Minuten"},
+        "proxon_intensivlueftung_45_min": {"name": "Intensivlüftung 45 Minuten"},
+        "proxon_intensivlueftung_start": {"name": "Intensivlüftung starten"},
     },
     "select": {
         # proxon_betriebsart keeps its legacy literal `name` (continuity) -

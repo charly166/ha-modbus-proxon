@@ -323,6 +323,15 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     Installationen behalten ihren aktuellen Zustand. Wer z. B. `FU_ErrorCode`
     oder die Betriebsstunden braucht, aktiviert sie einfach.
 
+18. **Intensivlüftung mit wählbarer Dauer**: Neben dem Schalter "Intensivlüftung (60 Min.)"
+    gibt es die Buttons **Intensivlüftung 15 / 30 / 45 Minuten** und eine freie Dauer: die
+    Zahl **Intensivlüftung Dauer** (1-360 Minuten, Standard 60) legt fest, wie lange der Button
+    **Intensivlüftung starten** lüftet. Die Zahl wird nur in Home Assistant gemerkt (und nach
+    einem Neustart wiederhergestellt), erst der Start-Button schreibt die Minuten ins Register
+    133 (Intensivlüftung Restzeit). Das Register erlaubt bis zu 1440 Minuten; die Eingabe ist
+    bewusst auf 360 begrenzt. Zum vorzeitigen Beenden dient weiterhin der Schalter (aus). Alle
+    Entitäten stehen im zentralen Gerät unter "Steuerung".
+
 ## Umfang / Kuration der Register
 
 Die vollständige Registerliste (`Modbus Liste FWT2.0 ver2 - für Kunden.xlsx`) umfasst über 450

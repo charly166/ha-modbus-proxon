@@ -1057,6 +1057,9 @@
       "proxon_zone_soll_temperatur": {
         "name": "Soll-Temperatur"
       },
+      "proxon_intensivlueftung_dauer": {
+        "name": "Intensivlüftung Dauer"
+      },
       "proxon_filterwechselintervall_t300": {
         "name": "Filterwechselintervall T300"
       },
@@ -1068,6 +1071,20 @@
       },
       "proxon_bypass_laufzeit_an_aus": {
         "name": "Bypass laufzeit (AN/AUS)"
+      }
+    },
+    "button": {
+      "proxon_intensivlueftung_15_min": {
+        "name": "Intensivlüftung 15 Minuten"
+      },
+      "proxon_intensivlueftung_30_min": {
+        "name": "Intensivlüftung 30 Minuten"
+      },
+      "proxon_intensivlueftung_45_min": {
+        "name": "Intensivlüftung 45 Minuten"
+      },
+      "proxon_intensivlueftung_start": {
+        "name": "Intensivlüftung starten"
       }
     },
     "select": {

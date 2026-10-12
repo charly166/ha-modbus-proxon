@@ -151,6 +151,9 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonNumberEntityDescript
     return out
 
 
+from .intensivlueftung import DAUER_DESCRIPTION, ProxonIntensivlueftungDauerNumber
+
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: ProxonConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
@@ -158,5 +161,6 @@ async def async_setup_entry(
     coordinator = entry.runtime_data.coordinator
     entities = [ProxonNumber(coordinator, d) for d in NUMBER_DESCRIPTIONS]
     entities += [ProxonNumber(coordinator, d) for d in _zone_descriptions(entry.runtime_data.zones)]
+    entities.extend([ProxonIntensivlueftungDauerNumber(coordinator, DAUER_DESCRIPTION)])
     async_add_entities(entities)
 
