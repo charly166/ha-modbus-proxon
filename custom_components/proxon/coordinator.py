@@ -101,9 +101,11 @@ class ProxonRuntimeData:
     # entity_ids suggested to entities of this entry that are still being added
     # (not registered yet), so two entities with the same name don't pick the same ID.
     claimed_ids: set[str] = field(default_factory=set)
-    # Duration (minutes) of the "Intensivlüftung starten" button, set by the number
-    # "Intensivlüftung Dauer" (see intensivlueftung.py).
+    # Duration (minutes) of the "Intensivlüftung (eingestellte Dauer)" switch, set by the
+    # number "Intensivlüftung Dauer"; and the key of the switch that started the running
+    # Intensivlüftung (None = unknown). See intensivlueftung.py.
     intensiv_minutes: int = 60
+    intensiv_origin: str | None = None
 
 
 type ProxonConfigEntry = ConfigEntry[ProxonRuntimeData]

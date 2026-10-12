@@ -1046,6 +1046,18 @@
       "proxon_intensivlueftung": {
         "name": "Intensivlüftung (60 Min.)"
       },
+      "proxon_intensivlueftung_15_min": {
+        "name": "Intensivlüftung (15 Min.)"
+      },
+      "proxon_intensivlueftung_30_min": {
+        "name": "Intensivlüftung (30 Min.)"
+      },
+      "proxon_intensivlueftung_45_min": {
+        "name": "Intensivlüftung (45 Min.)"
+      },
+      "proxon_intensivlueftung_start": {
+        "name": "Intensivlüftung (eingestellte Dauer)"
+      },
       "proxon_legionellaschutz": {
         "name": "Legionellaschutz"
       }
@@ -1071,20 +1083,6 @@
       },
       "proxon_bypass_laufzeit_an_aus": {
         "name": "Bypass laufzeit (AN/AUS)"
-      }
-    },
-    "button": {
-      "proxon_intensivlueftung_15_min": {
-        "name": "Intensivlüftung 15 Minuten"
-      },
-      "proxon_intensivlueftung_30_min": {
-        "name": "Intensivlüftung 30 Minuten"
-      },
-      "proxon_intensivlueftung_45_min": {
-        "name": "Intensivlüftung 45 Minuten"
-      },
-      "proxon_intensivlueftung_start": {
-        "name": "Intensivlüftung starten"
       }
     },
     "select": {

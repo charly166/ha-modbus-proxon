@@ -1186,7 +1186,7 @@ _EXTRA_MODULE_IMPORTS: dict[str, str] = {
         "from .heizelemente_global import heizelemente_global_binary_sensors\n"
     ),
     "switch": (
-        "from .intensivlueftung import INTENSIVLUEFTUNG_DESCRIPTION, ProxonIntensivlueftungSwitch\n"
+        "from .intensivlueftung import intensivlueftung_switches\n"
         "from .tastensperre import tastensperre_switches\n"
         "from .heizelemente_global import heizelemente_global_switches\n"
     ),
@@ -1211,7 +1211,7 @@ _EXTRA_MODULE_ENTITIES: dict[str, list[str]] = {
         "*heizelemente_global_binary_sensors(coordinator, entry)",
     ],
     "switch": [
-        "ProxonIntensivlueftungSwitch(coordinator, INTENSIVLUEFTUNG_DESCRIPTION)",
+        "*intensivlueftung_switches(coordinator)",
         "*tastensperre_switches(coordinator, entry)",
         "*heizelemente_global_switches(coordinator, entry)",
     ],
@@ -1523,17 +1523,15 @@ _EXTRA_ENTITY_STRINGS: dict = {
         "proxon_zone_heizelement": {"name": "Heizelement"},
         "proxon_zone_tastensperre": {"name": "Sperren Bedienteil"},
         "proxon_intensivlueftung": {"name": "Intensivlüftung (60 Min.)"},
+        "proxon_intensivlueftung_15_min": {"name": "Intensivlüftung (15 Min.)"},
+        "proxon_intensivlueftung_30_min": {"name": "Intensivlüftung (30 Min.)"},
+        "proxon_intensivlueftung_45_min": {"name": "Intensivlüftung (45 Min.)"},
+        "proxon_intensivlueftung_start": {"name": "Intensivlüftung (eingestellte Dauer)"},
     },
     "number": {
         "proxon_zone_offset_temperatur": {"name": "Offset-Temperatur"},
         "proxon_zone_soll_temperatur": {"name": "Soll-Temperatur"},
         "proxon_intensivlueftung_dauer": {"name": "Intensivlüftung Dauer"},
-    },
-    "button": {
-        "proxon_intensivlueftung_15_min": {"name": "Intensivlüftung 15 Minuten"},
-        "proxon_intensivlueftung_30_min": {"name": "Intensivlüftung 30 Minuten"},
-        "proxon_intensivlueftung_45_min": {"name": "Intensivlüftung 45 Minuten"},
-        "proxon_intensivlueftung_start": {"name": "Intensivlüftung starten"},
     },
     "select": {
         # proxon_betriebsart keeps its legacy literal `name` (continuity) -

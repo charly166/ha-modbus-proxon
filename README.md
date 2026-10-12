@@ -323,14 +323,18 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     Installationen behalten ihren aktuellen Zustand. Wer z. B. `FU_ErrorCode`
     oder die Betriebsstunden braucht, aktiviert sie einfach.
 
-18. **Intensivlüftung mit wählbarer Dauer**: Neben dem Schalter "Intensivlüftung (60 Min.)"
-    gibt es die Buttons **Intensivlüftung 15 / 30 / 45 Minuten** und eine freie Dauer: die
-    Zahl **Intensivlüftung Dauer** (1-360 Minuten, Standard 60) legt fest, wie lange der Button
-    **Intensivlüftung starten** lüftet. Die Zahl wird nur in Home Assistant gemerkt (und nach
-    einem Neustart wiederhergestellt), erst der Start-Button schreibt die Minuten ins Register
-    133 (Intensivlüftung Restzeit). Das Register erlaubt bis zu 1440 Minuten; die Eingabe ist
-    bewusst auf 360 begrenzt. Zum vorzeitigen Beenden dient weiterhin der Schalter (aus). Alle
-    Entitäten stehen im zentralen Gerät unter "Steuerung".
+18. **Intensivlüftung mit wählbarer Dauer** - als Schalter: Neben **Intensivlüftung (60 Min.)**
+    gibt es **Intensivlüftung (15 Min.)**, **(30 Min.)**, **(45 Min.)** und **Intensivlüftung
+    (eingestellte Dauer)**. Letzterer startet mit der Zahl **Intensivlüftung Dauer**
+    (1-360 Minuten, Standard 60); die Zahl wird nur in Home Assistant gemerkt (und nach einem
+    Neustart wiederhergestellt), erst der Schalter schreibt die Minuten ins Register 133
+    (Intensivlüftung Restzeit). Das Register erlaubt bis zu 1440 Minuten; die Eingabe ist
+    bewusst auf 360 begrenzt. Ausschalten eines Schalters beendet die Lüftung sofort (schreibt
+    0). Das Gerät kennt nur die Restzeit; die Integration merkt sich, welcher Schalter die
+    laufende Lüftung gestartet hat, und zeigt nur diesen als "an". Läuft sie ohne bekannten
+    Auslöser (am Bedienteil gestartet, nach einem Neustart), steht der 60-Minuten-Schalter auf
+    "an". Alle Entitäten stehen im zentralen Gerät unter "Steuerung". (Version 0.14.0 hatte dafür
+    Buttons; sie werden beim Update automatisch entfernt.)
 
 ## Umfang / Kuration der Register
 
