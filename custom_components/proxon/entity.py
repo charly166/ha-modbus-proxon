@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
+from homeassistant.core import callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity import DeviceInfo, EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -18,6 +20,8 @@ from .zones import ZoneInfo
 # registers 21/22) and so belong on the ZBP's zone device. Keyed by the
 # description key = unique_id, so entity_ids/history stay unchanged.
 ZBP_DEVICE_KEYS = frozenset({"proxon_co2_wohnzimmer", "proxon_luftfeuchte_wohnzimmer"})
+
+_UNSET: Any = object()  # "no optimistic value" marker
 
 
 def _zone_for(zones: list[ZoneInfo], component: str, zone_index: int | None, key: str = "") -> ZoneInfo | None:
@@ -65,6 +69,8 @@ class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
 
     entity_description: ProxonEntityDescription
     _attr_should_poll = False
+    # Value just written to the device, shown until the next coordinator update.
+    _optimistic: Any = _UNSET
     # Keyword-based fallback icons for entities without an explicit entry in
     # presentation.py; off for entities with their own icon logic (climate).
     _RULE_ICONS = True
@@ -167,6 +173,8 @@ class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
 
     @property
     def _value(self):
+        if self._optimistic is not _UNSET:
+            return self._optimistic
         return getattr(self._component, self.entity_description.field)
 
     async def _async_write(self, value) -> None:
@@ -175,7 +183,16 @@ class ProxonEntity(CoordinatorEntity[ProxonDataUpdateCoordinator]):
         except Exception as err:
             self.coordinator.record_write_error(self.entity_description.key, err)
             raise
+        # Show the written value right away; the full device poll that follows can take
+        # several seconds on a serial gateway. The next coordinator update replaces it.
+        self._optimistic = value
+        self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._optimistic = _UNSET
+        super()._handle_coordinator_update()
 
     @property
     def available(self) -> bool:

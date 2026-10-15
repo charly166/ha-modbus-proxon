@@ -69,8 +69,9 @@ class ProxonIntensivlueftungSwitch(ProxonEntity, SwitchEntity):
     entity_description: _IntensivlueftungSwitchDescription
 
     def _handle_coordinator_update(self) -> None:
-        # Restzeit back at 0: the run is over, forget who started it.
-        if self._value == 0:
+        # Restzeit back at 0: the run is over, forget who started it. (Read the polled
+        # value, not a just-written optimistic one.)
+        if getattr(self._component, self.entity_description.field) == 0:
             self.coordinator.config_entry.runtime_data.intensiv_origin = None
         super()._handle_coordinator_update()
 

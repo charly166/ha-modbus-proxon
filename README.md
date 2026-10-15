@@ -337,17 +337,21 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     Buttons; sie werden beim Update automatisch entfernt.)
 
 19. **Lovelace-Karten für einen Raum** (werden mit der Integration ausgeliefert und automatisch
-    geladen, keine zusätzliche Ressource nötig; ggf. einmal die Browser-Seite neu laden):
-    - **Proxon Raum (komplett)** `custom:proxon-room-card`: Ist-Temperatur (beim ZBP-Raum auch
-      Luftfeuchte), Soll-Temperatur mit −/+ (im Rahmen der ±3 °C des Raums bzw. 10-30 °C beim
-      ZBP), PTC-Heizelement ein/aus, PTC-Status und Bedienteil sperren/freigeben (schaltbar bei
+    geladen, keine zusätzliche Ressource nötig; nach dem Update die Browser-Seite **hart neu
+    laden**, Strg+F5, sonst kennt der Browser die Karten noch nicht - als Fallback lässt sich
+    `/proxon_frontend/proxon-room-card.js` unter Einstellungen → Dashboards → Ressourcen als
+    "JavaScript-Modul" eintragen):
+    - **Proxon Karte (detailliert)** `custom:proxon-room-card`: Ist-Temperatur (fett, beim
+      ZBP-Raum auch Luftfeuchte), Soll-Temperatur mit −/+ (im Rahmen der ±3 °C des Raums bzw.
+      10-30 °C beim ZBP), PTC-Heizelement ein/aus und Bedienteil sperren/freigeben (schaltbar bei
       Modbus-Schreibrecht 2, sonst nur Anzeige).
-    - **Proxon Raum (schlank)** `custom:proxon-room-card-slim`: Name, Ist-Temperatur, Soll mit
-      −/+ und das PTC-Symbol in einer Zeile.
+    - **Proxon Karte (kompakt)** `custom:proxon-room-card-slim`: Name (fett) mit Ist-Temperatur
+      darunter, Soll mit −/+ und das PTC-Symbol in einer Zeile.
     Das PTC-Symbol ist **grau** (Heizelement aus), **orange** (freigegeben) oder **rot** (heizt
-    gerade, aus dem Heizelement-Status des Raums, siehe Kanal-Zuordnung). Hinzufügen:
-    Dashboard bearbeiten → Karte hinzufügen → "Proxon Raum ..." und die `climate`-Entität des
-    Raums wählen, oder per YAML:
+    gerade, aus dem Heizelement-Status des Raums, siehe Kanal-Zuordnung). Mehrere schnelle
+    Klicks auf −/+ werden zusammengefasst und als **ein** Schreibzugriff gesendet (nach 0,6 s
+    Pause); die Anzeige springt sofort. Hinzufügen: Dashboard bearbeiten → Karte hinzufügen →
+    "Proxon Karte ..." und die `climate`-Entität des Raums wählen, oder per YAML:
 
     ```yaml
     type: custom:proxon-room-card        # oder custom:proxon-room-card-slim
@@ -358,6 +362,10 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     Die zugehörigen Entitäten (Heizelement, Status, Bedienteil-Sperre, Luftfeuchte) werden über
     das Gerät des Raums automatisch gefunden; bei Bedarf lassen sie sich mit `heating:`,
     `status:`, `lock:` und `humidity:` überschreiben.
+20. **Schreibzugriffe wirken sofort in der Oberfläche**: Nach einem erfolgreichen Schreiben
+    zeigt die Entität den geschriebenen Wert sofort an, statt erst die vollständige
+    Geräteabfrage (bei seriellen Gateways mehrere Sekunden) abzuwarten; der nächste Poll ersetzt
+    ihn durch den gelesenen Wert.
 
 ## Umfang / Kuration der Register
 

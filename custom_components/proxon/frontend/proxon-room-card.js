@@ -1,8 +1,8 @@
 /*
  * Proxon room cards for Home Assistant (shipped with the "HA Proxon FWT 2.0 Modbus" integration).
  *
- *   type: custom:proxon-room-card        # all-inclusive card
- *   type: custom:proxon-room-card-slim   # slim card
+ *   type: custom:proxon-room-card        # "Proxon Karte (detailliert)"
+ *   type: custom:proxon-room-card-slim   # "Proxon Karte (kompakt)"
  *   entity: climate.buero                # the room's climate entity (required)
  *   name: Büro                           # optional
  *   # optional overrides (normally found automatically on the same device):
@@ -12,9 +12,12 @@
  *   humidity: sensor.proxon_luftfeuchte_wohnzimmer
  *
  * PTC icon: grey = off, orange = enabled, red = heating.
+ * Clicks on -/+ are collected and sent as one write after a short pause.
  */
 (() => {
-  const VERSION = "1";
+  const VERSION = "2";
+  const SEND_DELAY_MS = 600; // wait for further -/+ clicks before writing the register
+  const PENDING_MAX_MS = 15000; // stop showing the local value if the state never follows
 
   const TK = {
     heating: "proxon_zone_heizelement",
@@ -25,29 +28,31 @@
   const CSS = `
     :host { display: block; }
     ha-card { padding: 12px 16px; }
+    ha-icon { --mdc-icon-size: 24px; }
     .head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .name { font-size: 1.1em; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .temps { display: flex; align-items: baseline; gap: 12px; margin: 8px 0 4px; }
-    .ist { font-size: 2.2em; font-weight: 300; line-height: 1.1; }
-    .hum { color: var(--secondary-text-color); }
+    .name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .head .name { font-size: 1.1em; }
+    .temps { display: flex; align-items: center; gap: 12px; margin: 8px 0 4px; }
+    .ist { font-size: 2.2em; font-weight: 700; line-height: 1.1; }
+    .hum { color: var(--secondary-text-color); display: inline-flex; align-items: center; }
     .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
     .label { color: var(--secondary-text-color); }
-    .stepper { display: flex; align-items: center; gap: 4px; }
-    .stepper .val { min-width: 4.5em; text-align: center; font-size: 1.2em; }
-    button { cursor: pointer; border: none; background: var(--secondary-background-color, #eee);
-      color: var(--primary-text-color); border-radius: 50%; width: 36px; height: 36px;
-      display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+    .pill { display: inline-flex; align-items: center; border-radius: 20px;
+      background: var(--secondary-background-color, #eee); }
+    .pill .val { min-width: 3.2em; text-align: center; font-weight: 500; }
+    button { cursor: pointer; border: none; background: transparent; color: var(--primary-text-color);
+      border-radius: 50%; width: 36px; height: 36px; display: inline-flex; align-items: center;
+      justify-content: center; padding: 0; }
     button[disabled] { opacity: 0.4; cursor: default; }
-    button.ptc { background: transparent; width: 44px; height: 44px; }
-    button.ptc ha-icon { --mdc-icon-size: 30px; }
+    button.ptc { background: var(--secondary-background-color, #eee); }
     .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 16px;
       background: var(--secondary-background-color, #eee); cursor: pointer; }
     .chip.static { cursor: default; }
-    .status { display: inline-flex; align-items: center; gap: 6px; }
-    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-    .slim { display: flex; align-items: center; gap: 10px; }
-    .slim .name { flex: 1 1 auto; min-width: 0; }
-    .slim .ist { font-size: 1.4em; }
+    .compact { display: flex; align-items: center; gap: 10px; }
+    .compact .info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+    .compact .name { font-size: 1em; }
+    .compact .sub { color: var(--secondary-text-color); font-size: 0.9em; }
+    .compact .ptc-icon { display: inline-flex; width: 36px; height: 36px; align-items: center; justify-content: center; }
     .unavailable { opacity: 0.5; }
   `;
 
@@ -63,6 +68,10 @@
       super();
       this.attachShadow({ mode: "open" });
       this._slim = false;
+      this._pending = undefined; // temperature chosen with -/+ but not yet confirmed by the state
+      this._sent = false;
+      this._timer = null;
+      this._expires = 0;
     }
 
     setConfig(config) {
@@ -80,6 +89,13 @@
 
     getCardSize() {
       return this._slim ? 1 : 4;
+    }
+
+    disconnectedCallback() {
+      if (this._timer) {
+        clearTimeout(this._timer);
+        this._timer = null;
+      }
     }
 
     static getConfigForm() {
@@ -129,17 +145,28 @@
       this._hass.callService(domain, service, data);
     }
 
+    // -/+ : change the shown target immediately, write the register once clicks stop.
     _step(direction) {
       const st = this._state(this._config.entity);
       if (!st) return;
       const a = st.attributes;
       const step = a.target_temp_step || 0.5;
-      const current = Number(a.temperature);
-      if (Number.isNaN(current)) return;
-      let next = Math.round((current + direction * step) / step) * step;
+      const base = this._pending !== undefined ? this._pending : Number(a.temperature);
+      if (Number.isNaN(base)) return;
+      let next = Math.round((base + direction * step) / step) * step;
       if (a.min_temp !== undefined) next = Math.max(next, a.min_temp);
       if (a.max_temp !== undefined) next = Math.min(next, a.max_temp);
-      this._call("climate", "set_temperature", { entity_id: this._config.entity, temperature: next });
+      if (next === base) return;
+      this._pending = next;
+      this._sent = false;
+      this._expires = Date.now() + SEND_DELAY_MS + PENDING_MAX_MS;
+      if (this._timer) clearTimeout(this._timer);
+      this._timer = setTimeout(() => {
+        this._timer = null;
+        this._sent = true;
+        this._call("climate", "set_temperature", { entity_id: this._config.entity, temperature: this._pending });
+      }, SEND_DELAY_MS);
+      this._render();
     }
 
     _toggle(id) {
@@ -147,9 +174,9 @@
       this._call(domain, "toggle", { entity_id: id });
     }
 
-    _fmt(value) {
+    _num(value, decimals) {
       const n = Number(value);
-      return Number.isNaN(n) ? "–" : `${n.toFixed(1).replace(".", ",")} °C`;
+      return Number.isNaN(n) ? "–" : n.toFixed(decimals).replace(".", ",");
     }
 
     _render() {
@@ -166,6 +193,14 @@
       const name = esc(cfg.name || a.friendly_name || cfg.entity);
       const unavailable = climate.state === "unavailable";
 
+      // Local (not yet confirmed) target: drop it once the state caught up or took too long.
+      if (this._pending !== undefined && this._sent) {
+        const reported = Number(a.temperature);
+        if (Math.abs(reported - this._pending) < 1e-6 || Date.now() > this._expires) {
+          this._pending = undefined;
+        }
+      }
+
       const heatingSt = this._state(ids.heating);
       const statusSt = this._state(ids.status);
       const enabled = heatingSt ? heatingSt.state === "on" : climate.state === "heat";
@@ -173,32 +208,39 @@
       const color = heating ? RED : enabled ? ORANGE : GREY;
       const label = heating ? "heizt" : enabled ? "freigegeben" : "aus";
 
-      const ist = this._fmt(a.current_temperature);
-      const soll = this._fmt(a.temperature);
+      const sollValue = this._pending !== undefined ? this._pending : Number(a.temperature);
+      const step = a.target_temp_step || 0.5;
+      const decimals = step >= 1 ? 0 : 1;
+      const ist = `${this._num(a.current_temperature, 1)} °C`;
       const min = a.min_temp;
       const max = a.max_temp;
-      const cur = Number(a.temperature);
-      const atMin = min !== undefined && cur <= min;
-      const atMax = max !== undefined && cur >= max;
+      const atMin = min !== undefined && sollValue <= min;
+      const atMax = max !== undefined && sollValue >= max;
       const hum = this._state(ids.humidity);
       const humText = hum && hum.state !== "unavailable" && hum.state !== "unknown" ? `${hum.state} %` : "";
 
-      const ptcButton = ids.heating
-        ? `<button class="ptc" id="ptc" title="Heizelement ${label}"><ha-icon icon="mdi:radiator" style="color:${color}"></ha-icon></button>`
-        : `<span class="status"><ha-icon icon="mdi:radiator" style="color:${color}"></ha-icon></span>`;
+      const sollText = this._slim
+        ? this._num(sollValue, decimals)
+        : `${this._num(sollValue, decimals)} °C`;
       const stepper = `
-        <div class="stepper">
+        <div class="pill">
           <button id="minus" ${atMin || unavailable ? "disabled" : ""}><ha-icon icon="mdi:minus"></ha-icon></button>
-          <span class="val">${soll}</span>
+          <span class="val">${sollText}</span>
           <button id="plus" ${atMax || unavailable ? "disabled" : ""}><ha-icon icon="mdi:plus"></ha-icon></button>
         </div>`;
+      const iconStyle = `color:${color}`;
+      const ptcButton = ids.heating
+        ? `<button class="ptc" id="ptc" title="Heizelement ${label}"><ha-icon icon="mdi:radiator" style="${iconStyle}"></ha-icon></button>`
+        : `<span class="ptc-icon" title="Heizelement ${label}"><ha-icon icon="mdi:radiator" style="${iconStyle}"></ha-icon></span>`;
 
       let body;
       if (this._slim) {
         body = `
-          <div class="slim ${unavailable ? "unavailable" : ""}">
-            <span class="name">${name}</span>
-            <span class="ist">${ist}</span>
+          <div class="compact ${unavailable ? "unavailable" : ""}">
+            <div class="info">
+              <span class="name">${name}</span>
+              <span class="sub">${ist}</span>
+            </div>
             ${stepper}
             ${ptcButton}
           </div>`;
@@ -221,14 +263,13 @@
         body = `
           <div class="head ${unavailable ? "unavailable" : ""}">
             <span class="name">${name}</span>
-            <span class="status" style="color:${color}"><span class="dot" style="background:${color}"></span>${label}</span>
           </div>
           <div class="temps ${unavailable ? "unavailable" : ""}">
             <span class="ist">${ist}</span>
             ${humText ? `<span class="hum"><ha-icon icon="mdi:water-percent"></ha-icon>${humText}</span>` : ""}
           </div>
           <div class="row">
-            <span class="label">Soll</span>
+            <span class="label">Soll-Temperatur</span>
             ${stepper}
           </div>
           <div class="row">
@@ -267,13 +308,13 @@
   window.customCards.push(
     {
       type: "proxon-room-card",
-      name: "Proxon Raum (komplett)",
+      name: "Proxon Karte (detailliert)",
       description: "Ist-/Soll-Temperatur, PTC-Heizelement mit Status, Bedienteil-Sperre",
       preview: false,
     },
     {
       type: "proxon-room-card-slim",
-      name: "Proxon Raum (schlank)",
+      name: "Proxon Karte (kompakt)",
       description: "Ist-/Soll-Temperatur und PTC-Heizelement in einer Zeile",
       preview: false,
     }
