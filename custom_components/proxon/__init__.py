@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import logging
 import re
+from pathlib import Path
 
+from homeassistant.components.frontend import add_extra_js_url
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.modbus import async_get_unit
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
+from homeassistant.loader import async_get_integration
 from homeassistant.util import slugify as ha_slugify
 from modbus_connection import ModbusTcpParams
 
@@ -33,6 +37,21 @@ _LOGGER = logging.getLogger(__name__)
 _LEGACY_NUMBERED_ID = re.compile(r"^([a-z_]+)\.proxon(?:_(?:\d+|[34]x\d{4}))?$")
 
 
+_CARD_URL = "/proxon_frontend/proxon-room-card.js"
+_DATA_CARD_REGISTERED = f"{DOMAIN}_card_registered"
+
+
+async def _async_register_cards(hass: HomeAssistant) -> None:
+    """Serve the bundled Lovelace room cards and load them in the frontend (once)."""
+    if hass.data.get(_DATA_CARD_REGISTERED):
+        return
+    hass.data[_DATA_CARD_REGISTERED] = True
+    path = Path(__file__).parent / "frontend" / "proxon-room-card.js"
+    await hass.http.async_register_static_paths([StaticPathConfig(_CARD_URL, str(path), cache_headers=False)])
+    version = (await async_get_integration(hass, DOMAIN)).version
+    add_extra_js_url(hass, f"{_CARD_URL}?v={version}")
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bool:
     """Set up Proxon from a config entry.
 
@@ -41,6 +60,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bo
     shared with any other integration talking to the same device. Core opens it
     lazily and closes it once the last config entry holding a unit on it unloads.
     """
+    await _async_register_cards(hass)
+
     unit = async_get_unit(
         hass,
         entry,

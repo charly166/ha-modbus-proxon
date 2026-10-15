@@ -336,6 +336,29 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     "an". Alle Entitäten stehen im zentralen Gerät unter "Steuerung". (Version 0.14.0 hatte dafür
     Buttons; sie werden beim Update automatisch entfernt.)
 
+19. **Lovelace-Karten für einen Raum** (werden mit der Integration ausgeliefert und automatisch
+    geladen, keine zusätzliche Ressource nötig; ggf. einmal die Browser-Seite neu laden):
+    - **Proxon Raum (komplett)** `custom:proxon-room-card`: Ist-Temperatur (beim ZBP-Raum auch
+      Luftfeuchte), Soll-Temperatur mit −/+ (im Rahmen der ±3 °C des Raums bzw. 10-30 °C beim
+      ZBP), PTC-Heizelement ein/aus, PTC-Status und Bedienteil sperren/freigeben (schaltbar bei
+      Modbus-Schreibrecht 2, sonst nur Anzeige).
+    - **Proxon Raum (schlank)** `custom:proxon-room-card-slim`: Name, Ist-Temperatur, Soll mit
+      −/+ und das PTC-Symbol in einer Zeile.
+    Das PTC-Symbol ist **grau** (Heizelement aus), **orange** (freigegeben) oder **rot** (heizt
+    gerade, aus dem Heizelement-Status des Raums, siehe Kanal-Zuordnung). Hinzufügen:
+    Dashboard bearbeiten → Karte hinzufügen → "Proxon Raum ..." und die `climate`-Entität des
+    Raums wählen, oder per YAML:
+
+    ```yaml
+    type: custom:proxon-room-card        # oder custom:proxon-room-card-slim
+    entity: climate.buero
+    name: Büro                           # optional
+    ```
+
+    Die zugehörigen Entitäten (Heizelement, Status, Bedienteil-Sperre, Luftfeuchte) werden über
+    das Gerät des Raums automatisch gefunden; bei Bedarf lassen sie sich mit `heating:`,
+    `status:`, `lock:` und `humidity:` überschreiben.
+
 ## Umfang / Kuration der Register
 
 Die vollständige Registerliste (`Modbus Liste FWT2.0 ver2 - für Kunden.xlsx`) umfasst über 450

@@ -3,11 +3,11 @@
   "name": "HA Proxon FWT 2.0 Modbus",
   "codeowners": ["@charly166"],
   "config_flow": true,
-  "dependencies": ["modbus"],
+  "dependencies": ["frontend", "http", "modbus"],
   "documentation": "https://github.com/charly166/ha-modbus-proxon",
   "integration_type": "device",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/charly166/ha-modbus-proxon/issues",
   "requirements": ["modbus-connection[tmodbus]>=4.12.1"],
-  "version": "0.14.1"
+  "version": "0.15.0"
 }
