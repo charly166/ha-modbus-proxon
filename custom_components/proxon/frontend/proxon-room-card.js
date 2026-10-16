@@ -60,6 +60,8 @@
     String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   const GREY = "var(--disabled-text-color, #9e9e9e)";
+  const LOCKED = "#b71c1c"; // dark red: Bedienteil gesperrt
+  const UNLOCKED = "#2e7d32"; // dark green: Bedienteil frei
   const ORANGE = "var(--warning-color, #ff9800)";
   const RED = "var(--error-color, #db4437)";
 
@@ -242,7 +244,7 @@
         const lockButton = lockSwitch
           ? `<button class="ptc" id="lock" title="Bedienteil ${lockSwitch.state === "on" ? "gesperrt - freigeben" : "frei - sperren"}"><ha-icon icon="${
               lockSwitch.state === "on" ? "mdi:lock" : "mdi:lock-open-variant"
-            }"></ha-icon></button>`
+            }" style="color:${lockSwitch.state === "on" ? LOCKED : UNLOCKED}"></ha-icon></button>`
           : "";
         body = `
           <div class="compact ${unavailable ? "unavailable" : ""}">
@@ -263,7 +265,7 @@
           lockRow = `
             <div class="row">
               <span class="label">Bedienteil</span>
-              <span class="chip ${writable ? "" : "static"}" id="lock"
+              <span class="chip ${writable ? "" : "static"}" id="lock" style="color:${locked ? LOCKED : UNLOCKED}"
                 title="${writable ? "Sperren / freigeben" : "Nur Anzeige (Modbus-Schreibrecht 2 nötig)"}">
                 <ha-icon icon="${locked ? "mdi:lock" : "mdi:lock-open-variant"}"></ha-icon>
                 ${locked ? "gesperrt" : "frei"}

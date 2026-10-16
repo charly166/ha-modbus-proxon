@@ -344,10 +344,10 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     - **Proxon Karte (detailliert)** `custom:proxon-room-card`: Ist-Temperatur (fett, beim
       ZBP-Raum auch Luftfeuchte), Soll-Temperatur mit −/+ (im Rahmen der ±3 °C des Raums bzw.
       10-30 °C beim ZBP), PTC-Heizelement ein/aus und Bedienteil sperren/freigeben (schaltbar bei
-      Modbus-Schreibrecht 2, sonst nur Anzeige).
+      Modbus-Schreibrecht 2, sonst nur Anzeige; dunkelrot = gesperrt, dunkelgrün = frei).
     - **Proxon Karte (kompakt)** `custom:proxon-room-card-slim`: Name (fett) mit Ist-Temperatur
       darunter, bei Modbus-Schreibrecht 2 ein Button zum **Sperren/Freigeben des Bedienteils**
-      (nur dann, sonst entfällt er), Soll mit −/+ und das PTC-Symbol in einer Zeile.
+      (nur dann, sonst entfällt er; **dunkelrot** = gesperrt, **dunkelgrün** = frei), Soll mit −/+ und das PTC-Symbol in einer Zeile.
     Das PTC-Symbol ist **grau** (Heizelement aus; auf der kompakten Karte in normaler
     Textfarbe, damit es nicht deaktiviert wirkt), **orange** (freigegeben) oder **rot** (heizt
     gerade, aus dem Heizelement-Status des Raums, siehe Kanal-Zuordnung). Mehrere schnelle
