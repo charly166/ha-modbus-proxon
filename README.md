@@ -372,6 +372,19 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     Geräteabfrage (bei seriellen Gateways mehrere Sekunden) abzuwarten; der nächste Poll ersetzt
     ihn durch den gelesenen Wert.
 
+21. **Heizelement-Status wie in der Hersteller-App (AUS / EIN / HEIZEN)**: Die App zeigt pro
+    Raum "heizen", sobald das Heizelement **freigegeben** ist **und** der Raum Wärme fordert
+    (kälter als sein Sollwert) - auch wenn das PTC-Relais in dem Moment nicht schaltet. Dafür
+    wird das LED-Register des Raums ausgewertet ("NBE LEDsetpointlevel", Input 589 + 3n; Stufe 6 =
+    Raum zu kalt, 5 = am Sollwert, 4 = wärmer; gemessen an einer Anlage, Bedeutung vom Hersteller
+    nicht dokumentiert). Der `binary_sensor` **Heizelement Status** eines Raums ist deshalb an,
+    wenn Freigabe an **und** Stufe 6, **oder** wenn ein ihm zugeordneter Kanal K1-K10 wirklich
+    schaltet (Attribute `raum_fordert_waerme`, `led_stufe`, `aktive_kanaele`). Nebenbedienpanels
+    (HNBP/NBPn) bekommen den Sensor jetzt immer, auch ohne Kanal-Zuordnung; das ZBP nur mit
+    Zuordnung. Die Karten färben das PTC-Symbol damit rot genau wie die App. Zum Nachvollziehen
+    gibt es je Raum die Diagnose-Sensoren **Raumstatus (roh)** (Input 588 + 3n; Bit 1 = Freigabe)
+    und **LED Sollwertstufe (roh)**.
+
 ## Umfang / Kuration der Register
 
 Die vollständige Registerliste (`Modbus Liste FWT2.0 ver2 - für Kunden.xlsx`) umfasst über 450
