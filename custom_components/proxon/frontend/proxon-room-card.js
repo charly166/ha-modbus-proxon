@@ -277,7 +277,7 @@
         const globalButton = globalSt
           ? `<span class="glob">PTC global<button class="ptc" id="global" title="Alle Heizelemente ${
               globalOn ? "freigegeben - sperren" : "gesperrt - freigeben"
-            }"><ha-icon icon="mdi:radiator" style="color:${globalOn ? ORANGE : GREY}"></ha-icon></button></span>`
+            }"><ha-icon icon="mdi:radiator" style="color:${globalOn ? ORANGE : "var(--primary-text-color)"}"></ha-icon></button></span>`
           : "";
         const lockSt = this._state(ids.lock);
         let lockRow = "";
