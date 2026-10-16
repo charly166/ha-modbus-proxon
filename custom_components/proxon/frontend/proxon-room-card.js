@@ -15,7 +15,7 @@
  * Clicks on -/+ are collected and sent as one write after a short pause.
  */
 (() => {
-  const VERSION = "3";
+  const VERSION = "4";
   const SEND_DELAY_MS = 600; // wait for further -/+ clicks before writing the register
   const PENDING_MAX_MS = 15000; // stop showing the local value if the state never follows
 
@@ -266,9 +266,8 @@
             <div class="row">
               <span class="label">Bedienteil</span>
               <span class="chip ${writable ? "" : "static"}" id="lock" style="color:${locked ? LOCKED : UNLOCKED}"
-                title="${writable ? "Sperren / freigeben" : "Nur Anzeige (Modbus-Schreibrecht 2 nötig)"}">
+                title="${locked ? "Bedienteil gesperrt" : "Bedienteil frei"}${writable ? " - klicken zum " + (locked ? "Freigeben" : "Sperren") : " (nur Anzeige, Modbus-Schreibrecht 2 nötig)"}">
                 <ha-icon icon="${locked ? "mdi:lock" : "mdi:lock-open-variant"}"></ha-icon>
-                ${locked ? "gesperrt" : "frei"}
               </span>
             </div>`;
         }
