@@ -2460,6 +2460,19 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSensorEntityDescript
                     state_class=SensorStateClass.MEASUREMENT,
                 )
             )
+            # Raw per-room "NBE Status" (Input 588 + 3n, undocumented): diagnostic aid to
+            # find which value the manufacturer app shows as "Heizen" for a room.
+            out.append(
+                ProxonSensorEntityDescription(
+                    key=f"proxon_raumstatus_{zone.slug}",
+                    component="nb_zones_input",
+                    field="status",
+                    zone_index=zone.zone_index,
+                    translation_key="proxon_zone_status",
+                    has_entity_name=True,
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                )
+            )
     return out
 
 
