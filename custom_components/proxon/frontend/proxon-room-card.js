@@ -10,6 +10,8 @@
  *   status: binary_sensor.buero_heizelement_status
  *   lock: switch.buero_sperren_bedienteil
  *   humidity: sensor.proxon_luftfeuchte_wohnzimmer
+ *   global: switch.proxon_heizelemente_global   # "PTC global" button (detailed card)
+ *   show_global: false                   # hide the "PTC global" button
  *
  * PTC icon: grey = off, orange = enabled, red = heating.
  * Clicks on -/+ are collected and sent as one write after a short pause.
@@ -23,6 +25,7 @@
     heating: "proxon_zone_heizelement",
     status: "proxon_zone_heizelement_status",
     lock: "proxon_zone_tastensperre",
+    global: "proxon_heizelemente_global",
   };
 
   const CSS = `
@@ -35,6 +38,7 @@
     .temps { display: flex; align-items: center; gap: 12px; margin: 8px 0 4px; }
     .ist { font-size: 2.2em; font-weight: 700; line-height: 1.1; }
     .hum { color: var(--secondary-text-color); display: inline-flex; align-items: center; }
+    .glob { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; color: var(--secondary-text-color); }
     .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
     .label { color: var(--secondary-text-color); }
     .pill { display: inline-flex; align-items: center; border-radius: 20px;
@@ -121,7 +125,7 @@
       if (this._ids) return this._ids;
       const hass = this._hass;
       const cfg = this._config;
-      const ids = { heating: cfg.heating, status: cfg.status, lock: cfg.lock, humidity: cfg.humidity };
+      const ids = { heating: cfg.heating, status: cfg.status, lock: cfg.lock, humidity: cfg.humidity, global: cfg.global };
       const device = hass.entities && hass.entities[cfg.entity] && hass.entities[cfg.entity].device_id;
       if (device) {
         for (const ent of Object.values(hass.entities)) {
@@ -134,6 +138,16 @@
             if (st && st.attributes.device_class === "humidity") ids.humidity = ent.entity_id;
           }
         }
+      }
+      // "Heizelemente Global" is a central entity (a switch only at Modbus write level 2).
+      if (!ids.global && cfg.show_global !== false) {
+        const glob = Object.values(hass.entities || {}).find(
+          (ent) =>
+            ent.platform === "proxon" &&
+            ent.translation_key === TK.global &&
+            ent.entity_id.startsWith("switch.")
+        );
+        if (glob) ids.global = glob.entity_id;
       }
       this._ids = ids;
       return ids;
@@ -257,6 +271,14 @@
             ${ptcButton}
           </div>`;
       } else {
+        // "PTC global": enables/disables all heating elements (only a switch at write level 2).
+        const globalSt = ids.global && ids.global.startsWith("switch.") ? this._state(ids.global) : undefined;
+        const globalOn = globalSt && globalSt.state === "on";
+        const globalButton = globalSt
+          ? `<span class="glob">PTC global<button class="ptc" id="global" title="Alle Heizelemente ${
+              globalOn ? "freigegeben - sperren" : "gesperrt - freigeben"
+            }"><ha-icon icon="mdi:radiator" style="color:${globalOn ? ORANGE : GREY}"></ha-icon></button></span>`
+          : "";
         const lockSt = this._state(ids.lock);
         let lockRow = "";
         if (lockSt) {
@@ -278,6 +300,7 @@
           <div class="temps ${unavailable ? "unavailable" : ""}">
             <span class="ist">${ist}</span>
             ${humText ? `<span class="hum"><ha-icon icon="mdi:water-percent"></ha-icon>${humText}</span>` : ""}
+            ${globalButton}
           </div>
           <div class="row">
             <span class="label">Soll-Temperatur</span>
@@ -295,6 +318,7 @@
       if (q("#minus")) q("#minus").addEventListener("click", () => this._step(-1));
       if (q("#plus")) q("#plus").addEventListener("click", () => this._step(1));
       if (q("#ptc")) q("#ptc").addEventListener("click", () => this._toggle(ids.heating));
+      if (q("#global")) q("#global").addEventListener("click", () => this._toggle(ids.global));
       if (q("#lock") && ids.lock && ids.lock.startsWith("switch.")) {
         q("#lock").addEventListener("click", () => this._toggle(ids.lock));
       }

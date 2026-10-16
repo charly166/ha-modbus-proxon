@@ -33,6 +33,8 @@ _COMMON = {
     "field": "proxon_heizelemente_global",
     "name": "Proxon Heizelemente Global",
     "has_entity_name": False,
+    # Lets the Lovelace room card find the switch (see frontend/proxon-room-card.js).
+    "translation_key": KEY,
 }
 
 
