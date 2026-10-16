@@ -351,8 +351,8 @@ Regelparameter und Datum/Uhrzeit-Register des T300-Abschnitts (z.B. `F-xx:Instal
     - **Proxon Karte (kompakt)** `custom:proxon-room-card-slim`: Name (fett) mit Ist-Temperatur
       darunter, bei Modbus-Schreibrecht 2 ein Button zum **Sperren/Freigeben des Bedienteils**
       (nur dann, sonst entfällt er; **dunkelrot** = gesperrt, **dunkelgrün** = frei), Soll mit −/+ und das PTC-Symbol in einer Zeile.
-    Das PTC-Symbol ist **grau** (Heizelement aus; auf der kompakten Karte in normaler
-    Textfarbe, damit es nicht deaktiviert wirkt), **orange** (freigegeben) oder **rot** (heizt
+    Das PTC-Symbol ist **schwarz** (Heizelement aus; normale Textfarbe, damit es nicht
+    deaktiviert wirkt), **orange** (freigegeben) oder **rot** (heizt
     gerade, aus dem Heizelement-Status des Raums, siehe Kanal-Zuordnung). Mehrere schnelle
     Klicks auf −/+ werden zusammengefasst und als **ein** Schreibzugriff gesendet (nach 0,6 s
     Pause); die Anzeige springt sofort. Hinzufügen: Dashboard bearbeiten → Karte hinzufügen →

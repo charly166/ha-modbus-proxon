@@ -13,7 +13,7 @@
  *   global: switch.proxon_heizelemente_global   # "PTC global" button (detailed card)
  *   show_global: false                   # hide the "PTC global" button
  *
- * PTC icon: grey = off, orange = enabled, red = heating.
+ * PTC icon: plain text colour (black) = off, orange = enabled, red = heating.
  * Clicks on -/+ are collected and sent as one write after a short pause.
  */
 (() => {
@@ -63,7 +63,6 @@
   const esc = (v) =>
     String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  const GREY = "var(--disabled-text-color, #9e9e9e)";
   const LOCKED = "#b71c1c"; // dark red: Bedienteil gesperrt
   const UNLOCKED = "#2e7d32"; // dark green: Bedienteil frei
   const ORANGE = "var(--warning-color, #ff9800)";
@@ -221,9 +220,8 @@
       const statusSt = this._state(ids.status);
       const enabled = heatingSt ? heatingSt.state === "on" : climate.state === "heat";
       const heating = statusSt ? statusSt.state === "on" : false;
-      // "off" is plain text colour on the compact card (grey would look disabled).
-      const offColor = this._slim ? "var(--primary-text-color)" : GREY;
-      const color = heating ? RED : enabled ? ORANGE : offColor;
+      // "off" is plain text colour (grey would look disabled / not switchable).
+      const color = heating ? RED : enabled ? ORANGE : "var(--primary-text-color)";
       const label = heating ? "heizt" : enabled ? "freigegeben" : "aus";
 
       const sollValue = this._pending !== undefined ? this._pending : Number(a.temperature);
