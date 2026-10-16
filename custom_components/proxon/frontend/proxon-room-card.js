@@ -11,7 +11,7 @@
  *   lock: switch.buero_sperren_bedienteil
  *   humidity: sensor.proxon_luftfeuchte_wohnzimmer
  *   global: switch.proxon_heizelemente_global   # "PTC global" button (detailed card)
- *   show_global: false                   # hide the "PTC global" button
+ *   show_global: true|false              # "PTC global" button: default only on the ZBP room
  *
  * PTC icon: plain text colour (black) = off, orange = enabled, red = heating.
  * Clicks on -/+ are collected and sent as one write after a short pause.
@@ -26,6 +26,7 @@
     status: "proxon_zone_heizelement_status",
     lock: "proxon_zone_tastensperre",
     global: "proxon_heizelemente_global",
+    zbp: "proxon_zone_soll_temperatur",
   };
 
   const CSS = `
@@ -125,6 +126,7 @@
       const hass = this._hass;
       const cfg = this._config;
       const ids = { heating: cfg.heating, status: cfg.status, lock: cfg.lock, humidity: cfg.humidity, global: cfg.global };
+      let isZbp = false;
       const device = hass.entities && hass.entities[cfg.entity] && hass.entities[cfg.entity].device_id;
       if (device) {
         for (const ent of Object.values(hass.entities)) {
@@ -136,10 +138,16 @@
             const st = hass.states[ent.entity_id];
             if (st && st.attributes.device_class === "humidity") ids.humidity = ent.entity_id;
           }
+          // Only the ZBP room (central control panel) has an absolute target temperature number.
+          if (ent.translation_key === TK.zbp) isZbp = true;
         }
       }
-      // "Heizelemente Global" is a central entity (a switch only at Modbus write level 2).
-      if (!ids.global && cfg.show_global !== false) {
+      // The ZBP has no "Sperren Bedienteil".
+      if (isZbp) ids.lock = undefined;
+      // "Heizelemente Global" belongs to the ZBP card only (a switch only at Modbus write level 2);
+      // `show_global: true/false` overrides.
+      const showGlobal = cfg.show_global === undefined ? isZbp : cfg.show_global !== false;
+      if (!ids.global && showGlobal) {
         const glob = Object.values(hass.entities || {}).find(
           (ent) =>
             ent.platform === "proxon" &&
@@ -265,8 +273,8 @@
               <span class="sub">${ist}</span>
             </div>
             ${lockButton}
-            ${stepper}
             ${ptcButton}
+            ${stepper}
           </div>`;
       } else {
         // "PTC global": enables/disables all heating elements (only a switch at write level 2).
