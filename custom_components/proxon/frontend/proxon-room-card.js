@@ -15,7 +15,7 @@
  * Clicks on -/+ are collected and sent as one write after a short pause.
  */
 (() => {
-  const VERSION = "2";
+  const VERSION = "3";
   const SEND_DELAY_MS = 600; // wait for further -/+ clicks before writing the register
   const PENDING_MAX_MS = 15000; // stop showing the local value if the state never follows
 
@@ -205,7 +205,9 @@
       const statusSt = this._state(ids.status);
       const enabled = heatingSt ? heatingSt.state === "on" : climate.state === "heat";
       const heating = statusSt ? statusSt.state === "on" : false;
-      const color = heating ? RED : enabled ? ORANGE : GREY;
+      // "off" is plain text colour on the compact card (grey would look disabled).
+      const offColor = this._slim ? "var(--primary-text-color)" : GREY;
+      const color = heating ? RED : enabled ? ORANGE : offColor;
       const label = heating ? "heizt" : enabled ? "freigegeben" : "aus";
 
       const sollValue = this._pending !== undefined ? this._pending : Number(a.temperature);
@@ -235,12 +237,20 @@
 
       let body;
       if (this._slim) {
+        // Lock button only when the lock is writable (a switch, i.e. Modbus write level 2).
+        const lockSwitch = ids.lock && ids.lock.startsWith("switch.") ? this._state(ids.lock) : undefined;
+        const lockButton = lockSwitch
+          ? `<button class="ptc" id="lock" title="Bedienteil ${lockSwitch.state === "on" ? "gesperrt - freigeben" : "frei - sperren"}"><ha-icon icon="${
+              lockSwitch.state === "on" ? "mdi:lock" : "mdi:lock-open-variant"
+            }"></ha-icon></button>`
+          : "";
         body = `
           <div class="compact ${unavailable ? "unavailable" : ""}">
             <div class="info">
               <span class="name">${name}</span>
               <span class="sub">${ist}</span>
             </div>
+            ${lockButton}
             ${stepper}
             ${ptcButton}
           </div>`;
