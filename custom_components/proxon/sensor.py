@@ -2473,6 +2473,17 @@ def _zone_descriptions(zones: list[ZoneInfo]) -> list[ProxonSensorEntityDescript
                     entity_category=EntityCategory.DIAGNOSTIC,
                 )
             )
+            out.append(
+                ProxonSensorEntityDescription(
+                    key=f"proxon_raumled_{zone.slug}",
+                    component="nb_zones_input",
+                    field="led_sollwertstufe",
+                    zone_index=zone.zone_index,
+                    translation_key="proxon_zone_led",
+                    has_entity_name=True,
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                )
+            )
     return out
 
 

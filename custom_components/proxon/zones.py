@@ -188,6 +188,7 @@ class NbZoneInput(Component):
     register_space = "input"
 
     status = integer(588, signed=True)
+    led_sollwertstufe = integer(589, signed=True)  # "LEDsetpointlevel" (undocumented)
     ist_temperatur = gauge(590, 0.1, signed=True)
 
 

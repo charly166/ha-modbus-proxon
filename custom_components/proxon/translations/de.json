@@ -198,6 +198,9 @@
       "proxon_zone_status": {
         "name": "Raumstatus (roh)"
       },
+      "proxon_zone_led": {
+        "name": "LED Sollwertstufe (roh)"
+      },
       "proxon_filter_tage": {
         "name": "Gerätefilter Tage seit Wechsel"
       },
