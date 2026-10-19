@@ -398,8 +398,20 @@ class FieldMeta:
     suggested_precision: int | None = None
 
 
+def is_signed(reg: "ExcelRegister") -> bool:
+    """Whether the register must be decoded as signed 16 bit.
+
+    The manufacturer's register list declares most temperature registers as
+    uint16, but they carry negative values below 0 degC (e.g. exhaust air in
+    winter would show as 654.3 degC instead of -1.1 degC). The original
+    proxon.yaml read them as int16, which is correct. Every real temperature
+    is far below 327 degC, so decoding all degC registers as signed is safe.
+    """
+    return reg.data_type.strip().lower().startswith("int") or reg.unit.strip() == "°C"
+
+
 def emit_field_line(field_name: str, address: int, reg: ExcelRegister, writable: bool, comment: str) -> str:
-    signed = reg.data_type.strip().lower().startswith("int")
+    signed = is_signed(reg)
     scale = reg.scale
     unit = reg.unit.strip()
     kwargs = [f"signed={signed}"]
@@ -553,7 +565,7 @@ def make_meta(
         platform=platform,
         writable=writable,
         unit=reg.unit.strip(),
-        signed=reg.data_type.strip().lower().startswith("int"),
+        signed=is_signed(reg),
         device_class=device_class,
         state_class=state_class,
         entity_category=entity_category,

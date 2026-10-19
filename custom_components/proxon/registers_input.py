@@ -17,18 +17,18 @@ class ZuAbluft(Component):
 
     proxon_co2_wohnzimmer = integer(21, signed=True, unit='ppm')  # Nicht in der FWT2.0-Registerliste (separates Modul, z.B. T300).
     proxon_luftfeuchte_wohnzimmer = integer(22, signed=True, unit='%')  # Nicht in der FWT2.0-Registerliste (separates Modul, z.B. T300).
-    proxon_temperatur_zuluft = gauge(195, 0.01, signed=False, unit='°C')  # Proxon Temperatur Zuluft
-    proxon_temperatur_abluft = gauge(196, 0.01, signed=False, unit='°C')  # Proxon Temperatur Abluft
-    proxon_temperatur_fortluft = gauge(197, 0.01, signed=False, unit='°C')  # Proxon Temperatur Fortluft
-    proxon_temperatur_frischluft = gauge(198, 0.01, signed=False, unit='°C')  # Proxon Temperatur Frischluft
+    proxon_temperatur_zuluft = gauge(195, 0.01, signed=True, unit='°C')  # Proxon Temperatur Zuluft
+    proxon_temperatur_abluft = gauge(196, 0.01, signed=True, unit='°C')  # Proxon Temperatur Abluft
+    proxon_temperatur_fortluft = gauge(197, 0.01, signed=True, unit='°C')  # Proxon Temperatur Fortluft
+    proxon_temperatur_frischluft = gauge(198, 0.01, signed=True, unit='°C')  # Proxon Temperatur Frischluft
 
 class WarmwasserInput(Component):
     """T300 Warmwasser Ist-Temperaturen. Migriert 1:1 aus proxon.yaml."""
 
     register_space = "input"
 
-    proxon_temperatur_wasser_unten = gauge(813, 0.1, signed=False, unit='°C', offset=-100)  # Proxon Temperatur Wasser Unten
-    proxon_ist_temperatur_wasser = gauge(814, 0.1, signed=False, unit='°C', offset=-100)  # Proxon Ist-Temperatur Wasser
+    proxon_temperatur_wasser_unten = gauge(813, 0.1, signed=True, unit='°C', offset=-100)  # Proxon Temperatur Wasser Unten
+    proxon_ist_temperatur_wasser = gauge(814, 0.1, signed=True, unit='°C', offset=-100)  # Proxon Ist-Temperatur Wasser
 
 class HeizstabStatus(Component):
     """T300 Heizstab-/Kompressorstatus (binäre Sensoren). Migriert 1:1 aus proxon.yaml."""
@@ -60,7 +60,7 @@ class Betriebswerte(Component):
     akt_drehzahl_zuluftventilator = integer(0, signed=True, unit='rpm')  # Akt.Drehzahl ZuLuftventilator
     akt_drehzahl_abluftventilator = integer(1, signed=True, unit='rpm')  # Akt.Drehzahl AbLuftventilator
     ptc_kuehlen_freigabe = integer(3, signed=True)  # PTC Kühlen Freigabe
-    nacht_temp_bei_zeitprogramm = gauge(4, 0.01, signed=False, unit='°C')  # Nacht Temp Bei Zeitprogramm
+    nacht_temp_bei_zeitprogramm = gauge(4, 0.01, signed=True, unit='°C')  # Nacht Temp Bei Zeitprogramm
     firmwareversionhaupptplatine = gauge(5, 0.1, signed=True)  # FirmwareVersionHaupptPlatine
     relaisstatushauptplatine = integer(8, signed=True, unit='Binär')  # RelaisStatusHauptPlatine
     es997stufe = integer(10, signed=True)  # ES997Stufe
@@ -118,15 +118,15 @@ class Betriebswerte(Component):
     fu_errorcode = integer(170, signed=True)  # FU_ErrorCode
     akt_leistung_kompressor = gauge(171, 0.01, signed=True, unit='%')  # Akt.Leistung: Kompressor
     fu_errorcode2 = integer(172, signed=True)  # FU_ErrorCode2
-    delta_sauggas_kondensator_temp = gauge(173, 0.01, signed=False, unit='°C')  # Delta Sauggas Kondensator Temp
+    delta_sauggas_kondensator_temp = gauge(173, 0.01, signed=True, unit='°C')  # Delta Sauggas Kondensator Temp
     fu_fatalfoferror = integer(174, signed=True)  # FU_FatalFOFerror
-    t5_vorverdampfer = gauge(175, 0.01, signed=False, unit='°C')  # T5 VorVerdampfer
-    t6_verdampfer = gauge(176, 0.01, signed=False, unit='°C')  # T6 Verdampfer
-    t8_nach_vorwaerme = gauge(177, 0.01, signed=False, unit='°C')  # T8 Nach Vorwärme
-    t12_vor_kondensator = gauge(178, 0.01, signed=False, unit='°C')  # T12 Vor Kondensator
-    t10_kondensator = gauge(179, 0.01, signed=False, unit='°C')  # T10 Kondensator
-    t13_kompressor = gauge(180, 0.01, signed=False, unit='°C')  # T13 Kompressor
-    t9_t_aul_vor_ewt = gauge(181, 0.01, signed=False, unit='°C')  # T9 T_AUL_vor_EWT
+    t5_vorverdampfer = gauge(175, 0.01, signed=True, unit='°C')  # T5 VorVerdampfer
+    t6_verdampfer = gauge(176, 0.01, signed=True, unit='°C')  # T6 Verdampfer
+    t8_nach_vorwaerme = gauge(177, 0.01, signed=True, unit='°C')  # T8 Nach Vorwärme
+    t12_vor_kondensator = gauge(178, 0.01, signed=True, unit='°C')  # T12 Vor Kondensator
+    t10_kondensator = gauge(179, 0.01, signed=True, unit='°C')  # T10 Kondensator
+    t13_kompressor = gauge(180, 0.01, signed=True, unit='°C')  # T13 Kompressor
+    t9_t_aul_vor_ewt = gauge(181, 0.01, signed=True, unit='°C')  # T9 T_AUL_vor_EWT
     wpabtauschwellecounter = integer(182, signed=True, unit='Sekunden')  # WpAbtauSchwelleCounter
     lscontrolfu_status = integer(183, signed=True)  # LsControlFU_Status
     lscontrolfuerrorinput = integer(184, signed=True, unit='AUS/AN')  # LsControlFUErrorInput
@@ -136,29 +136,29 @@ class Betriebswerte(Component):
     lscontrolhightime = gauge(188, 0.01, signed=True, unit='Sekunden')  # LsControlHighTime
     lscontrolpulsbreite = gauge(189, 0.01, signed=True, unit='Sekunden')  # LsControlPulsbreite
     akt_drehzahl_kompressor = integer(190, signed=True, unit='ppm')  # Akt.Drehzahl: Kompressor
-    tempzusatz1 = gauge(191, 0.01, signed=False, unit='°C')  # TempZusatz1
-    zuluftsollzone1 = gauge(192, 0.01, signed=False, unit='°C')  # ZuluftSollZone1
-    tempzusatz2 = gauge(193, 0.01, signed=False, unit='°C')  # TempZusatz2
-    zuluftsollzone2 = gauge(194, 0.01, signed=False, unit='°C')  # ZuluftSollZone2
+    tempzusatz1 = gauge(191, 0.01, signed=True, unit='°C')  # TempZusatz1
+    zuluftsollzone1 = gauge(192, 0.01, signed=True, unit='°C')  # ZuluftSollZone1
+    tempzusatz2 = gauge(193, 0.01, signed=True, unit='°C')  # TempZusatz2
+    zuluftsollzone2 = gauge(194, 0.01, signed=True, unit='°C')  # ZuluftSollZone2
     tcanforderungluft = gauge(199, 0.01, signed=True, unit='%')  # TcAnforderungLuft
     conwpstoptimer = integer(200, signed=True, unit='Sekunden')  # ConWpStopTimer
     akt_max_leistung_kompressor = gauge(201, 0.01, signed=True, unit='%')  # Akt. Max.Leistung Kompressor
-    delta_sauggas_verdampfer_temp = gauge(202, 0.01, signed=False, unit='°C')  # Delta Sauggas Verdampfer Temp
+    delta_sauggas_verdampfer_temp = gauge(202, 0.01, signed=True, unit='°C')  # Delta Sauggas Verdampfer Temp
     e_ventil_kuehlung_position = integer(203, signed=True)  # E-Ventil Kühlung Position
     e_ventil_heizung_position = integer(204, signed=True)  # E-Ventil Heizung Position
     e_ventil_vorwaerme_position = integer(205, signed=True)  # E-Ventil Vorwärme Position
     p14_nd_verdampfer = gauge(206, 0.001, signed=True, unit='bar')  # P14 ND. Verdampfer
-    t14_sauggas_nach_kondensator = gauge(207, 0.01, signed=False, unit='°C')  # T14 Sauggas nach Kondensator
-    t11_sauggas_nach_verdampfer = gauge(208, 0.01, signed=False, unit='°C')  # T11 Sauggas nach Verdampfer
+    t14_sauggas_nach_kondensator = gauge(207, 0.01, signed=True, unit='°C')  # T14 Sauggas nach Kondensator
+    t11_sauggas_nach_verdampfer = gauge(208, 0.01, signed=True, unit='°C')  # T11 Sauggas nach Verdampfer
     abtaudruck = gauge(209, 0.01, signed=True, unit='Pa')  # AbtauDruck
     einausstatus = integer(210, signed=True, unit='Binär')  # EinAusStatus
     akt_ventilator_stufe_abluft = integer(211, signed=True)  # Akt.Ventilator Stufe Abluft
     schieberberechnungrestzeit = integer(212, signed=True, unit='Sekunden')  # SchieberBerechnungRestZeit
     wptimerauslauf = integer(214, signed=True, unit='Sekunden')  # WpTimerAuslauf
     restwpzusatzabtauverzzeit = integer(215, signed=True, unit='Sekunden')  # RestWpZusatzAbtauVerzZeit
-    verdampfertemperatur_druck = gauge(216, 0.01, signed=False, unit='°C')  # Verdampfertemperatur (Druck)
+    verdampfertemperatur_druck = gauge(216, 0.01, signed=True, unit='°C')  # Verdampfertemperatur (Druck)
     fuinittimecounter = gauge(217, 0.01, signed=True, unit='Sekunden')  # FuInitTimeCounter
-    wpmaxr407_druckzutemp = gauge(218, 0.01, signed=False, unit='°C')  # WpMaxR407_DruckZuTemp
+    wpmaxr407_druckzutemp = gauge(218, 0.01, signed=True, unit='°C')  # WpMaxR407_DruckZuTemp
     stufectrlby = integer(219, signed=True)  # StufeCtrlBy
     erdwaerme_zustand = integer(220, signed=True, unit='AUS/AN')  # Erdwärme Zustand
     zustand_magnetventil_aus_an = integer(221, signed=True, unit='AUS/AN')  # Zustand Magnetventil AUS/AN
@@ -166,34 +166,34 @@ class Betriebswerte(Component):
     zustand_4_wegeventil_heizen_kuehlen = integer(223, signed=True, unit='AUS/AN')  # Zustand 4-Wegeventil Heizen/Kühlen
     vorwaermeventilzustand = integer(224, signed=True, unit='AUS/AN')  # VorwärmeVentilZustand
     fuleistungmodbus = integer(225, signed=True, unit='%')  # FuLeistungModbus
-    fu_temperaturepowermodule = integer(233, signed=False, unit='°C')  # FU_TemperaturePowermodule
-    fu_temperaturecabinet = integer(234, signed=False, unit='°C')  # FU_TemperatureCabinet
+    fu_temperaturepowermodule = integer(233, signed=True, unit='°C')  # FU_TemperaturePowermodule
+    fu_temperaturecabinet = integer(234, signed=True, unit='°C')  # FU_TemperatureCabinet
     regluftstufezuluft = integer(238, signed=True)  # RegLuftStufeZuluft
     regluftstufeabluft = integer(239, signed=True)  # RegLuftStufeAbluft
     stepstatepreh = integer(240, signed=True)  # StepStatePreH
     stepsetpointpospreh = integer(242, signed=True)  # StepSetpointPosPreH
     stepstatecool = integer(243, signed=True)  # StepStateCool
-    soll_ueberhitzung = gauge(244, 0.01, signed=False, unit='°C')  # Soll Überhitzung
+    soll_ueberhitzung = gauge(244, 0.01, signed=True, unit='°C')  # Soll Überhitzung
     stepsetpointposcool = integer(245, signed=True)  # StepSetpointPosCool
     stepsetpointposheat = integer(247, signed=True)  # StepSetpointPosHeat
     stepstateheat = integer(248, signed=True)  # StepStateHeat
-    delta_soll_t8_akt_t8 = gauge(249, 0.01, signed=False, unit='°C')  # Delta Soll T8 - Akt.T8
+    delta_soll_t8_akt_t8 = gauge(249, 0.01, signed=True, unit='°C')  # Delta Soll T8 - Akt.T8
     fu_motorcurrent = gauge(250, 0.01, signed=False, unit='Ampere')  # FU_MotorCurrent
-    sollzonentemperatur2 = gauge(251, 0.01, signed=False, unit='°C')  # SollZonenTemperatur2
-    akt_min_ueberhitzung = gauge(252, 0.01, signed=False, unit='°C')  # Akt. Min. Überhitzung
-    akt_max_ueberhitzung = gauge(253, 0.01, signed=False, unit='°C')  # Akt. Max. Überhitzung
+    sollzonentemperatur2 = gauge(251, 0.01, signed=True, unit='°C')  # SollZonenTemperatur2
+    akt_min_ueberhitzung = gauge(252, 0.01, signed=True, unit='°C')  # Akt. Min. Überhitzung
+    akt_max_ueberhitzung = gauge(253, 0.01, signed=True, unit='°C')  # Akt. Max. Überhitzung
     fu_motor_strom = gauge(254, 0.01, signed=True, unit='Ampere')  # FU Motor Strom
     regel_freigabe_restzeit_nach_abtau = integer(255, signed=True, unit='Sekunden')  # Regel Freigabe Restzeit Nach Abtau
     nachabtauleistungrestorevalue = gauge(256, 0.01, signed=True, unit='%')  # NachAbtauLeistungRestoreValue
-    nachabtausuperheatrestorevalue = gauge(257, 0.01, signed=False, unit='°C')  # NachAbtauSuperheatRestoreValue
+    nachabtausuperheatrestorevalue = gauge(257, 0.01, signed=True, unit='°C')  # NachAbtauSuperheatRestoreValue
     fumaxrpmupdatatet_fl = integer(258, signed=True, unit='AUS/AN')  # FuMaxRpmUpdatatet_fl
     fumaxrpmset = integer(259, signed=True, unit='ppm')  # FuMaxRpmSet
-    nachabtaumaxsuperheat = gauge(260, 0.01, signed=False, unit='°C')  # NachAbtauMaxSuperHeat
+    nachabtaumaxsuperheat = gauge(260, 0.01, signed=True, unit='°C')  # NachAbtauMaxSuperHeat
     eventilstartpostimeleft = integer(261, signed=True)  # EventilStartPosTimeLeft
     currentes997betriebsart = integer(262, signed=True)  # CurrentES997Betriebsart
-    t2_1_zonentemperatur1 = gauge(263, 0.01, signed=False, unit='°C')  # T2.1 ZonenTemperatur1
-    t2_2_zonentemperatur2 = gauge(264, 0.01, signed=False, unit='°C')  # T2.2 ZonenTemperatur2
-    sollzonentemperatur1 = gauge(265, 0.01, signed=False, unit='°C')  # SollZonenTemperatur1
+    t2_1_zonentemperatur1 = gauge(263, 0.01, signed=True, unit='°C')  # T2.1 ZonenTemperatur1
+    t2_2_zonentemperatur2 = gauge(264, 0.01, signed=True, unit='°C')  # T2.2 ZonenTemperatur2
+    sollzonentemperatur1 = gauge(265, 0.01, signed=True, unit='°C')  # SollZonenTemperatur1
 
 class Heizmodule(Component):
     """Status/Temperatur/Selbsttest der beiden PTC-Heizmodule. Neu hinzugefügt."""
@@ -212,19 +212,19 @@ class T300Diagnose(Component):
 
     register_space = "input"
 
-    t5_vor_verdampfer = gauge(811, 0.1, signed=False, unit='°C')  # T5 Vor Verdampfer
-    t6_verdampfer_2 = gauge(812, 0.1, signed=False, unit='°C')  # T6 Verdampfer
-    t13_kompressor_2 = gauge(815, 0.1, signed=False, unit='°C')  # T13 Kompressor
-    t11_sauggas_nach_verdampfer_2 = gauge(816, 0.1, signed=False, unit='°C')  # T11 Sauggas nach Verdampfer
-    t9_extern_fuehler = gauge(817, 0.1, signed=False, unit='°C')  # T9 Extern Fühler
+    t5_vor_verdampfer = gauge(811, 0.1, signed=True, unit='°C')  # T5 Vor Verdampfer
+    t6_verdampfer_2 = gauge(812, 0.1, signed=True, unit='°C')  # T6 Verdampfer
+    t13_kompressor_2 = gauge(815, 0.1, signed=True, unit='°C')  # T13 Kompressor
+    t11_sauggas_nach_verdampfer_2 = gauge(816, 0.1, signed=True, unit='°C')  # T11 Sauggas nach Verdampfer
+    t9_extern_fuehler = gauge(817, 0.1, signed=True, unit='°C')  # T9 Extern Fühler
     p14_nd_verdampfer_2 = gauge(818, 0.01, signed=False, unit='bar')  # P14 ND. Verdampfer
     p19_druckdiff_abtau_2 = gauge(819, 0.01, signed=False, unit='Pa')  # P19 Druckdiff. Abtau
     e_ventil_posision = integer(820, signed=False)  # E-ventil Posision
     stepsetpointposision = integer(821, signed=False)  # StepSetpointPosision
     stepmicrosteppos = integer(822, signed=False)  # StepMicroStepPos
     stepstate = integer(823, signed=False)  # StepState
-    verdampfertemperatur_druck_2 = gauge(829, 0.1, signed=False, unit='°C')  # Verdampfertemperatur (Druck)
-    delta_sauggas_verdampfer_temp_2 = gauge(830, 0.1, signed=False, unit='°C')  # Delta Sauggas Verdampfer Temp
+    verdampfertemperatur_druck_2 = gauge(829, 0.1, signed=True, unit='°C')  # Verdampfertemperatur (Druck)
+    delta_sauggas_verdampfer_temp_2 = gauge(830, 0.1, signed=True, unit='°C')  # Delta Sauggas Verdampfer Temp
     nou_used = integer(831, signed=False)  # Nou_used
     hotairrestrictedcnt = integer(832, signed=False, unit='Sekunden')  # HotAirRestrictedCnt
     compressorstate = integer(833, signed=False)  # CompressorState
@@ -270,19 +270,19 @@ class T300Diagnose(Component):
     t11_fehlercnt = integer(876, signed=False, unit='Sekunden')  # T11_FehlerCnt
     t9_fehlercnt = integer(877, signed=False, unit='Sekunden')  # T9_FehlerCnt
     kompmaxtempfehlercnt = integer(878, signed=False, unit='Sekunden')  # KompMaxTempFehlerCnt
-    currentsetpoint = gauge(879, 0.1, signed=False, unit='°C')  # CurrentSetpoint
+    currentsetpoint = gauge(879, 0.1, signed=True, unit='°C')  # CurrentSetpoint
     number_of_restart = integer(880, signed=False)  # Number_of_restart
     firmware_ver = gauge(881, 0.1, signed=False)  # Firmware ver
-    behaelderavg = gauge(882, 0.01, signed=False, unit='°C')  # BehaelderAvg
-    superheattemp = gauge(883, 0.01, signed=False, unit='°C')  # SuperHeatTemp
-    aktmaxsuperheat = gauge(884, 0.01, signed=False, unit='°C')  # AktMaxSuperHeat
-    aktminsuperheat = gauge(885, 0.01, signed=False, unit='°C')  # AktMinSuperHeat
-    superheatref = gauge(886, 0.01, signed=False, unit='°C')  # SuperHeatRef
+    behaelderavg = gauge(882, 0.01, signed=True, unit='°C')  # BehaelderAvg
+    superheattemp = gauge(883, 0.01, signed=True, unit='°C')  # SuperHeatTemp
+    aktmaxsuperheat = gauge(884, 0.01, signed=True, unit='°C')  # AktMaxSuperHeat
+    aktminsuperheat = gauge(885, 0.01, signed=True, unit='°C')  # AktMinSuperHeat
+    superheatref = gauge(886, 0.01, signed=True, unit='°C')  # SuperHeatRef
     eventilstartpostimeleft_2 = integer(887, signed=False, unit='Sekunden')  # EventilStartPosTimeLeft
     regreleaseafterabtauresttime = integer(888, signed=False, unit='Sekunden')  # RegReleaseAfterAbtauRestTime
     afterabtausuperheatrestorevalue = integer(889, signed=False)  # AfterAbtauSuperheatRestoreValue
-    afterabtaumaxsuperheat = gauge(890, 0.01, signed=False, unit='°C')  # AfterAbtauMaxSuperHeat
-    abtaustarttemp = gauge(892, 0.1, signed=False, unit='°C')  # AbtauStartTemp
+    afterabtaumaxsuperheat = gauge(890, 0.01, signed=True, unit='°C')  # AfterAbtauMaxSuperHeat
+    abtaustarttemp = gauge(892, 0.1, signed=True, unit='°C')  # AbtauStartTemp
     hitze_begrenzung = integer(896, signed=False)  # Hitze Begrenzung
     kaelte_begrenzung = integer(897, signed=False)  # Kälte Begrenzung
     pv_t9_level = integer(898, signed=False, unit='%')  # PV T9 level

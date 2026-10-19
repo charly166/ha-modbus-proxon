@@ -23,9 +23,9 @@ class Lueftung(Component):
 class T300Warmwasser(Component):
     """T300 Warmwasser-Heizstab. Migriert 1:1 aus proxon.yaml."""
 
-    proxon_soll_temperatur_wasser = gauge(2000, 0.1, signed=False, unit='°C', writable=True)  # Proxon Soll-Temperatur Wasser
+    proxon_soll_temperatur_wasser = gauge(2000, 0.1, signed=True, unit='°C', writable=True)  # Proxon Soll-Temperatur Wasser
     t300_heizstab = integer(2001, signed=False, unit='AUS/AN', writable=True)  # Heizstab
-    proxon_heizstab_temperatur = gauge(2003, 0.1, signed=False, unit='°C', writable=True)  # Proxon Heizstab Temperatur
+    proxon_heizstab_temperatur = gauge(2003, 0.1, signed=True, unit='°C', writable=True)  # Proxon Heizstab Temperatur
     betriebsart_t300 = integer(2002, signed=False, unit='AUS/AN', writable=True)  # Betriebsart (0=AUS 1=AN)
     filterwechselintervall_t300 = integer(2024, signed=False, unit='Monate', writable=True)  # Filterwechselintervall T300
     legionellaschutz = integer(2025, signed=False, unit='AUS/AN', writable=True)  # Legionellaschutz
