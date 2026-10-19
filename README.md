@@ -428,8 +428,17 @@ Excel-Kuration ab.
 
 - **Ein Koordinator**: Statt der vielen unterschiedlichen `scan_interval`-Werte der alten
   YAML pollt eine einzelne `DataUpdateCoordinator`-Instanz alle Register einmal pro 15
-  Sekunden (`UPDATE_INTERVAL_SECONDS` in `const.py`). `modbus-connection` fasst dabei pro
+  Sekunden (einstellbar: Setup, „Neu konfigurieren“ oder Zahnrad „Konfigurieren“ der
+  Integration). `modbus-connection` fasst dabei pro
   Component benachbarte Register zu möglichst wenigen Leseanfragen zusammen.
+- **Mehrere Home-Assistant-Instanzen am selben seriellen Gateway** (z.B. Produktiv- und
+  Testsystem an einem Waveshare RS485-zu-Ethernet-Konverter): RS485 hat nur einen Master, der
+  Gateway muss die Anfragen der Clients daher nacheinander abarbeiten. Dafür am Gateway das
+  Protokoll „Modbus TCP to RTU“ (Multi-host ist dann automatisch aktiv) und einen passenden
+  Timeout (Vielfaches von 32 ms, z.B. 256) einstellen und das Abfrageintervall auf der
+  zweiten Instanz verlängern (z.B. 30–60 s). Die seriellen Parameter (Proxon-Standard: 19200
+  Baud, 8 Datenbits, Parität Even, 1 Stopbit, Slave-Adresse 41) werden am Gateway eingestellt,
+  nicht in dieser Integration. Schreibzugriffe nur von einer Instanz aus.
 - **Weicher Fehlerzustand**: Antwortet ein einzelner Registerblock nicht (Gerät kurz
   beschäftigt, Variante ohne bestimmtes Modul, ...), werden nur die betroffenen Entitäten
   `unavailable`, nicht die gesamte Integration – siehe `coordinator.py`/`entity.py`.

@@ -7,8 +7,9 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant.components.modbus import async_get_temporary_unit
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlowWithReload
 from homeassistant.const import CONF_HOST, CONF_PORT
+from homeassistant.core import callback
 from homeassistant.data_entry_flow import section
 from homeassistant.helpers.selector import (
     AreaSelector,
@@ -27,6 +28,7 @@ from .const import (
     CONF_HAS_HNB,
     CONF_HNB_NAME,
     CONF_HNB_PTCS,
+    CONF_SCAN_INTERVAL,
     CONF_SLAVE,
     CONF_ZBP_NAME,
     CONF_ZBP_PTCS,
@@ -34,16 +36,34 @@ from .const import (
     CONF_ZONE_NAMES,
     CONF_ZONE_PTCS,
     DEFAULT_PORT,
+    DEFAULT_SCAN_INTERVAL,
     DEFAULT_SLAVE,
     DEFAULT_ZONE_COUNT,
     DOMAIN,
     MAX_PTC,
+    MAX_SCAN_INTERVAL,
     MAX_ZONE_COUNT,
+    MIN_SCAN_INTERVAL,
 )
 from .model import ProxonDevice
 from .zones import ptcs_from_value
 
 _LOGGER = logging.getLogger(__name__)
+
+def _scan_interval_selector() -> vol.All:
+    return vol.All(
+        NumberSelector(
+            NumberSelectorConfig(
+                min=MIN_SCAN_INTERVAL,
+                max=MAX_SCAN_INTERVAL,
+                step=1,
+                mode=NumberSelectorMode.BOX,
+                unit_of_measurement="s",
+            )
+        ),
+        vol.Coerce(int),
+    )
+
 
 STEP_CONNECTION_SCHEMA = vol.Schema(
     {
@@ -56,6 +76,7 @@ STEP_CONNECTION_SCHEMA = vol.Schema(
             NumberSelector(NumberSelectorConfig(min=1, max=247, mode=NumberSelectorMode.BOX)),
             vol.Coerce(int),
         ),
+        vol.Required(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): _scan_interval_selector(),
     }
 )
 
@@ -174,6 +195,11 @@ class ProxonConfigFlow(ConfigFlow, domain=DOMAIN):
         super().__init__()
         self._data: dict[str, Any] = {}
 
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry) -> "ProxonOptionsFlow":
+        return ProxonOptionsFlow()
+
     def _is_reconfigure(self) -> bool:
         return self.source == "reconfigure"
 
@@ -192,6 +218,10 @@ class ProxonConfigFlow(ConfigFlow, domain=DOMAIN):
     async def _async_step_connection(self, user_input: dict[str, Any] | None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         defaults = dict(self._get_reconfigure_entry().data) if self._is_reconfigure() else {}
+        if self._is_reconfigure():
+            defaults[CONF_SCAN_INTERVAL] = self._get_reconfigure_entry().options.get(
+                CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+            )
         if user_input is not None:
             try:
                 await self._async_probe(user_input)
@@ -278,12 +308,41 @@ class ProxonConfigFlow(ConfigFlow, domain=DOMAIN):
                 for legacy in ("zbp_relay", "hnb_relay", "zone_relays"):
                     self._data.pop(legacy, None)
 
+                scan_interval = self._data.pop(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
                 if self._is_reconfigure():
-                    return self.async_update_reload_and_abort(self._get_reconfigure_entry(), data=self._data)
-                return self.async_create_entry(title="HA Proxon FWT 2.0 Modbus", data=self._data)
+                    entry = self._get_reconfigure_entry()
+                    return self.async_update_reload_and_abort(
+                        entry,
+                        data=self._data,
+                        options={**entry.options, CONF_SCAN_INTERVAL: scan_interval},
+                    )
+                return self.async_create_entry(
+                    title="HA Proxon FWT 2.0 Modbus",
+                    data=self._data,
+                    options={CONF_SCAN_INTERVAL: scan_interval},
+                )
 
         return self.async_show_form(
             step_id="zone_names",
             data_schema=_zone_names_schema(has_hnb, zone_count, defaults),
             errors=errors,
         )
+
+
+class ProxonOptionsFlow(OptionsFlowWithReload):
+    """Quick dialog (Configure) for the poll interval, without walking through
+    the whole reconfigure wizard. Saving reloads the entry so the coordinator
+    picks up the new interval."""
+
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if user_input is not None:
+            return self.async_create_entry(data={**self.config_entry.options, **user_input})
+        schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_SCAN_INTERVAL,
+                    default=self.config_entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+                ): _scan_interval_selector()
+            }
+        )
+        return self.async_show_form(step_id="init", data_schema=schema)

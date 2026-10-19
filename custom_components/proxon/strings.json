@@ -2,19 +2,27 @@
   "config": {
     "step": {
       "user": {
-        "description": "Verbindung zur Proxon-Anlage (Modbus TCP, z.B. über einen seriellen Gateway).",
+        "description": "Connection to the Proxon unit (Modbus TCP, e.g. via a serial gateway). Serial settings (baud rate, parity, stop bits) are configured on the gateway itself – Proxon defaults: 19200 baud, 8 data bits, parity Even, 1 stop bit, slave address 41.",
         "data": {
           "host": "Modbus Host / IP-Adresse",
           "port": "Modbus Port",
-          "slave": "Modbus-Slave-Adresse"
+          "slave": "Modbus-Slave-Adresse",
+          "scan_interval": "Poll interval (seconds)"
+        },
+        "data_description": {
+          "scan_interval": "How often the unit is read. Choose a longer interval (e.g. 30–60 s) if several Home Assistant instances share one serial gateway."
         }
       },
       "reconfigure": {
-        "description": "Verbindungsdaten der Proxon-Anlage aktualisieren.",
+        "description": "Update the Proxon unit's connection details.",
         "data": {
           "host": "Modbus Host / IP-Adresse",
           "port": "Modbus Port",
-          "slave": "Modbus-Slave-Adresse"
+          "slave": "Modbus-Slave-Adresse",
+          "scan_interval": "Poll interval (seconds)"
+        },
+        "data_description": {
+          "scan_interval": "How often the unit is read. Choose a longer interval (e.g. 30–60 s) if several Home Assistant instances share one serial gateway."
         }
       },
       "zones_count": {
@@ -1106,6 +1114,20 @@
         "state": {
           "aus": "Aus",
           "an": "An"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Proxon settings",
+        "description": "How often the Proxon unit is polled. The integration reloads after saving.",
+        "data": {
+          "scan_interval": "Poll interval (seconds)"
+        },
+        "data_description": {
+          "scan_interval": "How often the unit is read. Choose a longer interval (e.g. 30–60 s) if several Home Assistant instances share one serial gateway."
         }
       }
     }

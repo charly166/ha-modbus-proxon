@@ -35,8 +35,13 @@ WRITE_LEVEL_ALL = 2
 # Single poll interval for the whole device. The legacy proxon.yaml used many
 # different scan_intervals (5-30s) per entity; modbus-connection polls a
 # Component's fields together in as few requests as possible, so one shared
-# interval for the whole device is simpler and still responsive.
-UPDATE_INTERVAL_SECONDS = 15
+# interval for the whole device is simpler and still responsive. Configurable
+# (setup, reconfigure and the options dialog) because a serial gateway shared
+# by several Home Assistant instances has only so much bus bandwidth.
+CONF_SCAN_INTERVAL = "scan_interval"
+DEFAULT_SCAN_INTERVAL = 15
+MIN_SCAN_INTERVAL = 5
+MAX_SCAN_INTERVAL = 600
 
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,

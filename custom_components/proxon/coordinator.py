@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN, UPDATE_INTERVAL_SECONDS
+from .const import CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN
 from .model import ProxonDevice
 from .zones import ZoneInfo
 
@@ -42,7 +42,7 @@ class ProxonDataUpdateCoordinator(DataUpdateCoordinator[ProxonUpdateReport]):
             _LOGGER,
             name=DOMAIN,
             config_entry=entry,
-            update_interval=timedelta(seconds=UPDATE_INTERVAL_SECONDS),
+            update_interval=timedelta(seconds=int(entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL))),
         )
         self.device = device
         # Last failed write (shown by the diagnostic sensor 'Letzter Schreibfehler').
