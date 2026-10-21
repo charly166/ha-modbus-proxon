@@ -7,7 +7,11 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant.components.modbus import async_get_temporary_unit
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlowWithReload
+from homeassistant.config_entries import (
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlowWithReload,
+)
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import section
@@ -197,7 +201,7 @@ class ProxonConfigFlow(ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry) -> "ProxonOptionsFlow":
+    def async_get_options_flow(config_entry) -> ProxonOptionsFlow:
         return ProxonOptionsFlow()
 
     def _is_reconfigure(self) -> bool:

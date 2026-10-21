@@ -398,7 +398,7 @@ class FieldMeta:
     suggested_precision: int | None = None
 
 
-def is_signed(reg: "ExcelRegister") -> bool:
+def is_signed(reg: ExcelRegister) -> bool:
     """Whether the register must be decoded as signed 16 bit.
 
     The manufacturer's register list declares most temperature registers as
@@ -1594,12 +1594,101 @@ _EXTRA_ENTITY_STRINGS: dict = {
 }
 
 
-def render_strings(all_meta: list[FieldMeta], config_flow: dict, *, include_extra_entities: bool = True) -> str:
+# English counterpart of _EXTRA_ENTITY_STRINGS (same keys). Home Assistant falls back to
+# en.json for every language other than German, so every translation_key needs an entry here.
+# Names of the register-derived entities (Excel list) stay as the manufacturer wrote them.
+_EXTRA_ENTITY_STRINGS_EN: dict = {
+    "sensor": {
+        "proxon_zone_ist_temperatur": {"name": "Current temperature"},
+        "proxon_zone_mitteltemperatur": {"name": "Average temperature"},
+        "proxon_zone_status": {"name": "Room status (raw)"},
+        "proxon_zone_led": {"name": "LED setpoint level (raw)"},
+        "proxon_filter_tage": {"name": "Device filter days since change"},
+        "proxon_filter_resttage": {"name": "Device filter days remaining"},
+        "proxon_energie_total": {"name": "Energy consumption"},
+        "proxon_aktueller_betrieb_text": {
+            "name": "Current operation (text)",
+            "state": {
+                "lueftungsbetrieb": "Ventilation mode",
+                "heizbetrieb": "Heating mode",
+                "kuehlbetrieb": "Cooling mode",
+            },
+        },
+        "proxon_vierwegeventil_text": {
+            "name": "4-way valve",
+            "state": {"heizen": "Heating", "kuehlen": "Cooling"},
+        },
+        "proxon_letzter_schreibfehler": {"name": "Last write error"},
+        "proxon_geraete_modell_text": {
+            "name": "Device model (text)",
+            "state": {"fwt": "FWT", "p": "P"},
+        },
+        "proxon_geraete_typ_text": {
+            "name": "Device type (text)",
+            "state": {"nur_heizen": "Heating only", "heizen_und_kuehlen": "Heating and cooling"},
+        },
+        "proxon_modbus_schreibrecht": {
+            "name": "Modbus write permission",
+            "state": {
+                "kein_schreibzugriff": "No write access",
+                "eingeschraenkter_schreibzugriff": "Restricted write access",
+                "voller_schreibzugriff": "Full write access",
+            },
+        },
+    },
+    "binary_sensor": {
+        "proxon_filter_wechsel_faellig": {"name": "Device filter change due"},
+        "proxon_bypass": {"name": "Bypass"},
+        "proxon_erdwaerme": {"name": "Geothermal"},
+        "proxon_magnetventil": {"name": "Solenoid valve"},
+        "proxon_ptc_relais_aktiv": {"name": "PTC relay active"},
+        "proxon_zone_tastensperre": {"name": "Control panel lock"},
+        "proxon_zone_heizelement_status": {"name": "Heating element status"},
+    },
+    "switch": {
+        "proxon_zone_heizelement": {"name": "Heating element"},
+        "proxon_zone_tastensperre": {"name": "Control panel lock"},
+        "proxon_intensivlueftung": {"name": "Intensive ventilation (60 min)"},
+        "proxon_intensivlueftung_15_min": {"name": "Intensive ventilation (15 min)"},
+        "proxon_intensivlueftung_30_min": {"name": "Intensive ventilation (30 min)"},
+        "proxon_intensivlueftung_45_min": {"name": "Intensive ventilation (45 min)"},
+        "proxon_intensivlueftung_start": {"name": "Intensive ventilation (set duration)"},
+    },
+    "number": {
+        "proxon_zone_offset_temperatur": {"name": "Offset temperature"},
+        "proxon_zone_soll_temperatur": {"name": "Target temperature"},
+        "proxon_intensivlueftung_dauer": {"name": "Intensive ventilation duration"},
+    },
+    "select": {
+        "proxon_betriebsart": {
+            "state": {
+                "aus": "Off",
+                "sommerbetrieb": "Summer mode",
+                "winterbetrieb": "Winter mode",
+                "eco_komfortbetrieb": "ECO comfort mode",
+                "ofenbetrieb": "Stove mode",
+            }
+        },
+        "proxon_betriebsart_t300": {
+            "name": "Operating mode",
+            "state": {"aus": "Off", "an": "On"},
+        },
+    },
+}
+
+
+def render_strings(
+    all_meta: list[FieldMeta],
+    config_flow: dict,
+    *,
+    include_extra_entities: bool = True,
+    extra_entity_strings: dict | None = None,
+) -> str:
     import json
 
     entity: dict[str, dict[str, dict]] = {}
     if include_extra_entities:
-        for platform, keys in _EXTRA_ENTITY_STRINGS.items():
+        for platform, keys in (extra_entity_strings or _EXTRA_ENTITY_STRINGS).items():
             entity.setdefault(platform, {}).update(keys)
     for m in all_meta:
         if m.migrated:
@@ -1639,13 +1728,14 @@ def main() -> None:
             continue
         (OUT_DIR / f"{platform}.py").write_text(render_platform_file(platform, metas), encoding="utf-8")
 
-    (OUT_DIR / "strings.json").write_text(render_strings(all_meta, CONFIG_FLOW_STRINGS), encoding="utf-8")
+    # strings.json is the English source (like in Home Assistant Core); en.json is its copy and
+    # the fallback for every language other than German, so it must contain all entity names.
+    english = render_strings(all_meta, CONFIG_FLOW_STRINGS_EN, extra_entity_strings=_EXTRA_ENTITY_STRINGS_EN)
+    (OUT_DIR / "strings.json").write_text(english, encoding="utf-8")
     translations_dir = OUT_DIR / "translations"
     translations_dir.mkdir(exist_ok=True)
     (translations_dir / "de.json").write_text(render_strings(all_meta, CONFIG_FLOW_STRINGS), encoding="utf-8")
-    (translations_dir / "en.json").write_text(
-        render_strings([], CONFIG_FLOW_STRINGS_EN, include_extra_entities=False), encoding="utf-8"
-    )
+    (translations_dir / "en.json").write_text(english, encoding="utf-8")
 
     n_holding = sum(len(c.fields) for c in holding_components)
     n_input = sum(len(c.fields) for c in input_components)

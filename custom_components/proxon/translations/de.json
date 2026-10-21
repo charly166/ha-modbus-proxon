@@ -2,15 +2,11 @@
   "config": {
     "step": {
       "user": {
-        "description": "Verbindung zur Proxon-Anlage (Modbus TCP, z.B. über einen seriellen Gateway). Die seriellen Einstellungen (Baudrate, Parität, Stopbits) werden am Gateway selbst vorgenommen – Proxon-Standard: 19200 Baud, 8 Datenbits, Parität Even, 1 Stopbit, Slave-Adresse 41.",
+        "description": "Verbindung zur Proxon-Anlage (Modbus TCP, z.B. über einen seriellen Gateway).",
         "data": {
           "host": "Modbus Host / IP-Adresse",
           "port": "Modbus Port",
-          "slave": "Modbus-Slave-Adresse",
-          "scan_interval": "Abfrageintervall (Sekunden)"
-        },
-        "data_description": {
-          "scan_interval": "Wie oft die Anlage ausgelesen wird. Bei mehreren Home-Assistant-Instanzen an einem seriellen Gateway ein längeres Intervall (z.B. 30–60 s) wählen."
+          "slave": "Modbus-Slave-Adresse"
         }
       },
       "reconfigure": {
@@ -18,11 +14,7 @@
         "data": {
           "host": "Modbus Host / IP-Adresse",
           "port": "Modbus Port",
-          "slave": "Modbus-Slave-Adresse",
-          "scan_interval": "Abfrageintervall (Sekunden)"
-        },
-        "data_description": {
-          "scan_interval": "Wie oft die Anlage ausgelesen wird. Bei mehreren Home-Assistant-Instanzen an einem seriellen Gateway ein längeres Intervall (z.B. 30–60 s) wählen."
+          "slave": "Modbus-Slave-Adresse"
         }
       },
       "zones_count": {
@@ -1114,20 +1106,6 @@
         "state": {
           "aus": "Aus",
           "an": "An"
-        }
-      }
-    }
-  },
-  "options": {
-    "step": {
-      "init": {
-        "title": "Proxon-Einstellungen",
-        "description": "Wie oft die Proxon-Anlage abgefragt wird. Nach dem Speichern wird die Integration neu geladen.",
-        "data": {
-          "scan_interval": "Abfrageintervall (Sekunden)"
-        },
-        "data_description": {
-          "scan_interval": "Wie oft die Anlage ausgelesen wird. Bei mehreren Home-Assistant-Instanzen an einem seriellen Gateway ein längeres Intervall (z.B. 30–60 s) wählen."
         }
       }
     }
