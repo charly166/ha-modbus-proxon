@@ -2,11 +2,15 @@
   "config": {
     "step": {
       "user": {
-        "description": "Connection to the Proxon unit (Modbus TCP, e.g. via a serial gateway).",
+        "description": "Connection to the Proxon unit (Modbus TCP, e.g. via a serial gateway). Serial settings (baud rate, parity, stop bits) are configured on the gateway itself – Proxon defaults: 19200 baud, 8 data bits, parity Even, 1 stop bit, slave address 41.",
         "data": {
           "host": "Modbus host / IP address",
           "port": "Modbus port",
-          "slave": "Modbus slave address"
+          "slave": "Modbus slave address",
+          "scan_interval": "Poll interval (seconds)"
+        },
+        "data_description": {
+          "scan_interval": "How often the unit is read. Choose a longer interval (e.g. 30–60 s) if several Home Assistant instances share one serial gateway."
         }
       },
       "reconfigure": {
@@ -14,7 +18,11 @@
         "data": {
           "host": "Modbus host / IP address",
           "port": "Modbus port",
-          "slave": "Modbus slave address"
+          "slave": "Modbus slave address",
+          "scan_interval": "Poll interval (seconds)"
+        },
+        "data_description": {
+          "scan_interval": "How often the unit is read. Choose a longer interval (e.g. 30–60 s) if several Home Assistant instances share one serial gateway."
         }
       },
       "zones_count": {
@@ -185,6 +193,20 @@
     "abort": {
       "already_configured": "This unit is already configured.",
       "reconfigure_successful": "Connection details updated."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Proxon settings",
+        "description": "How often the Proxon unit is polled. The integration reloads after saving.",
+        "data": {
+          "scan_interval": "Poll interval (seconds)"
+        },
+        "data_description": {
+          "scan_interval": "How often the unit is read. Choose a longer interval (e.g. 30–60 s) if several Home Assistant instances share one serial gateway."
+        }
+      }
     }
   },
   "entity": {

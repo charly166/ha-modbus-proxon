@@ -1415,90 +1415,428 @@ def render_platform_file(platform: str, metas: list[FieldMeta]) -> str:
 # doesn't depend on otherwise).
 MAX_ZONE_COUNT = 19
 
+OPTIONS_STRINGS: dict = {
+    "step": {
+        "init": {
+            "title": "Proxon-Einstellungen",
+            "description": "Wie oft die Proxon-Anlage abgefragt wird. Nach dem Speichern wird die Integration neu geladen.",
+            "data": {
+                "scan_interval": "Abfrageintervall (Sekunden)"
+            },
+            "data_description": {
+                "scan_interval": "Wie oft die Anlage ausgelesen wird. Bei mehreren Home-Assistant-Instanzen an einem seriellen Gateway ein längeres Intervall (z.B. 30–60 s) wählen."
+            }
+        }
+    }
+}
+
+OPTIONS_STRINGS_EN: dict = {
+    "step": {
+        "init": {
+            "title": "Proxon settings",
+            "description": "How often the Proxon unit is polled. The integration reloads after saving.",
+            "data": {
+                "scan_interval": "Poll interval (seconds)"
+            },
+            "data_description": {
+                "scan_interval": "How often the unit is read. Choose a longer interval (e.g. 30–60 s) if several Home Assistant instances share one serial gateway."
+            }
+        }
+    }
+}
+
 CONFIG_FLOW_STRINGS: dict = {
     "step": {
         "user": {
-            "description": "Verbindung zur Proxon-Anlage (Modbus TCP, z.B. über einen seriellen Gateway).",
-            "data": {"host": "Modbus Host / IP-Adresse", "port": "Modbus Port", "slave": "Modbus-Slave-Adresse"},
+            "description": "Verbindung zur Proxon-Anlage (Modbus TCP, z.B. über einen seriellen Gateway). Die seriellen Einstellungen (Baudrate, Parität, Stopbits) werden am Gateway selbst vorgenommen – Proxon-Standard: 19200 Baud, 8 Datenbits, Parität Even, 1 Stopbit, Slave-Adresse 41.",
+            "data": {
+                "host": "Modbus Host / IP-Adresse",
+                "port": "Modbus Port",
+                "slave": "Modbus-Slave-Adresse",
+                "scan_interval": "Abfrageintervall (Sekunden)"
+            },
+            "data_description": {
+                "scan_interval": "Wie oft die Anlage ausgelesen wird. Bei mehreren Home-Assistant-Instanzen an einem seriellen Gateway ein längeres Intervall (z.B. 30–60 s) wählen."
+            }
         },
         "reconfigure": {
             "description": "Verbindungsdaten der Proxon-Anlage aktualisieren.",
-            "data": {"host": "Modbus Host / IP-Adresse", "port": "Modbus Port", "slave": "Modbus-Slave-Adresse"},
+            "data": {
+                "host": "Modbus Host / IP-Adresse",
+                "port": "Modbus Port",
+                "slave": "Modbus-Slave-Adresse",
+                "scan_interval": "Abfrageintervall (Sekunden)"
+            },
+            "data_description": {
+                "scan_interval": "Wie oft die Anlage ausgelesen wird. Bei mehreren Home-Assistant-Instanzen an einem seriellen Gateway ein längeres Intervall (z.B. 30–60 s) wählen."
+            }
         },
         "zones_count": {
             "description": "Wie viele Bedienteile/Zonen sind installiert? ZBP (Zentralbedienpanel) ist immer vorhanden und wird im nächsten Schritt separat benannt. Bei NBP zählt die höchste vorhandene Nummer, nicht die Anzahl - hast du z.B. NBP1-NBP3 und NBP5-NBP6, aber kein NBP4, trage hier 6 ein (NBP4 lässt sich im nächsten Schritt einfach leer lassen).",
-            "data": {"has_hnb": "Hauptnebenbedienpanel (HNBP) installiert", "zone_count": "Höchste installierte NBP-Nummer (NBPx)"},
+            "data": {
+                "has_hnb": "Hauptnebenbedienpanel (HNBP) installiert",
+                "zone_count": "Höchste installierte NBP-Nummer (NBPx)"
+            }
         },
         "zone_names": {
             "description": "Pro Bedienpanel ein Abschnitt: Wähle den passenden Home-Assistant-Raum und - optional - die zugehörigen Kanäle des PTC-Moduls. NBP-Zonen werden in der Reihenfolge NBP1, NBP2, ... abgefragt (Modbus-Registerreihenfolge, entscheidend für die Zuordnung). Fehlt ein NBP in deiner Nummerierung (z.B. kein NBP4), lass dessen Raum-Feld einfach leer - diese Zone wird dann übersprungen. Die Kanal-Auswahl ist nur für den 'Heizelement Status'-Sensor nötig: Das zentrale PTC-Modul hat die Kanäle K1-K10 (im Stromverkabelungsplan), jeder Kanal versorgt ein oder mehrere PTCs genau eines Raums. Ein Raum kann mehrere Kanäle haben, ein Kanal gehört aber nur zu einem Raum; die Zuordnung hat nichts mit der NBP-Nummer zu tun.",
             "sections": {
                 "ZBP": {
                     "name": "ZBP (Zentralbedienpanel)",
-                    "data": {"area": "Raum", "ptcs": "PTC-Kanäle K1-K10 (optional)"},
+                    "data": {
+                        "area": "Raum",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
                 },
                 "HNBP": {
                     "name": "HNBP (Hauptnebenbedienpanel)",
-                    "data": {"area": "Raum", "ptcs": "PTC-Kanäle K1-K10 (optional)"},
-                },
-                **{
-                    f"NBP{i}": {
-                        "name": f"NBP{i} (Nebenbedienpanel {i})",
-                        "data": {"area": "Raum (leer lassen, falls nicht vorhanden)", "ptcs": "PTC-Kanäle K1-K10 (optional)"},
+                    "data": {
+                        "area": "Raum",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
                     }
-                    for i in range(1, MAX_ZONE_COUNT + 1)
                 },
-            },
-        },
+                "NBP1": {
+                    "name": "NBP1 (Nebenbedienpanel 1)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP2": {
+                    "name": "NBP2 (Nebenbedienpanel 2)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP3": {
+                    "name": "NBP3 (Nebenbedienpanel 3)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP4": {
+                    "name": "NBP4 (Nebenbedienpanel 4)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP5": {
+                    "name": "NBP5 (Nebenbedienpanel 5)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP6": {
+                    "name": "NBP6 (Nebenbedienpanel 6)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP7": {
+                    "name": "NBP7 (Nebenbedienpanel 7)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP8": {
+                    "name": "NBP8 (Nebenbedienpanel 8)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP9": {
+                    "name": "NBP9 (Nebenbedienpanel 9)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP10": {
+                    "name": "NBP10 (Nebenbedienpanel 10)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP11": {
+                    "name": "NBP11 (Nebenbedienpanel 11)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP12": {
+                    "name": "NBP12 (Nebenbedienpanel 12)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP13": {
+                    "name": "NBP13 (Nebenbedienpanel 13)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP14": {
+                    "name": "NBP14 (Nebenbedienpanel 14)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP15": {
+                    "name": "NBP15 (Nebenbedienpanel 15)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP16": {
+                    "name": "NBP16 (Nebenbedienpanel 16)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP17": {
+                    "name": "NBP17 (Nebenbedienpanel 17)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP18": {
+                    "name": "NBP18 (Nebenbedienpanel 18)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                },
+                "NBP19": {
+                    "name": "NBP19 (Nebenbedienpanel 19)",
+                    "data": {
+                        "area": "Raum (leer lassen, falls nicht vorhanden)",
+                        "ptcs": "PTC-Kanäle K1-K10 (optional)"
+                    }
+                }
+            }
+        }
     },
     "error": {
         "cannot_connect": "Verbindung zur Anlage fehlgeschlagen. Adresse/Port/Slave-ID prüfen.",
         "duplicate_zone_names": "Zwei Zonen sind demselben Raum zugeordnet - bitte für jede Zone einen eigenen Raum wählen.",
-        "duplicate_ptcs": "Ein PTC-Kanal ist mehreren Zonen zugeordnet - jeder Kanal kann nur zu einem Raum gehören.",
+        "duplicate_ptcs": "Ein PTC-Kanal ist mehreren Zonen zugeordnet - jeder Kanal kann nur zu einem Raum gehören."
     },
-    "abort": {"already_configured": "Diese Anlage ist bereits eingerichtet.", "reconfigure_successful": "Verbindungsdaten aktualisiert."},
+    "abort": {
+        "already_configured": "Diese Anlage ist bereits eingerichtet.",
+        "reconfigure_successful": "Verbindungsdaten aktualisiert."
+    }
 }
 
 CONFIG_FLOW_STRINGS_EN: dict = {
     "step": {
         "user": {
-            "description": "Connection to the Proxon unit (Modbus TCP, e.g. via a serial gateway).",
-            "data": {"host": "Modbus host / IP address", "port": "Modbus port", "slave": "Modbus slave address"},
+            "description": "Connection to the Proxon unit (Modbus TCP, e.g. via a serial gateway). Serial settings (baud rate, parity, stop bits) are configured on the gateway itself – Proxon defaults: 19200 baud, 8 data bits, parity Even, 1 stop bit, slave address 41.",
+            "data": {
+                "host": "Modbus host / IP address",
+                "port": "Modbus port",
+                "slave": "Modbus slave address",
+                "scan_interval": "Poll interval (seconds)"
+            },
+            "data_description": {
+                "scan_interval": "How often the unit is read. Choose a longer interval (e.g. 30–60 s) if several Home Assistant instances share one serial gateway."
+            }
         },
         "reconfigure": {
             "description": "Update the Proxon unit's connection details.",
-            "data": {"host": "Modbus host / IP address", "port": "Modbus port", "slave": "Modbus slave address"},
+            "data": {
+                "host": "Modbus host / IP address",
+                "port": "Modbus port",
+                "slave": "Modbus slave address",
+                "scan_interval": "Poll interval (seconds)"
+            },
+            "data_description": {
+                "scan_interval": "How often the unit is read. Choose a longer interval (e.g. 30–60 s) if several Home Assistant instances share one serial gateway."
+            }
         },
         "zones_count": {
             "description": "How many control panels/zones are installed? ZBP (main panel) always exists and is named separately in the next step. For NBP, enter the highest installed number, not the count - e.g. if you have NBP1-NBP3 and NBP5-NBP6 but no NBP4, enter 6 (NBP4 can simply be left blank in the next step).",
-            "data": {"has_hnb": "Secondary main panel (HNBP) installed", "zone_count": "Highest installed NBP number (NBPx)"},
+            "data": {
+                "has_hnb": "Secondary main panel (HNBP) installed",
+                "zone_count": "Highest installed NBP number (NBPx)"
+            }
         },
         "zone_names": {
             "description": "One section per control panel: pick the matching Home Assistant Area and - optionally - its PTC module channels. NBP zones are asked for in order NBP1, NBP2, ... (Modbus register order, determines the mapping). If a number is missing from your NBP numbering (e.g. no NBP4), just leave its Area field blank - that zone is then skipped. The channel selection is only needed for the 'Heizelement Status' sensor: the central PTC module has channels K1-K10 (see the power wiring diagram), each feeding one or more PTCs of exactly one room. A room can have several channels, but a channel belongs to one room only; it has nothing to do with the NBP number.",
             "sections": {
                 "ZBP": {
                     "name": "ZBP (main control panel)",
-                    "data": {"area": "Area", "ptcs": "PTC channels K1-K10 (optional)"},
+                    "data": {
+                        "area": "Area",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
                 },
                 "HNBP": {
                     "name": "HNBP (secondary main panel)",
-                    "data": {"area": "Area", "ptcs": "PTC channels K1-K10 (optional)"},
-                },
-                **{
-                    f"NBP{i}": {
-                        "name": f"NBP{i} (remote panel {i})",
-                        "data": {"area": "Area (leave blank if not installed)", "ptcs": "PTC channels K1-K10 (optional)"},
+                    "data": {
+                        "area": "Area",
+                        "ptcs": "PTC channels K1-K10 (optional)"
                     }
-                    for i in range(1, MAX_ZONE_COUNT + 1)
                 },
-            },
-        },
+                "NBP1": {
+                    "name": "NBP1 (remote panel 1)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP2": {
+                    "name": "NBP2 (remote panel 2)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP3": {
+                    "name": "NBP3 (remote panel 3)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP4": {
+                    "name": "NBP4 (remote panel 4)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP5": {
+                    "name": "NBP5 (remote panel 5)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP6": {
+                    "name": "NBP6 (remote panel 6)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP7": {
+                    "name": "NBP7 (remote panel 7)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP8": {
+                    "name": "NBP8 (remote panel 8)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP9": {
+                    "name": "NBP9 (remote panel 9)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP10": {
+                    "name": "NBP10 (remote panel 10)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP11": {
+                    "name": "NBP11 (remote panel 11)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP12": {
+                    "name": "NBP12 (remote panel 12)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP13": {
+                    "name": "NBP13 (remote panel 13)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP14": {
+                    "name": "NBP14 (remote panel 14)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP15": {
+                    "name": "NBP15 (remote panel 15)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP16": {
+                    "name": "NBP16 (remote panel 16)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP17": {
+                    "name": "NBP17 (remote panel 17)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP18": {
+                    "name": "NBP18 (remote panel 18)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                },
+                "NBP19": {
+                    "name": "NBP19 (remote panel 19)",
+                    "data": {
+                        "area": "Area (leave blank if not installed)",
+                        "ptcs": "PTC channels K1-K10 (optional)"
+                    }
+                }
+            }
+        }
     },
     "error": {
         "cannot_connect": "Failed to connect. Please check address/port/slave id.",
         "duplicate_zone_names": "Two zones are mapped to the same Area - please pick a distinct Area per zone.",
-        "duplicate_ptcs": "A PTC channel is assigned to more than one zone - each channel can belong to one room only.",
+        "duplicate_ptcs": "A PTC channel is assigned to more than one zone - each channel can belong to one room only."
     },
-    "abort": {"already_configured": "This unit is already configured.", "reconfigure_successful": "Connection details updated."},
+    "abort": {
+        "already_configured": "This unit is already configured.",
+        "reconfigure_successful": "Connection details updated."
+    }
 }
 
 # Translation strings for hand-written (non-generated) entities: select.py
@@ -1680,6 +2018,7 @@ _EXTRA_ENTITY_STRINGS_EN: dict = {
 def render_strings(
     all_meta: list[FieldMeta],
     config_flow: dict,
+    options: dict,
     *,
     include_extra_entities: bool = True,
     extra_entity_strings: dict | None = None,
@@ -1694,7 +2033,7 @@ def render_strings(
         if m.migrated:
             continue  # migrated entities use a literal `name`, no translation needed
         entity.setdefault(m.platform, {})[m.key] = {"name": m.name}
-    doc = {"config": config_flow, "entity": entity}
+    doc = {"config": config_flow, "options": options, "entity": entity}
     return json.dumps(doc, ensure_ascii=False, indent=2) + "\n"
 
 
@@ -1730,11 +2069,15 @@ def main() -> None:
 
     # strings.json is the English source (like in Home Assistant Core); en.json is its copy and
     # the fallback for every language other than German, so it must contain all entity names.
-    english = render_strings(all_meta, CONFIG_FLOW_STRINGS_EN, extra_entity_strings=_EXTRA_ENTITY_STRINGS_EN)
+    english = render_strings(
+        all_meta, CONFIG_FLOW_STRINGS_EN, OPTIONS_STRINGS_EN, extra_entity_strings=_EXTRA_ENTITY_STRINGS_EN
+    )
     (OUT_DIR / "strings.json").write_text(english, encoding="utf-8")
     translations_dir = OUT_DIR / "translations"
     translations_dir.mkdir(exist_ok=True)
-    (translations_dir / "de.json").write_text(render_strings(all_meta, CONFIG_FLOW_STRINGS), encoding="utf-8")
+    (translations_dir / "de.json").write_text(
+        render_strings(all_meta, CONFIG_FLOW_STRINGS, OPTIONS_STRINGS), encoding="utf-8"
+    )
     (translations_dir / "en.json").write_text(english, encoding="utf-8")
 
     n_holding = sum(len(c.fields) for c in holding_components)
