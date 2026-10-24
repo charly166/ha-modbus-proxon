@@ -46,9 +46,9 @@ installiert ist. Kein zusätzlicher Schritt nötig.
 
 ## Installation (HACS)
 
-1. In HACS → Integrationen → ⋮ → *Benutzerdefinierte Repositories* → dieses Repository
-   (`https://github.com/charly166/ha-modbus-proxon`) als Typ *Integration* hinzufügen.
-2. "HA Proxon FWT 2.0 Modbus" installieren, Home Assistant neu starten.
+1. In HACS nach **"HA Proxon FWT 2.0 Modbus"** suchen (die Integration ist im
+   HACS-Standardkatalog enthalten) und herunterladen.
+2. Home Assistant neu starten.
 3. Einstellungen → Geräte & Dienste → Integration hinzufügen → "Proxon" suchen.
 4. **Schritt 1 - Verbindung**: Modbus Host/IP-Adresse, Modbus Port (Standard `502`, an euer
    Modbus-TCP-Gateway anpassen) und Modbus-Slave-Adresse (Standard `41`) eingeben.
@@ -58,6 +58,10 @@ installiert ist. Kein zusätzlicher Schritt nötig.
    Reihenfolge - die Reihenfolge entscheidet über die Registerzuordnung, siehe unten) einen
    **Home-Assistant-Raum** aus einer Dropdown-Liste auswählen (nicht mehr frei eintippen).
    Existiert der Raum noch nicht, kann er direkt im Auswahlfeld neu angelegt werden.
+
+> **Fallback:** Taucht die Integration in HACS (noch) nicht in der Suche auf, kann sie als
+> benutzerdefiniertes Repository hinzugefügt werden: HACS → ⋮ → *Benutzerdefinierte
+> Repositories* → `https://github.com/charly166/ha-modbus-proxon` als Typ *Integration*.
 
 Die Integration verwaltet ihre Modbus-TCP-Verbindung selbst (siehe Hinweis oben); es ist also
 keine weitere Voraussetzung an eure Home-Assistant-Version bezüglich der `modbus`-Integration
