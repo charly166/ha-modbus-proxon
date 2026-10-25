@@ -33,6 +33,24 @@ es jetzt nativ als `climate`-Entität, ganz ohne die HACS-Erweiterung
 [hass-template-climate](https://github.com/jcwillox/hass-template-climate) und ohne
 Sync-Automatisierungen.
 
+## Screenshots
+
+**Geräteseite des zentralen Geräts** (Steuerung: Intensivlüftung, Betriebsart, Kühlung, Lüfterstufe):
+
+<img src="docs/screenshots/geraet-zentral.png" alt="Zentrales Gerät FWT2.0" width="720">
+
+**Geräteseite des T300** (Trinkwasserwärmepumpe):
+
+<img src="docs/screenshots/geraet-t300.png" alt="Gerät T300" width="720">
+
+**Lovelace-Karten pro Raum** (detailliert, mit Luftfeuchte beim ZBP-Raum, und kompakt):
+
+<p>
+  <img src="docs/screenshots/karte-detailliert-buero.png" alt="Karte detailliert: Büro" width="320">
+  <img src="docs/screenshots/karte-detailliert-wohnzimmer.png" alt="Karte detailliert: Wohnzimmer" width="320">
+  <img src="docs/screenshots/karte-kompakt-flur.png" alt="Karte kompakt: Flur" width="320">
+</p>
+
 ## Icon/Logo in Home Assistant
 
 Seit Home Assistant 2026.3 können Custom-Integrationen ihr Icon/Logo direkt mitbringen, ohne
