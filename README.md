@@ -2,6 +2,12 @@
   <img src="HA_Proxon_FWT2.0_Modbus.png" alt="HA Proxon FWT 2.0 Modbus" width="480">
 </p>
 
+<p align="center">
+  <a href="https://github.com/hacs/integration"><img src="https://img.shields.io/badge/HACS-Default-41BDF5.svg" alt="hacs_badge"></a>
+  <a href="https://github.com/charly166/ha-modbus-proxon/releases"><img src="https://img.shields.io/github/v/release/charly166/ha-modbus-proxon" alt="GitHub Release"></a>
+  <a href="https://github.com/charly166/ha-modbus-proxon/blob/main/LICENSE"><img src="https://img.shields.io/github/license/charly166/ha-modbus-proxon" alt="License"></a>
+</p>
+
 # HA Proxon FWT 2.0 Modbus
 
 Home-Assistant-Integration für die Proxon-Wärmepumpe/Komfortlüftung **FWT2.0** über Modbus
