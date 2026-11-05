@@ -8,8 +8,8 @@ the repository root, kept for reference).
 - ZBP sets an *absolute* target temperature (10-30°C) directly.
 - HNBP/NBPn zones don't have an absolute setpoint register: their target
   temperature is their own Mitteltemperatur (running average) plus an
-  Offset-Temperatur the device lets you adjust ±3°C. Both current_temperature
-  and target_temperature are computed live from the latest poll - no
+  Offset-Temperatur the device lets you adjust ±3°C. Both native_current_temperature
+  and native_target_temperature are computed live from the latest poll - no
   automation/template is needed to keep them in sync, unlike the old setup.
 - hvac_mode mirrors/controls the zone's own Heizelement switch (which also
   still exists as its own switch.* entity, unchanged).
@@ -46,7 +46,7 @@ class ProxonZoneClimate(ProxonEntity, ClimateEntity):
 
     entity_description: ProxonZoneClimateDescription
     _RULE_ICONS = False
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_precision = PRECISION_TENTHS
     _attr_hvac_modes = (HVACMode.OFF, HVACMode.HEAT)
     _attr_supported_features = (
@@ -72,11 +72,11 @@ class ProxonZoneClimate(ProxonEntity, ClimateEntity):
         return self.coordinator.device.nb_zones_input.zones[self._zone.zone_index]
 
     @property
-    def current_temperature(self) -> float | None:
+    def native_current_temperature(self) -> float | None:
         return self._input_component.ist_temperatur
 
     @property
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         if self._zone.kind == "zbp":
             return self._value  # `field` is "soll_temperatur", an absolute value
         return self._component.mitteltemperatur + self._value  # `field` is "offset_temperatur"
